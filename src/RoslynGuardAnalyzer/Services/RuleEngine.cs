@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -31,12 +32,12 @@ public sealed class RuleEngine : IRuleEngine
     /// </summary>
     public async Task<List<RuleViolation>> ExecuteRuleAsync(AnalysisRule rule, List<CodeElement> elements)
     {
-        if (rule == null)
+        if (rule is null)
             throw new ArgumentNullException(nameof(rule));
 
         var violations = new List<RuleViolation>();
 
-        if (!rule.IsEnabled || elements == null || !elements.Any())
+        if (!rule.IsEnabled || elements is null || !elements.Any())
             return violations;
 
         await Task.Run(() =>
@@ -59,7 +60,7 @@ public sealed class RuleEngine : IRuleEngine
     /// </summary>
     public async Task<List<RuleViolation>> ExecuteAllRulesAsync(List<CodeElement> elements)
     {
-        if (elements == null || !elements.Any())
+        if (elements is null || !elements.Any())
             return new List<RuleViolation>();
 
         var violations = new List<RuleViolation>();
@@ -99,7 +100,7 @@ public sealed class RuleEngine : IRuleEngine
                     .FirstOrDefault(e => e.Name == dependency || e.FullyQualifiedName == dependency)?
                     .GetFullyQualifiedName();
 
-                if (dependencyLayer == null) continue;
+                if (dependencyLayer is null) continue;
 
                 var depLayer = GetElementLayer(
                     elements.First(e => e.FullyQualifiedName == dependencyLayer),

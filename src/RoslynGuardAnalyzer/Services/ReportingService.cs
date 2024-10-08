@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -24,7 +25,7 @@ public sealed class ReportingService : IReportingService
     /// </summary>
     public string GenerateReport(AnalysisResult result)
     {
-        if (result == null)
+        if (result is null)
             throw new ArgumentNullException(nameof(result));
 
         var sb = new StringBuilder();
@@ -121,7 +122,7 @@ public sealed class ReportingService : IReportingService
     /// </summary>
     public string GenerateFormattedReport(AnalysisResult result, string format)
     {
-        if (result == null)
+        if (result is null)
             throw new ArgumentNullException(nameof(result));
 
         return format?.ToUpperInvariant() switch
@@ -138,7 +139,7 @@ public sealed class ReportingService : IReportingService
     /// </summary>
     public async Task SaveReportAsync(ViolationReport report, string filePath)
     {
-        if (report == null)
+        if (report is null)
             throw new ArgumentNullException(nameof(report));
 
         if (string.IsNullOrWhiteSpace(filePath))

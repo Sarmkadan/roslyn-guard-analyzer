@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -80,7 +81,7 @@ public sealed class CodeFixService : ICodeFixService
         IEnumerable<RuleViolation> violations,
         CancellationToken cancellationToken = default)
     {
-        if (violations == null)
+        if (violations is null)
             throw new ArgumentNullException(nameof(violations));
 
         var violationList = violations.ToList();
@@ -127,7 +128,7 @@ public sealed class CodeFixService : ICodeFixService
         bool dryRun = false,
         CancellationToken cancellationToken = default)
     {
-        if (fixes == null)
+        if (fixes is null)
             throw new ArgumentNullException(nameof(fixes));
 
         var fixList = fixes.ToList();
