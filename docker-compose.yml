@@ -1,0 +1,87 @@
+# =============================================================================
+# Author: Vladyslav Zaiets | https://sarmkadan.com
+# CTO & Software Architect
+# =============================================================================
+# Docker Compose configuration for Roslyn Guard Analyzer
+# Enables easy containerized analysis and CI/CD integration
+# =============================================================================
+
+version: '3.8'
+
+services:
+  analyzer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: roslyn-guard-analyzer
+    image: roslyn-guard-analyzer:latest
+
+    # Mount source code for analysis
+    volumes:
+      - .:/workspace:ro
+      - ./reports:/reports:rw
+
+    # Working directory inside container
+    working_dir: /workspace
+
+    # Run as non-root user
+    user: analyzer
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
+
+    # Health check
+    healthcheck:
+      test: ["CMD", "./RoslynGuardAnalyzer", "--help"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    # Environment variables
+    environment:
+      - DOTNET_ENVIRONMENT=Production
+      - ANALYSIS_TIMEOUT=600
+      - LOG_LEVEL=2
+
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Optional: Results viewer (requires Python)
+  results-viewer:
+    image: python:3.11-slim
+    container_name: analyzer-results-viewer
+    depends_on:
+      - analyzer
+
+    volumes:
+      - ./reports:/reports:ro
+
+    working_dir: /reports
+
+    command: python3 -m http.server 8080 --bind 0.0.0.0
+
+    ports:
+      - "8080:8080"
+
+    # Only run this if you want to view results
+    profiles:
+      - viewer
+
+volumes:
+  reports:
+    driver: local
+
+networks:
+  default:
+    name: analyzer-network
