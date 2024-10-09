@@ -1,129 +1,818 @@
 # Roslyn Guard Analyzer
 
-A comprehensive .NET code analyzer built with Roslyn, enforcing architectural rules and best practices across codebases.
+**A production-grade architectural code analyzer powered by Roslyn for .NET projects**
+
+Enforce architectural rules, naming conventions, async patterns, and null safety across your entire codebase with a flexible, extensible analysis engine. Built for teams that take code quality seriously.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage Examples](#usage-examples)
+- [Architecture](#architecture)
+- [API Reference](#api-reference)
+- [Configuration Reference](#configuration-reference)
+- [CLI Reference](#cli-reference)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+
+## Overview
+
+Roslyn Guard Analyzer is a comprehensive static analysis tool that enforces architectural patterns and best practices in .NET codebases. Built on the Microsoft Roslyn compiler platform, it provides deep syntactic and semantic analysis capabilities to identify violations before they reach production.
+
+### Why Roslyn Guard Analyzer?
+
+- **Architectural Enforcement**: Define and enforce layer dependencies, preventing circular dependencies and architectural violations
+- **Naming Convention Validation**: Enforce consistent naming patterns across your codebase automatically
+- **Async Pattern Detection**: Identify improper async/await patterns, blocking calls, and Task handling issues
+- **Null Safety Validation**: Enforce nullable reference type patterns and null-safety best practices
+- **Team Scalability**: Run analysis as part of CI/CD pipelines to maintain standards across distributed teams
+- **Zero Configuration**: Works out of the box with sensible defaults
+- **Fully Customizable**: Define custom rules tailored to your architectural needs
+- **Multiple Output Formats**: Generate reports in Text, JSON, CSV, XML, and HTML formats
+
+### Perfect For
+
+- Large teams maintaining shared architectural standards
+- Microservices architectures requiring strict layer separation
+- Projects adopting async-first patterns
+- Teams implementing nullable reference types
+- CI/CD integration for code quality gates
 
 ## Features
 
-- **Layer Dependency Analysis**: Enforces architectural layers and prevents illegal cross-layer dependencies
-- **Naming Convention Enforcement**: Validates naming conventions for classes, methods, properties, and fields
-- **Async Pattern Detection**: Identifies improper async/await patterns and blocking calls
-- **Null Safety Validation**: Enforces nullable reference type handling and null safety patterns
-- **Comprehensive Reporting**: Generates detailed analysis reports in multiple formats (Text, JSON, CSV, XML)
-- **Rule Registry**: Extensible rule system for defining custom architectural rules
-- **Project Analysis**: Analyze entire projects with automatic file discovery and parallel processing
-- **Configuration Management**: Flexible configuration system with rule customization
+### Core Analysis Capabilities
 
-## Getting Started
+| Feature | Description |
+|---------|-------------|
+| **Layer Dependency Analysis** | Enforces architectural layers and prevents illegal cross-layer dependencies |
+| **Naming Convention Enforcement** | Validates naming conventions for classes, methods, properties, and fields |
+| **Async Pattern Detection** | Identifies improper async/await patterns and blocking calls in async contexts |
+| **Null Safety Validation** | Enforces nullable reference type handling and null-safety patterns |
+| **Project Analysis** | Analyze entire projects with automatic file discovery and parallel processing |
+| **Multi-Format Reporting** | Generate reports in Text, JSON, CSV, XML, and HTML formats |
+| **Rule Registry** | Extensible rule system for defining custom architectural rules |
+| **Configuration Management** | Flexible configuration system with rule customization |
+| **Performance Metrics** | Built-in performance profiling and analysis statistics |
+| **Event-Driven Architecture** | Publish/subscribe system for extensibility and monitoring |
+
+### Built-In Rules
+
+The analyzer ships with four foundational rules covering the most common architectural concerns:
+
+| Rule ID | Category | Description |
+|---------|----------|-------------|
+| `LYR001` | Layer Dependencies | Prevents repositories from depending on services or controllers |
+| `NAM001` | Naming Conventions | Enforces PascalCase for classes/methods, snake_case for fields |
+| `ASY001` | Async Patterns | Validates async/await patterns and proper Task handling |
+| `NUL001` | Null Safety | Checks nullable reference type handling and null-coalescing patterns |
+
+## Quick Start
 
 ### Prerequisites
 
-- .NET 10.0 or higher
-- C# language support
+- **.NET 10.0** or higher
+- **C# language support** (latest language features)
+- Visual Studio Code, Visual Studio, or any .NET IDE
 
-### Installation
+### One-Command Installation
+
+```bash
+# Clone and build
+git clone https://github.com/sarmkadan/roslyn-guard-analyzer.git
+cd roslyn-guard-analyzer
+dotnet build -c Release
+
+# Run analysis on a project
+dotnet run --project src/RoslynGuardAnalyzer -- /path/to/your/project.csproj
+```
+
+### 30-Second Example
+
+```bash
+# Analyze your current project
+cd ~/MyProject
+roslyn-guard-analyzer .
+
+# View results in JSON
+roslyn-guard-analyzer . --format json
+
+# Export to file
+roslyn-guard-analyzer . --output analysis-report.json
+```
+
+## Installation
+
+### Method 1: Clone and Build from Source
 
 ```bash
 git clone https://github.com/sarmkadan/roslyn-guard-analyzer.git
 cd roslyn-guard-analyzer
-dotnet build
+dotnet build -c Release
+
+# Create a convenient alias
+alias roslyn-guard='dotnet /path/to/roslyn-guard-analyzer/src/RoslynGuardAnalyzer/bin/Release/net10.0/RoslynGuardAnalyzer.dll'
 ```
 
-### Usage
+### Method 2: NuGet Package (When Published)
 
 ```bash
-# Analyze a project
-dotnet run -- /path/to/project.csproj
+dotnet tool install --global roslyn-guard-analyzer
+roslyn-guard-analyzer --version
+```
 
-# Analyze a single file
-dotnet run -- /path/to/file.cs
+### Method 3: Docker Container
+
+```bash
+docker build -t roslyn-guard-analyzer .
+docker run --rm -v $(pwd):/workspace roslyn-guard-analyzer /workspace/MyProject.csproj
+```
+
+### Method 4: Using Makefile
+
+```bash
+make build
+make install
+roslyn-guard-analyzer --help
+```
+
+## Usage Examples
+
+### Example 1: Basic Project Analysis
+
+Analyze an entire project directory:
+
+```bash
+roslyn-guard-analyzer ~/MyProject
+
+# Output:
+# === Roslyn Guard Analyzer ===
+# Starting architecture rule analysis...
+#
+# File: src/Domain/UserRepository.cs:42
+# Rule: LYR001 (Layer Dependencies)
+# Violation: Repository depends on service layer
+#
+# Analysis completed: 3 violations found
+```
+
+### Example 2: Analyze Specific File
+
+```bash
+roslyn-guard-analyzer ~/MyProject/src/Services/UserService.cs
+```
+
+### Example 3: JSON Output for Tool Integration
+
+```bash
+roslyn-guard-analyzer ~/MyProject --format json > analysis.json
+
+# Contents:
+# {
+#   "timestamp": "2026-05-04T10:30:00Z",
+#   "projectPath": "/home/user/MyProject",
+#   "totalFilesAnalyzed": 125,
+#   "violations": [
+#     {
+#       "ruleId": "LYR001",
+#       "category": "Layer Dependencies",
+#       "filePath": "src/Domain/UserRepository.cs",
+#       "line": 42,
+#       "column": 5,
+#       "message": "Repository class depends on service layer",
+#       "severity": "error"
+#     }
+#   ]
+# }
+```
+
+### Example 4: CSV Export for Spreadsheet Analysis
+
+```bash
+roslyn-guard-analyzer ~/MyProject --format csv --output violations.csv
+
+# Opens in Excel/Sheets for sorting and filtering:
+# RuleID,Category,File,Line,Column,Message,Severity
+# LYR001,Layer Dependencies,src/Domain/UserRepository.cs,42,5,Repository depends on service,error
+# NAM001,Naming,src/Services/userService.cs,15,7,Field should be snake_case,warning
+```
+
+### Example 5: HTML Report Generation
+
+```bash
+roslyn-guard-analyzer ~/MyProject --format html --output report.html
+open report.html
+```
+
+### Example 6: Filtering by Rule
+
+```bash
+# Analyze only naming convention violations
+roslyn-guard-analyzer ~/MyProject --rules NAM001
+
+# Analyze multiple specific rules
+roslyn-guard-analyzer ~/MyProject --rules LYR001,ASY001
+```
+
+### Example 7: Strict Mode (Fail on Any Violation)
+
+```bash
+roslyn-guard-analyzer ~/MyProject --strict
+# Exit code 1 if any violations found
+```
+
+### Example 8: Custom Configuration File
+
+Create `.roslyn-guard.json`:
+
+```json
+{
+  "projectPath": "./src",
+  "analysisTimeout": 600,
+  "maxViolationsToReport": 1000,
+  "rules": {
+    "LYR001": { "enabled": true, "severity": "error" },
+    "NAM001": { "enabled": true, "severity": "warning" },
+    "ASY001": { "enabled": false },
+    "NUL001": { "enabled": true, "severity": "error" }
+  },
+  "excludePatterns": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/*.Generated.cs"
+  ]
+}
+```
+
+```bash
+roslyn-guard-analyzer --config .roslyn-guard.json
+```
+
+### Example 9: Continuous Integration Pipeline
+
+GitHub Actions workflow:
+
+```yaml
+- name: Run Roslyn Guard Analyzer
+  run: |
+    dotnet run --project RoslynGuardAnalyzer -- ./src \
+      --format json \
+      --output analysis.json
+    
+    # Fail if critical violations found
+    if [ $(jq '.violations | map(select(.severity=="error")) | length' analysis.json) -gt 0 ]; then
+      echo "Architecture violations found!"
+      exit 1
+    fi
+```
+
+### Example 10: Custom Rule Integration
+
+Implement a custom rule by extending `AnalysisRule`:
+
+```csharp
+public class CustomLayerRule : AnalysisRule
+{
+    public override string Id => "CUSTOM001";
+    public override string Category => "Custom";
+    public override string Description => "Enforce custom architectural rule";
+    
+    public override async Task<IEnumerable<RuleViolation>> ValidateAsync(
+        CodeElement element,
+        RuleConfiguration config)
+    {
+        var violations = new List<RuleViolation>();
+        
+        // Implement your custom logic
+        if (element.Name.Contains("Temp"))
+        {
+            violations.Add(new RuleViolation
+            {
+                RuleId = Id,
+                FilePath = element.FilePath,
+                Line = element.Line,
+                Message = "Temporary classes should not be committed"
+            });
+        }
+        
+        return violations;
+    }
+}
 ```
 
 ## Architecture
 
-The analyzer is structured into several layers:
-
-- **Domain Models**: Core business entities (AnalysisRule, RuleViolation, CodeElement, etc.)
-- **Services**: Business logic (RuleEngine, AnalysisService, ReportingService, etc.)
-- **Data Access**: Repository pattern for persistence
-- **Infrastructure**: Dependency injection and configuration management
-
-## Key Components
-
-### Services
-
-- **IAnalysisService**: Orchestrates the complete analysis workflow
-- **IRuleRegistry**: Manages available rules
-- **IRuleEngine**: Executes rules against code elements
-- **IReportingService**: Generates analysis reports
-- **IValidationService**: Validates configurations and rules
-
-### Models
-
-- **AnalysisRule**: Defines an architectural rule
-- **RuleViolation**: Represents a violation found during analysis
-- **CodeElement**: Represents a code artifact being analyzed
-- **AnalysisResult**: Complete results of an analysis execution
-- **ViolationReport**: Formatted report for presentation
-
-### Repositories
-
-- **RuleRepository**: Manages rule persistence
-- **AnalysisResultRepository**: Stores analysis results
-- **ProjectRepository**: Tracks analyzed projects
-
-## Rules
-
-The analyzer includes built-in rules for:
-
-1. **Layer Dependency (LYR001)**: Prevents repositories from depending on services or controllers
-2. **Naming Convention (NAM001)**: Enforces PascalCase for classes/methods, snake_case for fields
-3. **Async Pattern (ASY001)**: Validates async/await patterns and Task handling
-4. **Null Safety (NUL001)**: Checks nullable reference type handling
-
-## Configuration
-
-Configure the analyzer via dependency injection:
-
-```csharp
-var services = new ServiceCollection();
-services.ConfigureAnalyzer(config =>
-{
-    config.MaxViolationsToReport = 500;
-    config.AnalysisTimeoutSeconds = 600;
-    config.LogLevel = 3;
-});
-services.RegisterAnalyzerServices();
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Roslyn Guard Analyzer                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              CLI & Command Processing                │  │
+│  │  (CliArgumentParser, CliOptions, CommandLineProcessor) │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │         Configuration & Validation Layer             │  │
+│  │  (ConfigurationLoader, ConfigurationValidator)      │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              Analysis Middleware Pipeline            │  │
+│  │  • ErrorHandling                                      │  │
+│  │  • Logging                                            │  │
+│  │  • PerformanceMetrics                                 │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │          Core Analysis Service Layer                 │  │
+│  │  • AnalysisService (Orchestration)                   │  │
+│  │  • RuleEngine (Rule Execution)                        │  │
+│  │  • RuleRegistry (Rule Management)                     │  │
+│  │  • DiagnosticsService (Roslyn Integration)           │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              Domain Models & Entities                │  │
+│  │  • AnalysisRule                                       │  │
+│  │  • RuleViolation                                      │  │
+│  │  • CodeElement                                        │  │
+│  │  • AnalysisResult                                     │  │
+│  │  • ViolationReport                                    │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │        Output Formatting & Reporting                 │  │
+│  │  • JsonFormatter                                      │  │
+│  │  • CsvFormatter                                       │  │
+│  │  • HtmlFormatter                                      │  │
+│  │  • FormatterRegistry                                  │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │           Data Persistence Layer                      │  │
+│  │  • AnalysisResultRepository                           │  │
+│  │  • ProjectRepository                                  │  │
+│  │  • RuleRepository                                     │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                               │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              Cross-Cutting Concerns                  │  │
+│  │  • EventBus (Pub/Sub)                                 │  │
+│  │  • CacheService                                       │  │
+│  │  • BackgroundTaskQueue                                │  │
+│  │  • WebhookHandler                                     │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Report Formats
+### Layer Responsibilities
 
-- **Text**: Human-readable format with visual indicators
-- **JSON**: Machine-readable format for tool integration
-- **CSV**: Spreadsheet-friendly format
-- **XML**: Structured data format
+**CLI Layer**: Parses command-line arguments, handles user interaction, and delegates to services
 
-## Development
+**Configuration Layer**: Loads and validates configuration from files and environment variables
 
-### Adding Custom Rules
+**Middleware Pipeline**: Cross-cutting concerns (logging, error handling, performance metrics)
 
-1. Create a rule class extending `AnalysisRule`
-2. Register it with `IRuleRegistry`
-3. Implement validation logic in `RuleEngine`
+**Analysis Layer**: Core business logic for rule execution and violation detection
 
-### Extending Analysis
+**Domain Layer**: Pure business entities with no dependencies on infrastructure
 
-Modify `IAnalysisService` to support additional file types or project formats.
+**Repository Layer**: Abstraction over data storage (currently in-memory, extensible)
+
+**Output Layer**: Formats results for consumption by different tools and users
+
+## API Reference
+
+### IAnalysisService
+
+Main service for orchestrating the analysis workflow.
+
+```csharp
+public interface IAnalysisService
+{
+    /// <summary>
+    /// Analyzes a project or file asynchronously
+    /// </summary>
+    /// <param name="projectPath">Path to project.csproj or individual .cs file</param>
+    /// <returns>Analysis results including violations found</returns>
+    Task<AnalysisResult> AnalyzeProjectAsync(string projectPath);
+    
+    /// <summary>
+    /// Analyzes with custom configuration
+    /// </summary>
+    Task<AnalysisResult> AnalyzeWithConfigAsync(
+        string projectPath,
+        RuleConfiguration configuration);
+}
+```
+
+### IRuleRegistry
+
+Manages available rules and their configurations.
+
+```csharp
+public interface IRuleRegistry
+{
+    /// <summary>
+    /// Gets all registered rules
+    /// </summary>
+    IEnumerable<AnalysisRule> GetAllRules();
+    
+    /// <summary>
+    /// Registers a new rule
+    /// </summary>
+    void RegisterRule(AnalysisRule rule);
+    
+    /// <summary>
+    /// Gets a specific rule by ID
+    /// </summary>
+    AnalysisRule? GetRule(string ruleId);
+    
+    /// <summary>
+    /// Enables or disables a rule
+    /// </summary>
+    void SetRuleEnabled(string ruleId, bool enabled);
+}
+```
+
+### IRuleEngine
+
+Executes rules against code elements.
+
+```csharp
+public interface IRuleEngine
+{
+    /// <summary>
+    /// Executes all enabled rules against a code element
+    /// </summary>
+    /// <returns>Violations found by all rules</returns>
+    Task<IEnumerable<RuleViolation>> ExecuteRulesAsync(
+        CodeElement element);
+    
+    /// <summary>
+    /// Executes a specific rule
+    /// </summary>
+    Task<IEnumerable<RuleViolation>> ExecuteRuleAsync(
+        string ruleId,
+        CodeElement element);
+}
+```
+
+### IReportingService
+
+Generates formatted reports from analysis results.
+
+```csharp
+public interface IReportingService
+{
+    /// <summary>
+    /// Generates a human-readable text report
+    /// </summary>
+    string GenerateReport(AnalysisResult result);
+    
+    /// <summary>
+    /// Generates a JSON report
+    /// </summary>
+    string GenerateJsonReport(AnalysisResult result);
+    
+    /// <summary>
+    /// Generates a CSV report
+    /// </summary>
+    string GenerateCsvReport(AnalysisResult result);
+    
+    /// <summary>
+    /// Generates an HTML report
+    /// </summary>
+    string GenerateHtmlReport(AnalysisResult result);
+}
+```
+
+### IValidationService
+
+Validates configurations and code elements.
+
+```csharp
+public interface IValidationService
+{
+    /// <summary>
+    /// Validates a rule configuration
+    /// </summary>
+    /// <returns>Validation errors, empty if valid</returns>
+    IEnumerable<string> ValidateConfiguration(RuleConfiguration config);
+    
+    /// <summary>
+    /// Validates a code element
+    /// </summary>
+    bool IsValidCodeElement(CodeElement element);
+}
+```
+
+### Domain Models
+
+#### AnalysisRule
+
+Base class for implementing custom rules:
+
+```csharp
+public abstract class AnalysisRule
+{
+    public abstract string Id { get; }
+    public abstract string Category { get; }
+    public abstract string Description { get; }
+    public virtual RuleSeverity DefaultSeverity => RuleSeverity.Error;
+    
+    public abstract Task<IEnumerable<RuleViolation>> ValidateAsync(
+        CodeElement element,
+        RuleConfiguration config);
+}
+```
+
+#### RuleViolation
+
+Represents a single violation:
+
+```csharp
+public class RuleViolation
+{
+    public string RuleId { get; set; }
+    public string FilePath { get; set; }
+    public int Line { get; set; }
+    public int Column { get; set; }
+    public string Message { get; set; }
+    public RuleSeverity Severity { get; set; }
+    public CodeElement? Element { get; set; }
+}
+```
+
+#### AnalysisResult
+
+Complete results from an analysis:
+
+```csharp
+public class AnalysisResult
+{
+    public string ProjectPath { get; set; }
+    public DateTime TimestampUtc { get; set; }
+    public int TotalFilesAnalyzed { get; set; }
+    public List<RuleViolation> Violations { get; set; }
+    public int ViolationCount => Violations.Count;
+    public AnalysisStatistics Statistics { get; set; }
+}
+```
+
+## Configuration Reference
+
+### JSON Configuration File Format
+
+Create a `.roslyn-guard.json` in your project root:
+
+```json
+{
+  "projectPath": "./src",
+  "analysisTimeout": 600,
+  "maxViolationsToReport": 1000,
+  "logLevel": 2,
+  "rules": {
+    "LYR001": {
+      "enabled": true,
+      "severity": "error",
+      "configuration": {
+        "allowedDependencies": ["Domain", "Infrastructure"]
+      }
+    },
+    "NAM001": {
+      "enabled": true,
+      "severity": "warning"
+    },
+    "ASY001": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "NUL001": {
+      "enabled": true,
+      "severity": "warning"
+    }
+  },
+  "excludePatterns": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/*.Generated.cs",
+    "**/*.Designer.cs"
+  ]
+}
+```
+
+### Configuration Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `projectPath` | string | `./` | Root path for analysis |
+| `analysisTimeout` | int | `600` | Timeout in seconds |
+| `maxViolationsToReport` | int | `500` | Maximum violations to include in report |
+| `logLevel` | int | `2` | Verbosity (0=none, 1=errors, 2=warnings, 3=info, 4=debug) |
+| `excludePatterns` | string[] | `["**/bin/**", "**/obj/**"]` | Glob patterns to exclude |
+
+### Rule Configuration
+
+Each rule can be individually configured:
+
+```json
+{
+  "rules": {
+    "LYR001": {
+      "enabled": true,
+      "severity": "error"
+    }
+  }
+}
+```
+
+## CLI Reference
+
+### Global Options
+
+```bash
+roslyn-guard-analyzer <path> [options]
+```
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--format` | `-f` | Output format: `text`, `json`, `csv`, `xml`, `html` |
+| `--output` | `-o` | Output file path (optional) |
+| `--config` | `-c` | Configuration file path |
+| `--rules` | `-r` | Comma-separated rule IDs to execute |
+| `--strict` | `-s` | Fail on any violation (exit code 1) |
+| `--quiet` | `-q` | Suppress console output |
+| `--verbose` | `-v` | Verbose logging |
+| `--help` | `-h` | Show help message |
+| `--version` | | Show version information |
+
+### Examples
+
+```bash
+# Basic analysis with default settings
+roslyn-guard-analyzer ./src
+
+# JSON output for CI/CD
+roslyn-guard-analyzer ./src -f json -o report.json
+
+# Only specific rules
+roslyn-guard-analyzer ./src -r LYR001,NAM001
+
+# Use config file
+roslyn-guard-analyzer -c ./analyzer.json
+
+# Verbose output for debugging
+roslyn-guard-analyzer ./src -v
+
+# Fail if violations found
+roslyn-guard-analyzer ./src -s && echo "Analysis passed" || echo "Violations found"
+```
+
+## Troubleshooting
+
+### Problem: "Project path not found"
+
+**Solution**: Verify the path exists and is accessible:
+```bash
+ls -la /path/to/project.csproj
+roslyn-guard-analyzer /path/to/project.csproj
+```
+
+### Problem: "No violations found but expected some"
+
+**Solution**: Check if rules are enabled in configuration:
+```bash
+# Verbose output shows which rules are active
+roslyn-guard-analyzer ./src -v
+
+# Verify rule is not disabled
+cat .roslyn-guard.json | grep -A2 '"LYR001"'
+```
+
+### Problem: "Analysis timeout"
+
+**Solution**: Increase timeout in configuration:
+```json
+{
+  "analysisTimeout": 1800
+}
+```
+
+### Problem: "Out of memory on large projects"
+
+**Solution**: Analyze files in batches:
+```bash
+# Analyze one directory at a time
+roslyn-guard-analyzer ./src/Domain
+roslyn-guard-analyzer ./src/Services
+roslyn-guard-analyzer ./src/Presentation
+```
+
+### Problem: "False positives in generated code"
+
+**Solution**: Exclude generated files:
+```json
+{
+  "excludePatterns": [
+    "**/*.Generated.cs",
+    "**/*.Designer.cs",
+    "**/obj/**"
+  ]
+}
+```
+
+### Problem: "Custom rule not executing"
+
+**Solution**: Verify rule is registered:
+```csharp
+var ruleRegistry = serviceProvider.GetRequiredService<IRuleRegistry>();
+var myRule = ruleRegistry.GetRule("CUSTOM001");
+if (myRule == null)
+    throw new Exception("Rule not registered");
+```
+
+## Contributing
+
+Contributions are welcome! Here's how to get started:
+
+### Development Setup
+
+```bash
+git clone https://github.com/sarmkadan/roslyn-guard-analyzer.git
+cd roslyn-guard-analyzer
+dotnet restore
+dotnet build
+```
+
+### Adding a Custom Rule
+
+1. Create a rule class in `src/RoslynGuardAnalyzer/Rules/`:
+
+```csharp
+public class MyCustomRule : AnalysisRule
+{
+    public override string Id => "CUSTOM001";
+    public override string Category => "Custom";
+    public override string Description => "My custom rule";
+    
+    public override async Task<IEnumerable<RuleViolation>> ValidateAsync(
+        CodeElement element,
+        RuleConfiguration config)
+    {
+        // Implementation here
+        return new List<RuleViolation>();
+    }
+}
+```
+
+2. Register it in `ServiceCollectionExtensions.cs`:
+
+```csharp
+services.AddSingleton<AnalysisRule, MyCustomRule>();
+```
+
+3. Add tests in `tests/` directory
+
+4. Submit a pull request with:
+   - Rule implementation
+   - Unit tests (>80% coverage)
+   - Documentation
+   - Example usage
+
+### Reporting Issues
+
+Please include:
+- .NET version
+- Project type (.csproj structure)
+- Reproduction steps
+- Expected vs actual behavior
+- Configuration file (if applicable)
+
+### Code Style
+
+- Follow C# naming conventions
+- Use async/await throughout
+- Add XML documentation comments
+- Target .NET 10.0 minimum
+- Enable nullable reference types
 
 ## License
 
 MIT License - Copyright © 2026 Vladyslav Zaiets
 
-## Author
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-**Vladyslav Zaiets** - CTO & Software Architect
-- Website: https://sarmkadan.com
-- Repository: https://github.com/sarmkadan/roslyn-guard-analyzer
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+See [LICENSE](LICENSE) for full details.
 
 ---
 
-For issues, feature requests, and contributions, please visit the GitHub repository.
+**Built by [Vladyslav Zaiets](https://sarmkadan.com) - CTO & Software Architect**
+
+[Portfolio](https://sarmkadan.com) | [GitHub](https://github.com/Sarmkadan) | [Telegram](https://t.me/sarmkadan)
