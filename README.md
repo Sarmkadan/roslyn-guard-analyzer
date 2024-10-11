@@ -22,7 +22,7 @@ Enforce architectural rules, naming conventions, async patterns, and null safety
 - [Troubleshooting](#troubleshooting)
 - [Testing](#testing)
 - [Performance](#performance)
-- [Ecosystem](#ecosystem)
+- [Related Projects](#related-projects)
 - [Contributing](#contributing)
 
 ## Overview
@@ -827,7 +827,7 @@ Benchmarks measured on .NET 10.0, Intel Core i7-12700H, 32 GB RAM, SSD storage. 
 }
 ```
 
-## Ecosystem
+## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
 
