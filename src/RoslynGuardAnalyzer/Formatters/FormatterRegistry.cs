@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -34,7 +35,7 @@ public sealed class FormatterRegistry
     /// </summary>
     public void Register(IOutputFormatter formatter)
     {
-        if (formatter == null)
+        if (formatter is null)
             throw new ArgumentNullException(nameof(formatter));
 
         _formatters[formatter.Format.ToLowerInvariant()] = formatter;
@@ -60,7 +61,7 @@ public sealed class FormatterRegistry
     /// </summary>
     public bool IsFormatSupported(string format)
     {
-        return GetFormatter(format) != null;
+        return GetFormatter(format) is not null;
     }
 
     /// <summary>
@@ -82,7 +83,7 @@ public sealed class FormatterRegistry
     public IOutputFormatter GetFormatterOrThrow(string format)
     {
         var formatter = GetFormatter(format);
-        if (formatter == null)
+        if (formatter is null)
             throw new InvalidOperationException($"No formatter found for format: {format}");
 
         return formatter;

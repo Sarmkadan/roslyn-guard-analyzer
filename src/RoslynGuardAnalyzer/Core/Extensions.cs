@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -243,7 +244,7 @@ public static class CollectionExtensions
     /// </summary>
     public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
     {
-        return source == null || !source.Any();
+        return source is null || !source.Any();
     }
 
     /// <summary>

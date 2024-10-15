@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -20,7 +21,7 @@ public static class CollectionExtensions
     /// </summary>
     public static IEnumerable<IList<T>> Batch<T>(this IEnumerable<T> source, int batchSize)
     {
-        if (source == null)
+        if (source is null)
             throw new ArgumentNullException(nameof(source));
 
         if (batchSize <= 0)
@@ -55,7 +56,7 @@ public static class CollectionExtensions
     /// </summary>
     public static void AddIfNotNull<T>(this ICollection<T> collection, T? item) where T : class
     {
-        if (item != null)
+        if (item is not null)
             collection.Add(item);
     }
 
@@ -64,9 +65,9 @@ public static class CollectionExtensions
     /// </summary>
     public static void AddRangeIfNotNull<T>(this ICollection<T> collection, IEnumerable<T>? items) where T : class
     {
-        if (items != null)
+        if (items is not null)
         {
-            foreach (var item in items.Where(i => i != null))
+            foreach (var item in items.Where(i => i is not null))
                 collection.Add(item);
         }
     }
@@ -76,7 +77,7 @@ public static class CollectionExtensions
     /// </summary>
     public static bool IsNullOrEmpty<T>(this IEnumerable<T>? source)
     {
-        return source == null || !source.Any();
+        return source is null || !source.Any();
     }
 
     /// <summary>
