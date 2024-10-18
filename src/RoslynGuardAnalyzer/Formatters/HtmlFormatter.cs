@@ -135,7 +135,68 @@ public sealed class HtmlFormatter : IOutputFormatter
 
     public string FormatReport(ViolationReport report)
     {
-        return FormatResult(null!); // Simplified for now
+        if (report is null)
+            throw new ArgumentNullException(nameof(report));
+
+        var sb = new StringBuilder();
+
+        sb.AppendLine("<!DOCTYPE html>");
+        sb.AppendLine("<html>");
+        sb.AppendLine("<head>");
+        sb.AppendLine("<meta charset=\"utf-8\">");
+        sb.AppendLine("<title>Violation Report - " + HtmlEscape(report.Title) + "</title>");
+        sb.AppendLine(GetStyles());
+        sb.AppendLine("</head>");
+        sb.AppendLine("<body>");
+        sb.AppendLine("<div class=\"container\">");
+        sb.AppendLine("<h1>" + HtmlEscape(report.Title) + "</h1>");
+        sb.AppendLine("<div class=\"header-info\">");
+        sb.AppendLine($"<p><strong>Generated:</strong> {report.GeneratedAt:yyyy-MM-dd HH:mm:ss} UTC</p>");
+        sb.AppendLine($"<p><strong>Total Violations:</strong> {report.Violations.Count}</p>");
+        sb.AppendLine("</div>");
+
+        // Severity breakdown
+        sb.AppendLine("<div class=\"summary\">");
+        var severityGroups = report.Violations.GroupBy(v => v.Severity).OrderByDescending(g => g.Key);
+        foreach (var group in severityGroups)
+        {
+            sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{group.Count()}</div><div class=\"stat-label\">{HtmlEscape(group.Key)}</div></div>");
+        }
+        sb.AppendLine("</div>");
+
+        // Violations table
+        if (report.Violations.Count > 0)
+        {
+            sb.AppendLine("<h2>Violations</h2>");
+            sb.AppendLine("<table class=\"violations-table\">");
+            sb.AppendLine("<thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>File</th><th>Line:Column</th></tr></thead>");
+            sb.AppendLine("<tbody>");
+
+            foreach (var violation in report.Violations.OrderByDescending(v => v.Severity))
+            {
+                var severityClass = violation.Severity.ToLowerInvariant();
+                sb.AppendLine($"<tr class=\"severity-{severityClass}\">");
+                sb.AppendLine($"<td>{HtmlEscape(violation.RuleName)}</td>");
+                sb.AppendLine($"<td>{violation.Severity}</td>");
+                sb.AppendLine($"<td>{HtmlEscape(violation.Message)}</td>");
+                sb.AppendLine($"<td>{HtmlEscape(System.IO.Path.GetFileName(violation.FilePath))}</td>");
+                sb.AppendLine($"<td>{violation.LineNumber}:{violation.ColumnNumber}</td>");
+                sb.AppendLine("</tr>");
+            }
+
+            sb.AppendLine("</tbody>");
+            sb.AppendLine("</table>");
+        }
+        else
+        {
+            sb.AppendLine("<div class=\"success\"><p>No violations found</p></div>");
+        }
+
+        sb.AppendLine("</div>");
+        sb.AppendLine("</body>");
+        sb.AppendLine("</html>");
+
+        return sb.ToString();
     }
 
     /// <summary>
@@ -216,10 +277,10 @@ h2 { color: #34495e; margin-top: 30px; }
     /// <summary>
     /// Escapes special HTML characters to prevent XSS.
     /// </summary>
-    private static string HtmlEscape(string text)
+    private static string HtmlEscape(string? text)
     {
         if (string.IsNullOrEmpty(text))
-            return text;
+            return string.Empty;
 
         return text
             .Replace("&", "&amp;")

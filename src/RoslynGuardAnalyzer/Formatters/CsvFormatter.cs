@@ -121,8 +121,8 @@ public sealed class CsvFormatter : IOutputFormatter
         if (string.IsNullOrEmpty(text))
             return "\"\"";
 
-        // If text contains comma, quote, or newline, enclose in quotes and escape quotes
-        if (text.Contains(',') || text.Contains('"') || text.Contains('\n'))
+        // If text contains comma, quote, newline, or carriage return, enclose in quotes and escape quotes
+        if (text.Contains(',') || text.Contains('"') || text.Contains('\n') || text.Contains('\r'))
         {
             return "\"" + text.Replace("\"", "\"\"") + "\"";
         }
