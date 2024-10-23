@@ -561,6 +561,8 @@ public class ValidationException : RoslynGuardException { }
 
 ## Extension Points
 
+> **See also**: [Custom Rule Development Guide](./custom-rule-development.md) for a comprehensive walkthrough including configuration patterns, GUARD_SKIP suppression, and testing examples.
+
 ### Implementing Custom Rules
 
 ```csharp
