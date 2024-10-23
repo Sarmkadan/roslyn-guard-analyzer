@@ -30,6 +30,10 @@ public sealed class CodeElement
     public string? FullyQualifiedName { get; set; }
     public List<string> Attributes { get; set; }
     public List<string> Dependencies { get; set; }
+    /// <summary>
+    /// Inline suppression directives collected from source comments (e.g. GUARD_SKIP, GUARD_SKIP:LYR001).
+    /// </summary>
+    public List<string> SuppressDirectives { get; set; }
     public bool IsPublic { get; set; }
     public bool IsAsync { get; set; }
     public bool IsStatic { get; set; }
@@ -50,6 +54,7 @@ public sealed class CodeElement
         EndLineNumber = 0;
         Attributes = new List<string>();
         Dependencies = new List<string>();
+        SuppressDirectives = new List<string>();
         Parameters = new List<string>();
         Complexity = 1;
         AnalyzedAt = DateTime.UtcNow;
