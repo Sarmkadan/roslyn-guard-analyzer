@@ -24,10 +24,7 @@ public static class PathNormalizer
         if (string.IsNullOrWhiteSpace(path))
             return string.Empty;
 
-        // Convert to full path to resolve relative paths
         var fullPath = Path.GetFullPath(path);
-
-        // Use forward slashes for consistency
         return fullPath.Replace(Path.DirectorySeparatorChar, '/');
     }
 
@@ -47,8 +44,7 @@ public static class PathNormalizer
         var normalized1 = Normalize(path1);
         var normalized2 = Normalize(path2);
 
-        // Case-insensitive on Windows, case-sensitive on Unix
-        var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        var comparison = System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
             ? StringComparison.OrdinalIgnoreCase
             : StringComparison.Ordinal;
 
@@ -69,7 +65,6 @@ public static class PathNormalizer
         }
         catch
         {
-            // If path calculation fails, return the target path
             return normalizedTarget;
         }
     }
@@ -126,19 +121,4 @@ public static class PathNormalizer
         var ext = GetExtension(path);
         return ext.Equals(extension, StringComparison.OrdinalIgnoreCase);
     }
-}
-
-internal sealed class RuntimeInformation
-{
-    public static bool IsOSPlatform(OSPlatform platform)
-    {
-        return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(platform);
-    }
-}
-
-public sealed class OSPlatform
-{
-    public static readonly OSPlatform Windows = new();
-    public static readonly OSPlatform Linux = new();
-    public static readonly OSPlatform OSX = new();
 }

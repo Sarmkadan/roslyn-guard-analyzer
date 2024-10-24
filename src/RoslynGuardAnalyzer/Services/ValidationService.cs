@@ -4,14 +4,13 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 using RoslynGuardAnalyzer.Domain.Models;
+
 namespace RoslynGuardAnalyzer.Services;
 
 /// <summary>
@@ -50,7 +49,6 @@ public sealed class ValidationService : IValidationService
         if (config.AnalysisTimeoutSeconds > 3600)
             errors.Add("AnalysisTimeoutSeconds should not exceed 3600 seconds (1 hour)");
 
-        // Validate all enabled rules
         foreach (var rule in config.EnabledRules)
         {
             var (ruleValid, ruleErrors) = ValidateRule(rule);
@@ -92,12 +90,8 @@ public sealed class ValidationService : IValidationService
         if (rule.Description?.Length < 10 || rule.Description?.Length > 500)
             errors.Add("Rule description must be between 10 and 500 characters");
 
-        // Validate rule pattern if provided
-        if (!string.IsNullOrWhiteSpace(rule.RulePattern))
-        {
-            if (!IsValidRegexPattern(rule.RulePattern))
-                errors.Add($"Rule pattern is not a valid regex: {rule.RulePattern}");
-        }
+        if (!string.IsNullOrWhiteSpace(rule.RulePattern) && !IsValidRegexPattern(rule.RulePattern))
+            errors.Add($"Rule pattern is not a valid regex: {rule.RulePattern}");
 
         return (errors.Count == 0, errors);
     }
@@ -117,24 +111,32 @@ public sealed class ValidationService : IValidationService
 
         if (File.Exists(expandedPath))
         {
-            // If it's a file, it should be a .csproj or .cs file
             var extension = Path.GetExtension(expandedPath);
             if (extension != ".csproj" && extension != ".cs" && extension != ".sln")
                 return (false, "File must be a .csproj, .cs, or .sln file");
         }
 
-        // Check if we have read access
         try
         {
-            _ = Directory.GetAccessControl(expandedPath);
+            if (Directory.Exists(expandedPath))
+            {
+                var probeFile = Path.Combine(expandedPath, ".guard-write-test");
+                File.WriteAllText(probeFile, "ok");
+                File.Delete(probeFile);
+            }
+            else
+            {
+                using var stream = new FileStream(expandedPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                _ = stream.Length;
+            }
         }
         catch (UnauthorizedAccessException)
         {
-            return (false, $"No read access to path: {projectPath}");
+            return (false, $"No read/write access to path: {projectPath}");
         }
-        catch (System.IO.FileNotFoundException)
+        catch (IOException ex)
         {
-            return (false, $"Path not found: {projectPath}");
+            return (false, $"Path access failed: {ex.Message}");
         }
 
         return (true, null);
@@ -259,16 +261,5 @@ public static class ValidationExtensions
             return false;
 
         return char.IsLower(text[0]) && !text.Contains('_');
-    }
-
-    /// <summary>
-    /// Determines if a string follows UPPER_CASE convention.
-    /// </summary>
-    public static bool IsUpperSnakeCase(this string text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return false;
-
-        return text == text.ToUpper() && text.All(c => char.IsLetterOrDigit(c) || c == '_');
     }
 }

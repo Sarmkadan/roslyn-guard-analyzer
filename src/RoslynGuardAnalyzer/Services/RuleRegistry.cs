@@ -4,13 +4,14 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System;
 
+using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Exceptions;
+
 namespace RoslynGuardAnalyzer.Services;
 
 /// <summary>

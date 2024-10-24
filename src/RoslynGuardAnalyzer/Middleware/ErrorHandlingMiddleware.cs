@@ -52,7 +52,7 @@ public sealed class ErrorHandlingMiddleware : IMiddleware
             context.ErrorMessage = $"Analysis timeout: {ex.Message}";
             Console.Error.WriteLine($"Warning: Analysis exceeded timeout");
         }
-        catch (OperationCanceledException ex) when (!_failOnError)
+        catch (OperationCanceledException) when (!_failOnError)
         {
             context.IsCancelled = true;
             context.ErrorMessage = "Analysis was cancelled";

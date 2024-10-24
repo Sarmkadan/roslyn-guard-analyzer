@@ -95,14 +95,15 @@ public sealed class RuleConfigurationBuilder
     {
         var config = new RuleConfiguration
         {
-            RuleName = _ruleName,
-            IsEnabled = _enabled,
-            Severity = _severity,
+            Name = _ruleName,
             Description = _description
         };
 
+        config.SetCustomSetting("Enabled", _enabled.ToString());
+        config.SetCustomSetting("Severity", _severity);
+
         foreach (var (key, value) in _parameters)
-            config.SetParameter(key, value);
+            config.SetCustomSetting(key, value?.ToString() ?? string.Empty);
 
         return config;
     }

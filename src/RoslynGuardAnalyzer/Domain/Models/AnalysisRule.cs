@@ -17,7 +17,7 @@ namespace RoslynGuardAnalyzer.Domain.Models;
 /// Represents an architectural rule that can be enforced during code analysis.
 /// Contains the definition, configuration, and metadata about a single rule.
 /// </summary>
-public sealed class AnalysisRule
+public class AnalysisRule
 {
     public string Id { get; set; }
     public string Name { get; set; }

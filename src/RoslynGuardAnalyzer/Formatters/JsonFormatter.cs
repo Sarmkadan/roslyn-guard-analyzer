@@ -5,9 +5,11 @@
 // =============================================================================
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
 
 namespace RoslynGuardAnalyzer.Formatters;
@@ -29,25 +31,27 @@ public sealed class JsonFormatter : IOutputFormatter
     {
         var violations = result.Violations.Select(v => new
         {
+            v.RuleId,
             v.RuleName,
-            v.Severity,
+            Severity = v.Severity.ToString(),
             v.Message,
             v.FilePath,
             v.LineNumber,
-            v.ColumnNumber
+            v.ColumnNumber,
+            v.CodeSnippet
         }).ToList();
 
         var output = new
         {
             result.ProjectName,
             result.ProjectPath,
-            result.IsCompleted,
+            result.AnalysisSucceeded,
             result.ErrorMessage,
             result.TotalFilesAnalyzed,
             result.TotalElementsAnalyzed,
             ViolationCount = result.ViolationCount,
             Violations = violations,
-            TimestampUtc = DateTime.UtcNow.ToIso8601String()
+            TimestampUtc = DateTime.UtcNow.ToString("O")
         };
 
         return JsonSerialize(output);
@@ -57,67 +61,65 @@ public sealed class JsonFormatter : IOutputFormatter
     {
         var violationList = violations.Select(v => new
         {
+            v.RuleId,
             v.RuleName,
-            v.Severity,
+            Severity = v.Severity.ToString(),
             v.Message,
             v.FilePath,
             v.LineNumber,
             v.ColumnNumber,
-            Code = v.Code ?? "N/A"
+            Code = v.CodeSnippet ?? "N/A"
         }).ToList();
 
-        var output = new
+        return JsonSerialize(new
         {
             Count = violationList.Count,
             Violations = violationList
-        };
-
-        return JsonSerialize(output);
+        });
     }
 
     public string FormatReport(ViolationReport report)
     {
-        var violationsByRule = report.Violations
-            .GroupBy(v => v.RuleName)
-            .Select(g => new
-            {
-                Rule = g.Key,
-                Count = g.Count(),
-                Severity = g.First().Severity
-            })
-            .ToList();
-
+        var violations = report.ViolationGroups.SelectMany(g => g.Violations).ToList();
         var output = new
         {
             report.Title,
+            report.ProjectName,
             report.GeneratedAt,
-            TotalViolations = report.Violations.Count,
+            report.Summary,
+            report.DetailedContent,
+            TotalViolations = violations.Count,
             SeveritySummary = new
             {
-                Critical = report.Violations.Count(v => v.Severity == "Critical"),
-                High = report.Violations.Count(v => v.Severity == "High"),
-                Medium = report.Violations.Count(v => v.Severity == "Medium"),
-                Low = report.Violations.Count(v => v.Severity == "Low")
+                Critical = violations.Count(v => v.Severity == SeverityLevel.Critical),
+                High = violations.Count(v => v.Severity == SeverityLevel.Error),
+                Medium = violations.Count(v => v.Severity == SeverityLevel.Warning),
+                Low = violations.Count(v => v.Severity == SeverityLevel.Info)
             },
-            ViolationsByRule = violationsByRule,
-            RecommendedActions = report.RecommendedActions
+            ViolationsByRule = violations
+                .GroupBy(v => v.RuleName)
+                .Select(g => new
+                {
+                    Rule = g.Key,
+                    Count = g.Count(),
+                    Severity = g.Max(v => v.Severity).ToString()
+                })
+                .ToList()
         };
 
         return JsonSerialize(output);
     }
 
     /// <summary>
-    /// Manually serializes an object to JSON (since we don't depend on Newtonsoft.Json).
-    /// Handles basic types, collections, and anonymous objects.
+    /// Manually serializes an object to JSON.
     /// </summary>
-    private static string JsonSerialize(object obj)
+    private static string JsonSerialize(object? obj)
     {
         if (obj is null)
             return "null";
 
         var type = obj.GetType();
 
-        // Handle primitives
         if (type == typeof(string))
             return JsonEscape((string)obj);
 
@@ -125,35 +127,31 @@ public sealed class JsonFormatter : IOutputFormatter
             return obj.ToString()!;
 
         if (type == typeof(bool))
-            return ((bool)obj) ? "true" : "false";
+            return (bool)obj ? "true" : "false";
 
         if (type == typeof(DateTime))
-            return JsonEscape(((DateTime)obj).ToIso8601String());
+            return JsonEscape(((DateTime)obj).ToString("O"));
 
-        // Handle enumerables (but not strings)
-        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string))
+        if (type.IsEnum)
+            return JsonEscape(obj.ToString() ?? string.Empty);
+
+        if (typeof(IEnumerable).IsAssignableFrom(type) && type != typeof(string))
         {
             var items = new List<string>();
-            foreach (var item in (System.Collections.IEnumerable)obj)
+            foreach (var item in (IEnumerable)obj)
                 items.Add(JsonSerialize(item));
             return "[" + string.Join(",", items) + "]";
         }
 
-        // Handle objects - use reflection to serialize properties
-        var properties = type.GetProperties();
         var pairs = new List<string>();
-
-        foreach (var prop in properties)
+        foreach (var prop in type.GetProperties())
         {
             try
             {
-                var value = prop.GetValue(obj);
-                var serialized = JsonSerialize(value);
-                pairs.Add($"{JsonEscape(prop.Name)}:{serialized}");
+                pairs.Add($"{JsonEscape(prop.Name)}:{JsonSerialize(prop.GetValue(obj))}");
             }
             catch
             {
-                // Skip properties that can't be serialized
             }
         }
 
@@ -178,27 +176,11 @@ public sealed class JsonFormatter : IOutputFormatter
                 case '\n': sb.Append("\\n"); break;
                 case '\r': sb.Append("\\r"); break;
                 case '\t': sb.Append("\\t"); break;
-                default:
-                    if (c < 32)
-                        sb.Append($"\\u{(int)c:x4}");
-                    else
-                        sb.Append(c);
-                    break;
+                default: sb.Append(c); break;
             }
         }
 
         sb.Append('"');
         return sb.ToString();
-    }
-}
-
-/// <summary>
-/// Extension methods for date/time formatting to ISO 8601.
-/// </summary>
-internal static class DateTimeExtensions
-{
-    public static string ToIso8601String(this DateTime dt)
-    {
-        return dt.ToString("yyyy-MM-ddTHH:mm:ssZ");
     }
 }

@@ -153,10 +153,12 @@ public sealed class NamespaceMatcher
                 if (segmentIndex >= parts.Length)
                     return false;
 
-                // Look for the next literal pattern
+                // Look for the next literal pattern and require the wildcard
+                // to consume at least one namespace segment.
                 if (i + 1 < _segments.Length)
                 {
                     var nextLiteral = _segments[i + 1];
+                    segmentIndex++;
                     while (segmentIndex < parts.Length && !parts[segmentIndex].Equals(nextLiteral, StringComparison.OrdinalIgnoreCase))
                         segmentIndex++;
 
