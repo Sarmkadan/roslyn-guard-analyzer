@@ -1080,3 +1080,4 @@ See [LICENSE](LICENSE) for full details.
 **Built by [Vladyslav Zaiets](https://sarmkadan.com) - CTO & Software Architect**
 
 [Portfolio](https://sarmkadan.com) | [GitHub](https://github.com/Sarmkadan) | [Telegram](https://t.me/sarmkadan)
+
