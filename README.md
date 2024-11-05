@@ -736,9 +736,62 @@ public class AnalysisResult
 
 ## Configuration Reference
 
-### JSON Configuration File Format
+Roslyn Guard Analyzer supports multiple configuration approaches:
 
-Create a `.roslyn-guard.json` in your project root:
+### 1. appsettings.json (Recommended - IOptions Pattern)
+
+Create an `appsettings.json` file in your project root or use the provided `appsettings.example.json`:
+
+```json
+{
+  "RoslynGuardAnalyzer": {
+    "ProjectPath": "./",
+    "AnalysisTimeoutSeconds": 600,
+    "MaxViolationsToReport": 1000,
+    "LogLevel": 2,
+    "OutputFormat": "text",
+    "OutputFile": null,
+    "GenerateReport": true,
+    "ReportType": "summary",
+    "FailOnViolations": true,
+    "SkipCache": false,
+    "MaxParallelThreads": 8,
+    "RuleFilter": [],
+    "ExcludePatterns": [
+      "**/bin/**",
+      "**/obj/**",
+      "**/*.Generated.cs",
+      "**/*.Designer.cs"
+    ],
+    "MinimumSeverity": "Low",
+    "ConfigFile": null
+  }
+}
+```
+
+**Configuration Properties:**
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `ProjectPath` | string | `./` | Root path for analysis |
+| `AnalysisTimeoutSeconds` | int | `600` | Timeout in seconds (1-max int) |
+| `MaxViolationsToReport` | int | `1000` | Maximum violations to include (1-100000) |
+| `LogLevel` | int | `2` | Verbosity (0=none, 1=errors, 2=warnings, 3=info, 4=debug) |
+| `OutputFormat` | string | `text` | Output format (text, json, csv, html, xml) |
+| `OutputFile` | string | null | Output file path (optional) |
+| `GenerateReport` | bool | `true` | Whether to generate a report |
+| `ReportType` | string | `summary` | Report type (summary, detailed, full) |
+| `FailOnViolations` | bool | `true` | Exit with code 1 if violations found |
+| `SkipCache` | bool | `false` | Skip caching for fresh analysis |
+| `MaxParallelThreads` | int | CPU count | Maximum parallel threads (1-64) |
+| `RuleFilter` | string[] | [] | Comma-separated rule IDs to execute |
+| `ExcludePatterns` | string[] | [bin/**, obj/**, *.Generated.cs, *.Designer.cs] | Glob patterns to exclude |
+| `MinimumSeverity` | string | `Low` | Minimum severity to report (Low, Medium, High, Critical) |
+| `ConfigFile` | string | null | Path to custom configuration file |
+
+### 2. .roslyn-guard.json (Legacy Format)
+
+For backward compatibility, you can still use `.roslyn-guard.json`:
 
 ```json
 {
@@ -775,6 +828,69 @@ Create a `.roslyn-guard.json` in your project root:
   ]
 }
 ```
+
+### 3. Environment Variables
+
+All configuration properties can be set via environment variables with the prefix `RoslynGuardAnalyzer__`:
+
+```bash
+export RoslynGuardAnalyzer__ProjectPath="./src"
+export RoslynGuardAnalyzer__AnalysisTimeoutSeconds=900
+export RoslynGuardAnalyzer__OutputFormat="json"
+export RoslynGuardAnalyzer__MaxViolationsToReport=500
+
+# Run the analyzer
+roslyn-guard-analyzer ./src
+```
+
+### 4. Command-Line Arguments (Highest Priority)
+
+Command-line arguments override all configuration sources:
+
+```bash
+# Basic usage
+roslyn-guard-analyzer ./src
+
+# With custom format
+roslyn-guard-analyzer ./src --format json --output report.json
+
+# With specific rules
+roslyn-guard-analyzer ./src --rules LYR001,NAM001
+
+# With custom config file
+roslyn-guard-analyzer --config ./custom-config.json
+
+# Verbose output
+roslyn-guard-analyzer ./src --verbose
+
+# Fail on any violation
+roslyn-guard-analyzer ./src --strict
+```
+
+### Configuration Precedence
+
+Configuration values are applied in the following order (later sources override earlier ones):
+
+1. **Default values** (hardcoded in `RoslynGuardAnalyzerOptions`)
+2. **appsettings.json** (if present)
+3. **Environment variables** (if set)
+4. **Command-line arguments** (highest priority)
+
+This allows you to:
+- Set sensible defaults in code
+- Override with environment-specific settings via appsettings.json
+- Tweak for specific runs via environment variables
+- Force specific values via command-line for CI/CD pipelines
+
+### Validation
+
+The analyzer validates all configuration values and will report errors for:
+- Invalid enum values (OutputFormat, MinimumSeverity, ReportType)
+- Out-of-range numeric values (AnalysisTimeoutSeconds, MaxViolationsToReport, etc.)
+- Missing required values (ProjectPath)
+- Invalid file paths (if specified)
+
+Validation errors are displayed before analysis begins, preventing misconfiguration.
 
 ### Configuration Properties
 
