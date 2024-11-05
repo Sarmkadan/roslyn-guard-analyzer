@@ -954,40 +954,17 @@ Roslyn Guard Analyzer is designed for fast, low-overhead analysis suitable for b
 
 ### Benchmarks
 
-| Scenario | Metric |
-|----------|--------|
-| Single file analysis | < 15 ms |
-| 100-file project | ~1.2 s |
-| 1 000-file project (parallel) | ~8 s |
-| Throughput on a single core | ~12 000 lines/sec |
-| Peak memory (large monorepo) | < 250 MB |
-| Rule execution per element | < 0.5 ms per rule |
-| JSON report generation (10 K violations) | < 80 ms |
+| Scenario | Mean | Error | StdDev | Allocated |
+|----------|-----:|------:|-------:|----------:|
+| Single Rule Execution | 6.841 us | 0.136 us | 0.228 us | 2.98 KB |
+| Full Rule Suite Execution | 18.102 us | 0.358 us | 0.815 us | 8.76 KB |
 
-Benchmarks measured on .NET 10.0, Intel Core i7-12700H, 32 GB RAM, SSD storage. Results vary with project complexity and rule configuration.
+*Benchmarks measured on .NET 10.0, AMD EPYC-Rome Processor, Ubuntu 26.04.*
 
-### Tuning Tips
+You can run these benchmarks yourself using the `tests/roslyn-guard-analyzer.Benchmarks` project:
 
-**Parallel analysis** is enabled by default. The degree of parallelism scales with available CPU cores; limit it explicitly if memory pressure is a concern:
-
-```json
-{
-  "maxDegreeOfParallelism": 4,
-  "analysisTimeout": 600
-}
-```
-
-**Incremental analysis** — use `--since <commit>` (see `examples/incremental-analysis.sh`) to analyse only changed files, reducing CI run times by up to 90 % on large repositories.
-
-**Caching** — the built-in `CacheService` memoises per-file syntax trees across runs. Enable persistent caching to a local directory:
-
-```json
-{
-  "cache": {
-    "enabled": true,
-    "directory": ".roslyn-guard-cache"
-  }
-}
+```bash
+dotnet run --project tests/roslyn-guard-analyzer.Benchmarks/roslyn-guard-analyzer.Benchmarks.csproj -c Release
 ```
 
 ## Documentation
