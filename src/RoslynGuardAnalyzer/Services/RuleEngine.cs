@@ -213,7 +213,7 @@ public sealed class RuleEngine : IRuleEngine
             // Check if non-nullable types are properly handled
             if (element.ElementType == CodeElementType.Property || element.ElementType == CodeElementType.Field)
             {
-                if (!string.IsNullOrEmpty(element.ReturnType) && !element.ReturnType.Contains("?"))
+                if (!string.IsNullOrEmpty(element.ReturnType) && !element.ReturnType.Contains("?", StringComparison.Ordinal))
                 {
                     // Non-nullable type without proper initialization detection
                     // Simplified check - would need deeper semantic analysis in production
