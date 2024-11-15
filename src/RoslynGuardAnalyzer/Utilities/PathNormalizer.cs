@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -86,7 +87,7 @@ public static class PathNormalizer
     /// </summary>
     public static string Combine(params string[] segments)
     {
-        if (segments == null || segments.Length == 0)
+        if (segments is null || segments.Length == 0)
             return string.Empty;
 
         var combined = Path.Combine(segments);

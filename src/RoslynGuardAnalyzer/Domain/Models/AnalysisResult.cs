@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -57,7 +58,7 @@ public sealed class AnalysisResult
     /// </summary>
     public void AddViolation(RuleViolation violation)
     {
-        if (violation == null)
+        if (violation is null)
             throw new ArgumentNullException(nameof(violation));
 
         Violations.Add(violation);
@@ -80,7 +81,7 @@ public sealed class AnalysisResult
     /// </summary>
     public void AddAnalyzedElement(CodeElement element)
     {
-        if (element != null)
+        if (element is not null)
         {
             AnalyzedElements.Add(element);
             TotalElementsAnalyzed = AnalyzedElements.Count;

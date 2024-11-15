@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -135,7 +136,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
 
             Clear();
 
-            if (projects != null)
+            if (projects is not null)
             {
                 foreach (var project in projects)
                 {
@@ -182,7 +183,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
             var json = await File.ReadAllTextAsync(filePath);
             var projects = System.Text.Json.JsonSerializer.Deserialize<List<AnalysisProject>>(json);
 
-            if (projects != null)
+            if (projects is not null)
             {
                 foreach (var project in projects)
                 {
@@ -234,7 +235,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
     public async Task RemoveProjectAsync(string projectId, bool deleteSourceFiles = false)
     {
         var project = GetById(projectId);
-        if (project == null)
+        if (project is null)
             return;
 
         if (deleteSourceFiles && Directory.Exists(project.GetDirectoryPath()))

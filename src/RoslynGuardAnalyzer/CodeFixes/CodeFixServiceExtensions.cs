@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -23,7 +24,7 @@ public static class CodeFixServiceExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="services"/> is <see langword="null"/>.</exception>
     public static IServiceCollection AddCodeFixServices(this IServiceCollection services)
     {
-        if (services == null)
+        if (services is null)
             throw new ArgumentNullException(nameof(services));
 
         services.AddSingleton<ICodeFixService, CodeFixService>();

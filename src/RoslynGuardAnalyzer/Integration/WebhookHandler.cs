@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -68,7 +69,7 @@ public sealed class WebhookHandler
         lock (_lockObject)
         {
             var webhook = _webhooks.FirstOrDefault(w => w.Id == webhookId);
-            return webhook != null && _webhooks.Remove(webhook);
+            return webhook is not null && _webhooks.Remove(webhook);
         }
     }
 
@@ -80,7 +81,7 @@ public sealed class WebhookHandler
         lock (_lockObject)
         {
             var webhook = _webhooks.FirstOrDefault(w => w.Id == webhookId);
-            if (webhook != null)
+            if (webhook is not null)
             {
                 webhook.IsActive = false;
                 return true;
@@ -108,7 +109,7 @@ public sealed class WebhookHandler
             SendWebhookAsync(webhook, jsonPayload)
         ).ToList();
 
-        await Task.WhenAll(tasks.Where(t => t != null)!);
+        await Task.WhenAll(tasks.Where(t => t is not null)!);
     }
 
     /// <summary>

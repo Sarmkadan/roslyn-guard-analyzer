@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -23,7 +24,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static void RegisterAnalyzerServices(this IServiceCollection services)
     {
-        if (services == null)
+        if (services is null)
             throw new ArgumentNullException(nameof(services));
 
         // Register repositories
@@ -47,7 +48,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static void RegisterAnalyzerServices(this IServiceCollection services, string dataDirectory)
     {
-        if (services == null)
+        if (services is null)
             throw new ArgumentNullException(nameof(services));
 
         // Register repositories with custom data directory
@@ -98,7 +99,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static void RegisterValidationOnly(this IServiceCollection services)
     {
-        if (services == null)
+        if (services is null)
             throw new ArgumentNullException(nameof(services));
 
         services.AddSingleton<IValidationService, ValidationService>();
@@ -109,7 +110,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static void RegisterReportingOnly(this IServiceCollection services)
     {
-        if (services == null)
+        if (services is null)
             throw new ArgumentNullException(nameof(services));
 
         services.AddSingleton<IReportingService, ReportingService>();
@@ -120,10 +121,10 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static void ConfigureAnalyzer(this IServiceCollection services, Action<AnalyzerConfiguration> configure)
     {
-        if (services == null)
+        if (services is null)
             throw new ArgumentNullException(nameof(services));
 
-        if (configure == null)
+        if (configure is null)
             throw new ArgumentNullException(nameof(configure));
 
         var config = new AnalyzerConfiguration();
