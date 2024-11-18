@@ -94,6 +94,8 @@ public sealed class RuleEngine : IRuleEngine
 
             foreach (var dependency in element.Dependencies)
             {
+                if (dependency.EndsWith(".Tests", StringComparison.OrdinalIgnoreCase)) continue;
+
                 var dependencyLayer = elements
                     .FirstOrDefault(e => e.Name == dependency || e.FullyQualifiedName == dependency)?
                     .GetFullyQualifiedName();
