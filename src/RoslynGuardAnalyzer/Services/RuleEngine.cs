@@ -115,16 +115,20 @@ public sealed class RuleEngine : IRuleEngine
                 // Repositories can't depend on services or controllers
                 if (elementLayer == 0 && (depLayer == 1 || depLayer == 2))
                 {
-                    violations.Add(new RuleViolation(
-                        rule.Id,
-                        rule.Name,
-                        $"Repository '{element.Name}' depends on layer '{dependency}' (illegal dependency)",
-                        element.FilePath)
+                    var sev = GetSeverity(rule, element.FilePath);
+                    if (sev.HasValue)
                     {
-                        LineNumber = element.StartLineNumber,
-                        Severity = rule.DefaultSeverity,
-                        Category = rule.Category
-                    });
+                        violations.Add(new RuleViolation(
+                            rule.Id,
+                            rule.Name,
+                            $"Repository '{element.Name}' depends on layer '{dependency}' (illegal dependency)",
+                            element.FilePath)
+                        {
+                            LineNumber = element.StartLineNumber,
+                            Severity = sev.Value,
+                            Category = rule.Category
+                        });
+                    }
                 }
             }
         }
@@ -132,9 +136,45 @@ public sealed class RuleEngine : IRuleEngine
         return violations;
     }
 
-    /// <summary>
-    /// Checks for naming convention violations.
-    /// </summary>
+    private readonly Dictionary<string, string[]> _editorConfigCache = new();
+
+    private SeverityLevel? GetSeverity(AnalysisRule rule, string filePath)
+    {
+        if (string.IsNullOrEmpty(filePath)) return rule.DefaultSeverity;
+
+        var dir = System.IO.Path.GetDirectoryName(filePath);
+        while (!string.IsNullOrEmpty(dir))
+        {
+            var editorConfigPath = System.IO.Path.Combine(dir, ".editorconfig");
+            if (System.IO.File.Exists(editorConfigPath))
+            {
+                if (!_editorConfigCache.TryGetValue(editorConfigPath, out var lines))
+                {
+                    lines = System.IO.File.ReadAllLines(editorConfigPath);
+                    _editorConfigCache[editorConfigPath] = lines;
+                }
+
+                foreach (var line in lines)
+                {
+                    var trimmed = line.Trim();
+                    if (trimmed.StartsWith($"dotnet_diagnostic.{rule.Id}.severity", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var parts = trimmed.Split('=');
+                        if (parts.Length == 2)
+                        {
+                            var severityStr = parts[1].Trim().ToLowerInvariant();
+                            if (severityStr == "none") return null;
+                            if (severityStr == "error") return SeverityLevel.Error;
+                            if (severityStr == "warning") return SeverityLevel.Warning;
+                            if (severityStr == "suggestion" || severityStr == "info") return SeverityLevel.Info;
+                        }
+                    }
+                }
+            }
+            dir = System.IO.Path.GetDirectoryName(dir);
+        }
+        return rule.DefaultSeverity;
+    }
     private List<RuleViolation> CheckNamingConventions(AnalysisRule rule, List<CodeElement> elements)
     {
         var violations = new List<RuleViolation>();
@@ -142,6 +182,9 @@ public sealed class RuleEngine : IRuleEngine
         foreach (var element in elements)
         {
             var issues = ValidateNaming(element);
+            
+            var sev = GetSeverity(rule, element.FilePath);
+            if (!sev.HasValue) continue;
 
             foreach (var issue in issues)
             {
@@ -152,7 +195,7 @@ public sealed class RuleEngine : IRuleEngine
                     element.FilePath)
                 {
                     LineNumber = element.StartLineNumber,
-                    Severity = rule.DefaultSeverity,
+                    Severity = sev.Value,
                     Category = rule.Category
                 });
             }
@@ -174,31 +217,39 @@ public sealed class RuleEngine : IRuleEngine
             if (element.ReturnType?.Contains("Task", StringComparison.OrdinalIgnoreCase) == true
                 && !element.IsAsync)
             {
-                violations.Add(new RuleViolation(
-                    rule.Id,
-                    rule.Name,
-                    $"Method '{element.Name}' returns Task but is not marked as async",
-                    element.FilePath)
+                var sev = GetSeverity(rule, element.FilePath);
+                if (sev.HasValue)
                 {
-                    LineNumber = element.StartLineNumber,
-                    Severity = rule.DefaultSeverity,
-                    Category = rule.Category
-                });
+                    violations.Add(new RuleViolation(
+                        rule.Id,
+                        rule.Name,
+                        $"Method '{element.Name}' returns Task but is not marked as async",
+                        element.FilePath)
+                    {
+                        LineNumber = element.StartLineNumber,
+                        Severity = sev.Value,
+                        Category = rule.Category
+                    });
+                }
             }
 
             // Async methods should end with "Async" suffix
             if (element.IsAsync && !element.Name.EndsWith(AnalyzerConstants.Naming.AsyncSuffix))
             {
-                violations.Add(new RuleViolation(
-                    rule.Id,
-                    rule.Name,
-                    $"Async method '{element.Name}' should end with '{AnalyzerConstants.Naming.AsyncSuffix}' suffix",
-                    element.FilePath)
+                var sev = GetSeverity(rule, element.FilePath);
+                if (sev.HasValue)
                 {
-                    LineNumber = element.StartLineNumber,
-                    Severity = rule.DefaultSeverity,
-                    Category = rule.Category
-                });
+                    violations.Add(new RuleViolation(
+                        rule.Id,
+                        rule.Name,
+                        $"Async method '{element.Name}' should end with '{AnalyzerConstants.Naming.AsyncSuffix}' suffix",
+                        element.FilePath)
+                    {
+                        LineNumber = element.StartLineNumber,
+                        Severity = sev.Value,
+                        Category = rule.Category
+                    });
+                }
             }
         }
 
