@@ -430,7 +430,8 @@ roslyn-guard-analyzer ./src/Services
 ## Next Steps
 
 - Read the [Architecture Guide](./architecture.md) for deep dive
-- Check [API Reference](./api-reference.md) for custom rule development
+- Check [Custom Rule Development Guide](./custom-rule-development.md) to write your own rules
+- Check [API Reference](./api-reference.md) for complete interface documentation
 - Review [FAQ](./faq.md) for common questions
 - Explore [Deployment Guide](./deployment.md) for production setup
 
