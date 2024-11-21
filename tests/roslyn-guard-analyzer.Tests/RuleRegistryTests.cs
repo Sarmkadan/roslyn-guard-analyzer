@@ -6,7 +6,7 @@
 
 using System.Collections.Generic;
 using FluentAssertions;
-using Moq;
+using NSubstitute;
 using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
 using RoslynGuardAnalyzer.Exceptions;
@@ -68,7 +68,7 @@ public sealed class RuleRegistryTests
     public async System.Threading.Tasks.Task ExecuteRuleAsync_MockedEngine_ReturnsConfiguredViolationsAndVerifiesInteraction()
     {
         // Arrange
-        var mockEngine = new Mock<IRuleEngine>();
+        var mockEngine = Substitute.For<IRuleEngine>();
         var rule = new AnalysisRule("LYR001", "Layer Rule", "Enforces layer boundaries", RuleCategory.LayerDependency);
         var elements = new List<CodeElement>();
 
@@ -80,19 +80,17 @@ public sealed class RuleRegistryTests
         };
 
         mockEngine
-            .Setup(e => e.ExecuteRuleAsync(It.IsAny<AnalysisRule>(), It.IsAny<List<CodeElement>>()))
-            .ReturnsAsync(new List<RuleViolation> { expectedViolation });
+            .ExecuteRuleAsync(Arg.Any<AnalysisRule>(), Arg.Any<List<CodeElement>>())
+            .Returns(System.Threading.Tasks.Task.FromResult(new List<RuleViolation> { expectedViolation }));
 
         // Act
-        var violations = await mockEngine.Object.ExecuteRuleAsync(rule, elements);
+        var violations = await mockEngine.ExecuteRuleAsync(rule, elements);
 
         // Assert
         violations.Should().HaveCount(1);
         violations[0].RuleId.Should().Be("LYR001");
         violations[0].Severity.Should().Be(SeverityLevel.Error);
         violations[0].IsCritical().Should().BeTrue();
-        mockEngine.Verify(
-            e => e.ExecuteRuleAsync(It.IsAny<AnalysisRule>(), It.IsAny<List<CodeElement>>()),
-            Times.Once);
+        await mockEngine.Received(1).ExecuteRuleAsync(Arg.Any<AnalysisRule>(), Arg.Any<List<CodeElement>>());
     }
 }

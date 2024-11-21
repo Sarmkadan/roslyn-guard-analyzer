@@ -6,6 +6,7 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>Zaiets.roslyn.guard.analyzer</PackageId>
     <Version>2.0.2</Version>
     <Authors>Vladyslav Zaiets</Authors>
@@ -32,9 +33,15 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="10.0.0" />
-    <PackageReference Include="System.Reflection.Metadata" Version="10.0.0" />
-    <PackageReference Include="System.Text.Json" Version="10.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="10.0.0">
+      <NoWarn>NU1510</NoWarn>
+    </PackageReference>
+    <PackageReference Include="System.Reflection.Metadata" Version="10.0.0">
+      <NoWarn>NU1510</NoWarn>
+    </PackageReference>
+    <PackageReference Include="System.Text.Json" Version="10.0.0">
+      <NoWarn>NU1510</NoWarn>
+    </PackageReference>
     <PackageReference Include="Serilog" Version="4.2.0" />
   </ItemGroup>
 

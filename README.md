@@ -77,6 +77,64 @@ The analyzer ships with four foundational rules covering the most common archite
 | `ASY001` | Async Patterns | Validates async/await patterns and proper Task handling |
 | `NUL001` | Null Safety | Checks nullable reference type handling and null-coalescing patterns |
 
+## Advanced Features
+
+### Custom Rule Builder DSL
+
+Define predicate-based rules with a fluent API and register them just like built-in rules:
+
+```csharp
+var rule = CustomRuleBuilder.Create("CUS001", "Async suffix rule")
+    .For(RuleCategory.AsyncPattern)
+    .WithSeverity(SeverityLevel.Warning)
+    .WithDescription("Requires async methods to end with Async")
+    .When(element => element.ElementType == CodeElementType.Method && element.IsAsync && !element.Name.EndsWith("Async"))
+    .WithMessage(element => $"Method '{element.Name}' must end with Async")
+    .Build();
+
+ruleRegistry.RegisterRule(rule);
+var violations = await ruleEngine.ExecuteRuleAsync(rule, elements);
+```
+
+### Suppression Manager
+
+Persist rule suppressions and filter out known exceptions with justification and optional expiration:
+
+```csharp
+var suppression = new SuppressionRecord
+{
+    RuleId = "LYR001",
+    TargetFile = "src/Legacy/LegacyRepository.cs",
+    Justification = "Legacy dependency scheduled for refactor",
+    Author = "team-maintainer",
+    CreatedAt = DateTime.UtcNow,
+    ExpiresAt = DateTime.UtcNow.AddDays(30),
+    IsActive = true
+};
+
+suppressionManager.AddSuppression(suppression);
+await suppressionManager.SaveAsync("suppressions.json");
+await suppressionManager.LoadAsync("suppressions.json");
+var visibleViolations = suppressionManager.FilterSuppressed(violations);
+```
+
+### Fix-All Provider
+
+Preview or apply bulk fixes with severity and rule filters:
+
+```csharp
+var result = await fixAllProvider.ApplyAllAsync(
+    violations,
+    new FixAllOptions
+    {
+        DryRun = false,
+        MinimumSeverity = SeverityLevel.Warning,
+        RuleIds = new[] { "RG-N001", "RG-A001" },
+        SkipBreakingChanges = true,
+        MaxFixes = 25
+    });
+```
+
 ### Diagnostic Codes Examples
 
 #### LYR001: Layer Dependencies

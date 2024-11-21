@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
 
 namespace RoslynGuardAnalyzer.Formatters;
@@ -27,77 +28,49 @@ public sealed class CsvFormatter : IOutputFormatter
 
     public string FormatResult(AnalysisResult result)
     {
-        var sb = new StringBuilder();
-
-        // Header
-        sb.AppendLine("Rule,Severity,Message,File,Line,Column,Code");
-
-        // Violations
-        foreach (var violation in result.Violations)
-        {
-            sb.AppendLine(FormatViolationAsCsv(violation));
-        }
-
-        return sb.ToString();
+        return FormatViolations(result.Violations);
     }
 
     public string FormatViolations(IEnumerable<RuleViolation> violations)
     {
         var sb = new StringBuilder();
-
-        // Header
         sb.AppendLine("Rule,Severity,Message,File,Line,Column,Code");
 
-        // Violations
         foreach (var violation in violations)
-        {
             sb.AppendLine(FormatViolationAsCsv(violation));
-        }
 
         return sb.ToString();
     }
 
     public string FormatReport(ViolationReport report)
     {
+        var violations = report.ViolationGroups.SelectMany(g => g.Violations).ToList();
         var sb = new StringBuilder();
 
-        // Summary section
         sb.AppendLine("SUMMARY");
         sb.AppendLine($"Title,{CsvEscape(report.Title)}");
         sb.AppendLine($"Generated,{report.GeneratedAt:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine($"Total Violations,{report.Violations.Count}");
+        sb.AppendLine($"Total Violations,{violations.Count}");
         sb.AppendLine();
 
-        // Severity summary
         sb.AppendLine("SEVERITY SUMMARY");
         sb.AppendLine("Severity,Count");
-        sb.AppendLine($"Critical,{report.Violations.Count(v => v.Severity == "Critical")}");
-        sb.AppendLine($"High,{report.Violations.Count(v => v.Severity == "High")}");
-        sb.AppendLine($"Medium,{report.Violations.Count(v => v.Severity == "Medium")}");
-        sb.AppendLine($"Low,{report.Violations.Count(v => v.Severity == "Low")}");
+        sb.AppendLine($"Critical,{violations.Count(v => v.Severity == SeverityLevel.Critical)}");
+        sb.AppendLine($"High,{violations.Count(v => v.Severity == SeverityLevel.Error)}");
+        sb.AppendLine($"Medium,{violations.Count(v => v.Severity == SeverityLevel.Warning)}");
+        sb.AppendLine($"Low,{violations.Count(v => v.Severity == SeverityLevel.Info)}");
         sb.AppendLine();
 
-        // Rules summary
         sb.AppendLine("VIOLATIONS BY RULE");
         sb.AppendLine("Rule,Count,Severity");
-
-        var ruleGroups = report.Violations.GroupBy(v => v.RuleName);
-        foreach (var group in ruleGroups)
-        {
-            var severity = group.First().Severity;
-            sb.AppendLine($"{CsvEscape(group.Key)},{group.Count()},{severity}");
-        }
+        foreach (var group in violations.GroupBy(v => v.RuleName))
+            sb.AppendLine($"{CsvEscape(group.Key)},{group.Count()},{group.Max(v => v.Severity)}");
 
         sb.AppendLine();
-
-        // Detailed violations
         sb.AppendLine("DETAILED VIOLATIONS");
         sb.AppendLine("Rule,Severity,Message,File,Line,Column,Code");
-
-        foreach (var violation in report.Violations)
-        {
+        foreach (var violation in violations)
             sb.AppendLine(FormatViolationAsCsv(violation));
-        }
 
         return sb.ToString();
     }
@@ -110,22 +83,19 @@ public sealed class CsvFormatter : IOutputFormatter
         return $"{CsvEscape(violation.RuleName)},{violation.Severity}," +
                $"{CsvEscape(violation.Message)},{CsvEscape(violation.FilePath)}," +
                $"{violation.LineNumber},{violation.ColumnNumber}," +
-               $"{CsvEscape(violation.Code ?? "N/A")}";
+               $"{CsvEscape(violation.CodeSnippet ?? "N/A")}";
     }
 
     /// <summary>
-    /// Escapes a string for CSV output (encloses in quotes and escapes quotes inside).
+    /// Escapes a string for CSV output.
     /// </summary>
     private static string CsvEscape(string text)
     {
         if (string.IsNullOrEmpty(text))
             return "\"\"";
 
-        // If text contains comma, quote, or newline, enclose in quotes and escape quotes
         if (text.Contains(',') || text.Contains('"') || text.Contains('\n'))
-        {
             return "\"" + text.Replace("\"", "\"\"") + "\"";
-        }
 
         return text;
     }
