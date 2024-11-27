@@ -3,7 +3,7 @@
 # CTO & Software Architect
 # =============================================================================
 # Docker Compose configuration for Roslyn Guard Analyzer v2
-# Supports containerized analysis, health monitoring, and CI/CD integration
+# Supports containerized analysis and CI/CD integration
 # =============================================================================
 
 services:
@@ -15,12 +15,10 @@ services:
     image: roslyn-guard-analyzer:2.0.0
     restart: unless-stopped
 
-    ports:
-      - "8080:8080"
-
     # Mount source code for analysis
+    # Replace the volume mount below with your project directory
     volumes:
-      - .:/workspace:ro
+      - ./src:/workspace:ro
       - ./reports:/reports:rw
 
     # Working directory inside container
@@ -36,20 +34,16 @@ services:
           cpus: '1'
           memory: 1G
 
-    # Health check
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      start_period: 5s
-      retries: 3
-
     # Environment variables
     environment:
       - DOTNET_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
       - ANALYSIS_TIMEOUT=600
-      - LOG_LEVEL=2
+
+    # Command to run the analyzer with a sample project
+    # Edit this line to point to your project file (.csproj) or directory
+    # Example: command: "/workspace/YourProject/YourProject.csproj"
+    # For directory analysis: command: "/workspace/YourProject"
+    command: "/workspace/RoslynGuardAnalyzer/RoslynGuardAnalyzer.csproj"
 
     # Logging configuration
     logging:
@@ -57,28 +51,6 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-
-  # Optional: Results viewer (requires Python)
-  results-viewer:
-    image: python:3.11-slim
-    container_name: analyzer-results-viewer
-    depends_on:
-      analyzer:
-        condition: service_healthy
-
-    volumes:
-      - ./reports:/reports:ro
-
-    working_dir: /reports
-
-    command: python3 -m http.server 9090 --bind 0.0.0.0
-
-    ports:
-      - "9090:9090"
-
-    # Only run this if you want to view results
-    profiles:
-      - viewer
 
 volumes:
   reports:
