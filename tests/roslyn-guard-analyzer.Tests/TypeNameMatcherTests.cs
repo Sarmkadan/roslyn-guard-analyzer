@@ -8,10 +8,16 @@ using FluentAssertions;
 using RoslynGuardAnalyzer.Utilities;
 using Xunit;
 
+/// <summary>
+/// Tests for the <see cref="TypeNameMatcher"/> class.
+/// </summary>
 namespace RoslynGuardAnalyzer.Tests;
 
 public sealed class TypeNameMatcherTests
 {
+    /// <summary>
+    /// Tests the <see cref="TypeNameMatcher.Matches(string)"/> method.
+    /// </summary>
     [Fact]
     public void Matches_ExactTypeName_ReturnsTrueCaseInsensitively()
     {
@@ -24,6 +30,9 @@ public sealed class TypeNameMatcherTests
         matcher.Matches("OtherClass").Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests the <see cref="TypeNameMatcher.Matches(string)"/> method with a wildcard suffix.
+    /// </summary>
     [Fact]
     public void Matches_StarWildcardSuffix_MatchesAllTypesWithGivenPrefix()
     {
@@ -36,6 +45,9 @@ public sealed class TypeNameMatcherTests
         matcher.Matches("AnalysisRepository").Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests the <see cref="TypeNameMatcher.MatchesFullyQualified(string, string)"/> method.
+    /// </summary>
     [Fact]
     public void MatchesFullyQualified_WithNamespaceAndTypeName_CombinesBeforeMatching()
     {
@@ -47,6 +59,9 @@ public sealed class TypeNameMatcherTests
         matcher.MatchesFullyQualified("MyApp.Services", "RuleRepository").Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests the <see cref="NamespaceMatcher"/> class.
+    /// </summary>
     [Fact]
     public void NamespaceMatcher_WildcardSegment_MatchesOneOrMoreIntermediateParts()
     {
