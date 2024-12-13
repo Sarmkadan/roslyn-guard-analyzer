@@ -13,10 +13,14 @@ using RoslynGuardAnalyzer.Exceptions;
 using RoslynGuardAnalyzer.Services;
 using Xunit;
 
-namespace RoslynGuardAnalyzer.Tests;
-
+/// <summary>
+/// Tests for the RuleRegistry class.
+/// </summary>
 public sealed class RuleRegistryTests
 {
+    /// <summary>
+    /// Verifies that the RuleRegistry is initialized with four built-in rules.
+    /// </summary>
     [Fact]
     public void RuleRegistry_DefaultInitialization_RegistersFourBuiltInRules()
     {
@@ -31,6 +35,9 @@ public sealed class RuleRegistryTests
         registry.GetRule("NUL001").Should().NotBeNull();
     }
 
+    /// <summary>
+    /// Verifies that registering a duplicate rule throws a ConfigurationException.
+    /// </summary>
     [Fact]
     public void RegisterRule_DuplicateRuleId_ThrowsConfigurationException()
     {
@@ -46,6 +53,9 @@ public sealed class RuleRegistryTests
             .WithMessage("*LYR001*");
     }
 
+    /// <summary>
+    /// Verifies that the IsCritical method returns true only for error and critical severity.
+    /// </summary>
     [Fact]
     public void RuleViolation_IsCritical_ReturnsTrueOnlyForErrorAndCriticalSeverity()
     {
@@ -64,6 +74,9 @@ public sealed class RuleRegistryTests
         criticalViolation.IsCritical().Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies that registering a valid rule registers successfully.
+    /// </summary>
     [Fact]
     public void RegisterRule_ValidRule_RegistersSuccessfully()
     {
@@ -80,6 +93,9 @@ public sealed class RuleRegistryTests
         registry.GetRuleCount().Should().Be(1);
     }
 
+    /// <summary>
+    /// Verifies that registering a null rule throws an ArgumentNullException.
+    /// </summary>
     [Fact]
     public void RegisterRule_NullRule_ThrowsArgumentNullException()
     {
@@ -93,6 +109,9 @@ public sealed class RuleRegistryTests
         act.Should().Throw<System.ArgumentNullException>();
     }
 
+    /// <summary>
+    /// Verifies that getting a non-existent rule returns null.
+    /// </summary>
     [Fact]
     public void GetRule_NonExistentRuleId_ReturnsNull()
     {
@@ -106,6 +125,9 @@ public sealed class RuleRegistryTests
         rule.Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies that getting rules by category returns the correct rules.
+    /// </summary>
     [Fact]
     public void GetRulesByCategory_MatchingCategory_ReturnsCorrectRules()
     {
@@ -129,6 +151,9 @@ public sealed class RuleRegistryTests
         namingRules.Should().NotContain(rule3);
     }
 
+    /// <summary>
+    /// Verifies that removing an existing rule returns true and removes the rule.
+    /// </summary>
     [Fact]
     public void RemoveRule_ExistingRule_ReturnsTrueAndRemovesRule()
     {
@@ -145,6 +170,9 @@ public sealed class RuleRegistryTests
         rule.Should().BeNull();
     }
 
+    /// <summary>
+    /// Verifies that getting enabled rules returns only enabled rules.
+    /// </summary>
     [Fact]
     public void GetEnabledRules_ReturnsOnlyEnabledRules()
     {
@@ -165,6 +193,9 @@ public sealed class RuleRegistryTests
         enabledRules.Should().NotContain(disabledRule);
     }
 
+    /// <summary>
+    /// Verifies that clearing the registry removes all rules.
+    /// </summary>
     [Fact]
     public void Clear_RemovesAllRules()
     {
@@ -179,6 +210,9 @@ public sealed class RuleRegistryTests
         registry.GetAllRules().Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Verifies that executing a rule with a mocked engine returns the configured violations and verifies interaction.
+    /// </summary>
     [Fact]
     public async System.Threading.Tasks.Task ExecuteRuleAsync_MockedEngine_ReturnsConfiguredViolationsAndVerifiesInteraction()
     {
