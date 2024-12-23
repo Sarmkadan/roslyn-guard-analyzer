@@ -17,8 +17,15 @@ using Xunit;
 
 namespace RoslynGuardAnalyzer.Tests;
 
+/// <summary>
+/// Provides unit tests for the <see cref="FixAllProvider"/> class.
+/// </summary>
 public sealed class FixAllProviderTests
 {
+    /// <summary>
+    /// Tests that <see cref="FixAllProvider.PreviewAllAsync(IEnumerable{RuleViolation}, FixAllOptions)"/> returns the expected fixes when violations are provided.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     [Fact]
     public async Task PreviewAllAsync_WithViolations_ReturnsExpectedFixes()
     {
@@ -39,6 +46,10 @@ public sealed class FixAllProviderTests
         fixes[0].RuleId.Should().Be("RG-N001");
     }
 
+    /// <summary>
+    /// Tests that <see cref="FixAllProvider.ApplyAllAsync(IEnumerable{RuleViolation}, FixAllOptions)"/> does not apply changes when <paramref name="DryRun"/> is true.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     [Fact]
     public async Task ApplyAllAsync_DryRun_DoesNotApplyChanges()
     {
@@ -61,6 +72,10 @@ public sealed class FixAllProviderTests
         await codeFixService.Received(1).ApplyFixesAsync(Arg.Any<IEnumerable<CodeFix>>(), true, Arg.Any<CancellationToken>());
     }
 
+    /// <summary>
+    /// Tests that <see cref="FixAllProvider.ApplyAllAsync(IEnumerable{RuleViolation}, FixAllOptions)"/> filters low severity violations based on <paramref name="MinimumSeverity"/>.
+    /// </summary>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     [Fact]
     public async Task ApplyAllAsync_WithMinimumSeverity_FiltersLowSeverityViolations()
     {
