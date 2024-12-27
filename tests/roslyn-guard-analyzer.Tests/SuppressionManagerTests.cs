@@ -13,10 +13,14 @@ using RoslynGuardAnalyzer.Domain.Models;
 using RoslynGuardAnalyzer.Suppressions;
 using Xunit;
 
-namespace RoslynGuardAnalyzer.Tests;
-
+/// <summary>
+/// Tests for the <see cref="SuppressionManager"/> class.
+/// </summary>
 public sealed class SuppressionManagerTests
 {
+    /// <summary>
+    /// Tests that a new suppression record is stored and matches a violation.
+    /// </summary>
     [Fact]
     public void AddSuppression_NewRecord_IsStoredAndMatchesViolation()
     {
@@ -42,6 +46,9 @@ public sealed class SuppressionManagerTests
         manager.IsSuppressed(violation).Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that a violation is returned when filtering suppressed violations with an expired suppression.
+    /// </summary>
     [Fact]
     public void FilterSuppressed_WithExpiredSuppression_ReturnsViolation()
     {
@@ -67,6 +74,9 @@ public sealed class SuppressionManagerTests
         remaining.Should().ContainSingle();
     }
 
+    /// <summary>
+    /// Tests that a violation is hidden when filtering suppressed violations with an active suppression.
+    /// </summary>
     [Fact]
     public void FilterSuppressed_ActiveSuppression_HidesViolation()
     {
@@ -92,6 +102,10 @@ public sealed class SuppressionManagerTests
         remaining.Should().BeEmpty();
     }
 
+    /// <summary>
+    /// Creates a new <see cref="RuleViolation"/> instance for testing purposes.
+    /// </summary>
+    /// <returns>A new <see cref="RuleViolation"/> instance.</returns>
     private static RuleViolation CreateViolation()
     {
         var violation = new RuleViolation("LYR001", "Layer rule", "Violation", "/src/LegacyRepository.cs")
