@@ -13,10 +13,14 @@ using RoslynGuardAnalyzer.Rules;
 using RoslynGuardAnalyzer.Services;
 using Xunit;
 
-namespace RoslynGuardAnalyzer.Tests;
-
+/// <summary>
+/// Contains tests for the CustomRuleBuilder class.
+/// </summary>
 public sealed class CustomRuleBuilderTests
 {
+    /// <summary>
+    /// Tests that a valid rule is created with the correct properties.
+    /// </summary>
     [Fact]
     public void Build_ValidRule_CreatesRuleWithCorrectProperties()
     {
@@ -41,6 +45,10 @@ public sealed class CustomRuleBuilderTests
         rule.ViolationPredicate(new CodeElement("OrderService", CodeElementType.Class, "/src/OrderService.cs") { IsPublic = true }).Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests that the violation predicate filters correctly.
+    /// </summary>
+    /// <returns>A task that completes when the test is finished.</returns>
     [Fact]
     public async Task When_ViolationPredicate_FiltersCorrectly()
     {
