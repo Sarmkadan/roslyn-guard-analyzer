@@ -3,7 +3,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Generic;
@@ -12,19 +12,20 @@ using System.Linq;
 namespace RoslynGuardAnalyzer.Exceptions;
 
 /// <summary>
-/// Extension methods for RoslynGuardException and its derived types.
+/// Extension methods for <see cref="RoslynGuardException"/> and its derived types.
+/// Provides formatting, summarization, and analysis capabilities for exception handling.
 /// </summary>
 public static class RoslynGuardExceptionExtensions
 {
     /// <summary>
     /// Creates a formatted error report string for the exception, including all details.
     /// </summary>
-    /// <param name="exception">The exception to format</param>
-    /// <returns>Formatted error report with all available information</returns>
+    /// <param name="exception">The exception to format.</param>
+    /// <returns>Formatted error report with all available information.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is <see langword="null"/>.</exception>
     public static string FormatErrorReport(this RoslynGuardException exception)
     {
-        if (exception == null)
-            throw new ArgumentNullException(nameof(exception));
+        ArgumentNullException.ThrowIfNull(exception);
 
         var report = new System.Text.StringBuilder();
         report.AppendLine("=== ROSLYN GUARD ANALYZER ERROR REPORT ===");
@@ -49,12 +50,12 @@ public static class RoslynGuardExceptionExtensions
                 if (!string.IsNullOrEmpty(analysisEx.ProjectPath))
                     report.AppendLine($"Project Path: {analysisEx.ProjectPath}");
 
-                if (analysisEx.Details != null && analysisEx.Details.Count > 0)
+                if (analysisEx.Details?.Count > 0)
                 {
                     report.AppendLine($"Details ({analysisEx.Details.Count} items):");
                     foreach (var detail in analysisEx.Details)
                     {
-                        report.AppendLine($"  - {detail}");
+                        report.AppendLine($" - {detail}");
                     }
                 }
                 break;
@@ -86,7 +87,7 @@ public static class RoslynGuardExceptionExtensions
         }
 
         // Inner exception if present
-        if (exception.InnerException != null)
+        if (exception.InnerException is not null)
         {
             report.AppendLine();
             report.AppendLine("=== INNER EXCEPTION ===");
@@ -102,13 +103,13 @@ public static class RoslynGuardExceptionExtensions
     /// <summary>
     /// Creates a concise error summary suitable for logging or user display.
     /// </summary>
-    /// <param name="exception">The exception to summarize</param>
-    /// <param name="includeDetails">Whether to include exception details in the summary</param>
-    /// <returns>Concise error summary</returns>
+    /// <param name="exception">The exception to summarize.</param>
+    /// <param name="includeDetails">Whether to include exception details in the summary.</param>
+    /// <returns>Concise error summary.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is <see langword="null"/>.</exception>
     public static string ToErrorSummary(this RoslynGuardException exception, bool includeDetails = true)
     {
-        if (exception == null)
-            throw new ArgumentNullException(nameof(exception));
+        ArgumentNullException.ThrowIfNull(exception);
 
         var summary = new System.Text.StringBuilder();
         summary.Append($"[{exception.ErrorCode}] {exception.Message}");
@@ -123,7 +124,7 @@ public static class RoslynGuardExceptionExtensions
                 if (!string.IsNullOrEmpty(analysisEx.ProjectPath))
                     summary.Append($" | Project: {analysisEx.ProjectPath}");
 
-                if (includeDetails && analysisEx.Details != null && analysisEx.Details.Count > 0)
+                if (includeDetails && analysisEx.Details?.Count > 0)
                 {
                     var firstDetail = analysisEx.Details.FirstOrDefault() ?? "Unknown error";
                     summary.Append($" | Details: {firstDetail}");
@@ -156,12 +157,12 @@ public static class RoslynGuardExceptionExtensions
     /// <summary>
     /// Determines if the exception represents a critical failure that should stop analysis.
     /// </summary>
-    /// <param name="exception">The exception to check</param>
-    /// <returns>True if the exception is critical</returns>
+    /// <param name="exception">The exception to check.</param>
+    /// <returns>True if the exception is critical.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is <see langword="null"/>.</exception>
     public static bool IsCritical(this RoslynGuardException exception)
     {
-        if (exception == null)
-            throw new ArgumentNullException(nameof(exception));
+        ArgumentNullException.ThrowIfNull(exception);
 
         return exception switch
         {
@@ -177,15 +178,14 @@ public static class RoslynGuardExceptionExtensions
     /// <summary>
     /// Creates a dictionary containing all exception properties for serialization or analysis.
     /// </summary>
-    /// <param name="exception">The exception to convert</param>
-    /// <returns>Dictionary with exception properties</returns>
+    /// <param name="exception">The exception to convert.</param>
+    /// <returns>Dictionary with exception properties.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="exception"/> is <see langword="null"/>.</exception>
     public static Dictionary<string, object?> ToPropertyDictionary(this RoslynGuardException exception)
     {
-        if (exception == null)
-            throw new ArgumentNullException(nameof(exception));
+        ArgumentNullException.ThrowIfNull(exception);
 
-        var dict = new Dictionary<string, object?>(
-            StringComparer.OrdinalIgnoreCase)
+        var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
         {
             ["ErrorCode"] = exception.ErrorCode,
             ["OccurredAt"] = exception.OccurredAt,
