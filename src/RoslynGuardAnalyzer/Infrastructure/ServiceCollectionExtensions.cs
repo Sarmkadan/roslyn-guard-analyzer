@@ -1,8 +1,9 @@
 #nullable enable
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.IO;
@@ -27,10 +28,11 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers all analyzer services into the dependency injection container.
     /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static void RegisterAnalyzerServices(this IServiceCollection services)
     {
-        if (services is null)
-            throw new ArgumentNullException(nameof(services));
+        ArgumentNullException.ThrowIfNull(services);
 
         services.AddLogging(configure => configure.AddConsole());
         services.AddSingleton<RuleRepository>();
@@ -54,10 +56,15 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers analyzer services with a custom data directory.
     /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <param name="dataDirectory">The data directory path for storing analyzer data.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="dataDirectory"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="dataDirectory"/> is empty or whitespace.</exception>
     public static void RegisterAnalyzerServices(this IServiceCollection services, string dataDirectory)
     {
-        if (services is null)
-            throw new ArgumentNullException(nameof(services));
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(dataDirectory, nameof(dataDirectory));
 
         services.AddLogging(configure => configure.AddConsole());
         services.AddSingleton(new RuleRepository(dataDirectory));
@@ -81,37 +88,44 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Initializes analyzer services after registration.
     /// </summary>
-    public static async Task InitializeAnalyzerAsync(this IServiceProvider serviceProvider)
+    /// <param name="serviceProvider">The service provider to resolve services from.</param>
+    /// <param name="logger">Optional logger for initialization messages.</param>
+    /// <returns>A task representing the initialization operation.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="serviceProvider"/> is <see langword="null"/>.</exception>
+    public static async Task InitializeAnalyzerAsync(this IServiceProvider serviceProvider, ILogger? logger = null)
     {
+        ArgumentNullException.ThrowIfNull(serviceProvider);
+
         var ruleRepository = serviceProvider.GetRequiredService<RuleRepository>();
         var projectRepository = serviceProvider.GetRequiredService<ProjectRepository>();
 
         try
         {
-            await ruleRepository.LoadAsync();
+            await ruleRepository.LoadAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Could not load rules from disk: {ex.Message}");
+            logger?.LogWarning(ex, "Could not load rules from disk");
         }
 
         try
         {
-            await projectRepository.LoadAsync();
+            await projectRepository.LoadAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Warning: Could not load projects from disk: {ex.Message}");
+            logger?.LogWarning(ex, "Could not load projects from disk");
         }
     }
 
     /// <summary>
     /// Registers only the validation service for lightweight usage.
     /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static void RegisterValidationOnly(this IServiceCollection services)
     {
-        if (services is null)
-            throw new ArgumentNullException(nameof(services));
+        ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<IValidationService, ValidationService>();
     }
@@ -119,10 +133,11 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Registers only the reporting service.
     /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
     public static void RegisterReportingOnly(this IServiceCollection services)
     {
-        if (services is null)
-            throw new ArgumentNullException(nameof(services));
+        ArgumentNullException.ThrowIfNull(services);
 
         services.AddSingleton<IReportingService, ReportingService>();
     }
@@ -130,13 +145,14 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Configures the analyzer with custom settings.
     /// </summary>
+    /// <param name="services">The service collection to register services with.</param>
+    /// <param name="configure">Configuration action to apply.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="services"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="configure"/> is <see langword="null"/>.</exception>
     public static void ConfigureAnalyzer(this IServiceCollection services, Action<AnalyzerConfiguration> configure)
     {
-        if (services is null)
-            throw new ArgumentNullException(nameof(services));
-
-        if (configure is null)
-            throw new ArgumentNullException(nameof(configure));
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configure);
 
         var config = new AnalyzerConfiguration();
         configure(config);
@@ -200,6 +216,7 @@ public sealed class AnalyzerConfiguration
     /// <summary>
     /// Validates the configuration.
     /// </summary>
+    /// <returns><see langword="true"/> if the configuration is valid; otherwise, <see langword="false"/>.</returns>
     public bool IsValid()
     {
         return !string.IsNullOrWhiteSpace(DataDirectory)
@@ -212,6 +229,7 @@ public sealed class AnalyzerConfiguration
     /// <summary>
     /// Ensures the data directory exists.
     /// </summary>
+    /// <exception cref="IOException">Thrown when the directory cannot be created.</exception>
     public void EnsureDataDirectoryExists()
     {
         if (!Directory.Exists(DataDirectory))
@@ -223,6 +241,7 @@ public sealed class AnalyzerConfiguration
     /// <summary>
     /// Creates a copy of this configuration.
     /// </summary>
+    /// <returns>A new <see cref="AnalyzerConfiguration"/> instance with the same values.</returns>
     public AnalyzerConfiguration Clone()
     {
         return new AnalyzerConfiguration
