@@ -28,12 +28,10 @@ public static class AnalysisStartedEventJsonExtensions
     /// <param name="value">The event to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation.</param>
     /// <returns>A JSON string representation of the event.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public static string ToJson(this AnalysisStartedEvent value, bool indented = false)
     {
-        if (value is null)
-        {
-            throw new ArgumentNullException(nameof(value));
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         var options = indented
             ? new JsonSerializerOptions(_jsonSerializerOptions)
@@ -49,21 +47,27 @@ public static class AnalysisStartedEventJsonExtensions
     /// Deserializes an AnalysisStartedEvent from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized AnalysisStartedEvent, or null if parsing fails.</returns>
-    public static AnalysisStartedEvent? FromJson(string json)
+    /// <returns>The deserialized AnalysisStartedEvent.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+    public static AnalysisStartedEvent FromJson(string json)
     {
+        ArgumentNullException.ThrowIfNull(json);
+
         if (string.IsNullOrWhiteSpace(json))
         {
-            return null;
+            throw new ArgumentException("JSON string cannot be empty or whitespace.", nameof(json));
         }
 
         try
         {
-            return JsonSerializer.Deserialize<AnalysisStartedEvent>(json, _jsonSerializerOptions);
+            return JsonSerializer.Deserialize<AnalysisStartedEvent>(json, _jsonSerializerOptions)
+                ?? throw new JsonException("Deserialization returned null, expected valid AnalysisStartedEvent.");
         }
-        catch (JsonException)
+        catch (JsonException ex)
         {
-            return null;
+            throw new JsonException("Failed to deserialize AnalysisStartedEvent from JSON.", ex);
         }
     }
 
@@ -85,7 +89,7 @@ public static class AnalysisStartedEventJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<AnalysisStartedEvent>(json, _jsonSerializerOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
