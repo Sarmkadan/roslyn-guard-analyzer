@@ -29,13 +29,11 @@ public static class WebhookHandlerJsonExtensions
     /// </summary>
     /// <param name="value">The webhook handler instance to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="value"/> is <see langword="null"/>.</exception>
     /// <returns>A JSON string representation of the webhook handler.</returns>
     public static string ToJson(this WebhookHandler value, bool indented = false)
     {
-        if (value is null)
-        {
-            throw new ArgumentNullException(nameof(value));
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         var options = indented
             ? new JsonSerializerOptions(_jsonSerializerOptions)
@@ -51,13 +49,11 @@ public static class WebhookHandlerJsonExtensions
     /// Deserializes a JSON string to a <see cref="WebhookHandler"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
     /// <returns>The deserialized webhook handler instance, or null if the JSON is invalid.</returns>
     public static WebhookHandler? FromJson(string json)
     {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            throw new ArgumentException("JSON string cannot be null or whitespace", nameof(json));
-        }
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
         try
         {
@@ -74,6 +70,7 @@ public static class WebhookHandlerJsonExtensions
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized webhook handler instance, or null if deserialization failed.</param>
+    /// <exception cref="ArgumentException"><paramref name="json"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     public static bool TryFromJson(string json, out WebhookHandler? value)
     {
@@ -87,7 +84,7 @@ public static class WebhookHandlerJsonExtensions
         try
         {
             value = JsonSerializer.Deserialize<WebhookHandler>(json, _jsonSerializerOptions);
-            return true;
+            return value is not null;
         }
         catch (JsonException)
         {
