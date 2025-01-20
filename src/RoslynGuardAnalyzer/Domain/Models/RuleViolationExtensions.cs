@@ -14,8 +14,8 @@ using RoslynGuardAnalyzer.Core;
 namespace RoslynGuardAnalyzer.Domain.Models;
 
 /// <summary>
-/// Extension methods for <see cref="RuleViolation"/> to provide additional functionality
-/// for working with rule violations in various scenarios.
+/// Provides extension methods for <see cref="RuleViolation"/> to enable fluent modification
+/// and querying of rule violations with improved readability and type safety.
 /// </summary>
 public static class RuleViolationExtensions
 {
@@ -24,14 +24,13 @@ public static class RuleViolationExtensions
     /// </summary>
     /// <param name="violation">The original violation to copy from.</param>
     /// <param name="newMessage">The new message to set.</param>
-    /// <returns>A new RuleViolation instance with the updated message.</returns>
+    /// <returns>A new <see cref="RuleViolation"/> instance with the updated message.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="newMessage"/> is <see langword="null"/>, empty, or whitespace.</exception>
     public static RuleViolation WithMessage(this RuleViolation violation, string newMessage)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
-
-        if (string.IsNullOrWhiteSpace(newMessage))
-            throw new ArgumentException("Message cannot be null or empty.", nameof(newMessage));
+        ArgumentNullException.ThrowIfNull(violation);
+        ArgumentException.ThrowIfNullOrWhiteSpace(newMessage, nameof(newMessage));
 
         var copy = new RuleViolation
         {
@@ -61,14 +60,15 @@ public static class RuleViolationExtensions
     /// <param name="newFilePath">The new file path.</param>
     /// <param name="newLineNumber">The new line number.</param>
     /// <param name="newColumnNumber">The new column number.</param>
-    /// <returns>A new RuleViolation instance with the updated location.</returns>
+    /// <returns>A new <see cref="RuleViolation"/> instance with the updated location.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="newFilePath"/> is <see langword="null"/>, empty, or whitespace.
+    /// <paramref name="newLineNumber"/> must be positive.
+    /// <paramref name="newColumnNumber"/> cannot be negative.</exception>
     public static RuleViolation WithLocation(this RuleViolation violation, string newFilePath, int newLineNumber, int newColumnNumber = 0)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
-
-        if (string.IsNullOrWhiteSpace(newFilePath))
-            throw new ArgumentException("File path cannot be null or empty.", nameof(newFilePath));
+        ArgumentNullException.ThrowIfNull(violation);
+        ArgumentException.ThrowIfNullOrWhiteSpace(newFilePath, nameof(newFilePath));
 
         if (newLineNumber <= 0)
             throw new ArgumentException("Line number must be positive.", nameof(newLineNumber));
@@ -102,11 +102,11 @@ public static class RuleViolationExtensions
     /// </summary>
     /// <param name="violation">The original violation to copy from.</param>
     /// <param name="newSeverity">The new severity level.</param>
-    /// <returns>A new RuleViolation instance with the updated severity.</returns>
+    /// <returns>A new <see cref="RuleViolation"/> instance with the updated severity.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
     public static RuleViolation WithSeverity(this RuleViolation violation, SeverityLevel newSeverity)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         var copy = new RuleViolation
         {
@@ -135,14 +135,13 @@ public static class RuleViolationExtensions
     /// <param name="violation">The original violation to copy from.</param>
     /// <param name="key">The metadata key to add or update.</param>
     /// <param name="value">The metadata value to set.</param>
-    /// <returns>A new RuleViolation instance with the additional metadata.</returns>
+    /// <returns>A new <see cref="RuleViolation"/> instance with the additional metadata.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="key"/> is <see langword="null"/>, empty, or whitespace.</exception>
     public static RuleViolation WithMetadata(this RuleViolation violation, string key, string value)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
-
-        if (string.IsNullOrWhiteSpace(key))
-            throw new ArgumentException("Metadata key cannot be null or empty.", nameof(key));
+        ArgumentNullException.ThrowIfNull(violation);
+        ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
 
         var copy = new RuleViolation
         {
@@ -171,11 +170,11 @@ public static class RuleViolationExtensions
     /// </summary>
     /// <param name="violation">The original violation to copy from.</param>
     /// <param name="newDetectedAt">The new detection timestamp.</param>
-    /// <returns>A new RuleViolation instance with the updated timestamp.</returns>
+    /// <returns>A new <see cref="RuleViolation"/> instance with the updated timestamp.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
     public static RuleViolation WithDetectedAt(this RuleViolation violation, DateTime newDetectedAt)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         var copy = new RuleViolation
         {
@@ -204,10 +203,10 @@ public static class RuleViolationExtensions
     /// <param name="violation">The violation to check.</param>
     /// <param name="category">The category to check against.</param>
     /// <returns>True if the violation's category matches the specified category.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
     public static bool HasCategory(this RuleViolation violation, RuleCategory category)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         return violation.Category == category;
     }
@@ -218,13 +217,12 @@ public static class RuleViolationExtensions
     /// <param name="violation">The violation to check.</param>
     /// <param name="categories">The categories to check against.</param>
     /// <returns>True if the violation's category matches any of the specified categories.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="categories"/> is <see langword="null"/>.</exception>
     public static bool HasAnyCategory(this RuleViolation violation, params RuleCategory[] categories)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
-
-        if (categories == null || categories.Length == 0)
-            return false;
+        ArgumentNullException.ThrowIfNull(violation);
+        ArgumentNullException.ThrowIfNull(categories);
 
         return categories.Contains(violation.Category);
     }
@@ -233,16 +231,16 @@ public static class RuleViolationExtensions
     /// Gets a formatted string containing the violation's code snippet if available.
     /// </summary>
     /// <param name="violation">The violation to get snippet from.</param>
-    /// <returns>Formatted code snippet with line numbers, or null if no snippet exists.</returns>
+    /// <returns>Formatted code snippet with line numbers, or <see langword="null"/> if no snippet exists.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
     public static string? GetFormattedCodeSnippet(this RuleViolation violation)
     {
-        if (violation == null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         if (string.IsNullOrWhiteSpace(violation.CodeSnippet))
             return null;
 
-        var lines = violation.CodeSnippet.Split(new[] { '\n' }, StringSplitOptions.None);
+        var lines = violation.CodeSnippet.Split(['\n'], StringSplitOptions.None);
         var sb = new StringBuilder();
 
         for (int i = 0; i < lines.Length; i++)
