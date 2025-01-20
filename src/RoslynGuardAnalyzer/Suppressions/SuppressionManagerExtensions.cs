@@ -7,8 +7,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using RoslynGuardAnalyzer.Domain.Models;
 
 namespace RoslynGuardAnalyzer.Suppressions;
@@ -27,6 +25,7 @@ public static class SuppressionManagerExtensions
     /// <param name="author">Optional author of the suppression (defaults to current user).</param>
     /// <param name="expiresAt">Optional expiration date for the suppression.</param>
     /// <returns>The created suppression record.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="manager"/> or <paramref name="violation"/> is <see langword="null"/>.</exception>
     public static SuppressionRecord AddSuppression(
         this SuppressionManager manager,
         RuleViolation violation,
@@ -34,11 +33,8 @@ public static class SuppressionManagerExtensions
         string? author = null,
         DateTime? expiresAt = null)
     {
-        if (manager is null)
-            throw new ArgumentNullException(nameof(manager));
-
-        if (violation is null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(manager);
+        ArgumentNullException.ThrowIfNull(violation);
 
         var record = new SuppressionRecord
         {
@@ -66,15 +62,14 @@ public static class SuppressionManagerExtensions
     /// <param name="manager">The suppression manager.</param>
     /// <param name="ruleId">The rule ID to match.</param>
     /// <returns>The number of suppressions removed.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="manager"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="ruleId"/> is null or whitespace.</exception>
     public static int RemoveSuppressionsByRuleId(
         this SuppressionManager manager,
         string ruleId)
     {
-        if (manager is null)
-            throw new ArgumentNullException(nameof(manager));
-
-        if (string.IsNullOrWhiteSpace(ruleId))
-            throw new ArgumentException("Rule ID cannot be null or empty.", nameof(ruleId));
+        ArgumentNullException.ThrowIfNull(manager);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleId);
 
         var suppressions = manager.GetSuppressions(ruleId);
         int removedCount = 0;
@@ -96,15 +91,13 @@ public static class SuppressionManagerExtensions
     /// <param name="manager">The suppression manager.</param>
     /// <param name="violations">The violations to check.</param>
     /// <returns>True if any violation is suppressed; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="manager"/> or <paramref name="violations"/> is <see langword="null"/>.</exception>
     public static bool HasAnySuppressed(
         this SuppressionManager manager,
         IEnumerable<RuleViolation> violations)
     {
-        if (manager is null)
-            throw new ArgumentNullException(nameof(manager));
-
-        if (violations is null)
-            throw new ArgumentNullException(nameof(violations));
+        ArgumentNullException.ThrowIfNull(manager);
+        ArgumentNullException.ThrowIfNull(violations);
 
         return violations.Any(violation => manager.IsSuppressed(violation));
     }
@@ -115,12 +108,12 @@ public static class SuppressionManagerExtensions
     /// <param name="manager">The suppression manager.</param>
     /// <param name="ruleId">Optional rule ID to filter by. If null, returns total count.</param>
     /// <returns>The count of active suppressions.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="manager"/> is <see langword="null"/>.</exception>
     public static int GetSuppressionCount(
         this SuppressionManager manager,
         string? ruleId = null)
     {
-        if (manager is null)
-            throw new ArgumentNullException(nameof(manager));
+        ArgumentNullException.ThrowIfNull(manager);
 
         var suppressions = manager.GetSuppressions(ruleId);
 
@@ -137,12 +130,12 @@ public static class SuppressionManagerExtensions
     /// <param name="manager">The suppression manager.</param>
     /// <param name="ruleId">Optional rule ID to filter by.</param>
     /// <returns>A new list containing all active suppression records.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="manager"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<SuppressionRecord> ExportActiveSuppressions(
         this SuppressionManager manager,
         string? ruleId = null)
     {
-        if (manager is null)
-            throw new ArgumentNullException(nameof(manager));
+        ArgumentNullException.ThrowIfNull(manager);
 
         var allSuppressions = manager.GetSuppressions(ruleId);
 
@@ -159,11 +152,11 @@ public static class SuppressionManagerExtensions
     /// </summary>
     /// <param name="manager">The suppression manager.</param>
     /// <returns>The number of expired suppressions removed.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="manager"/> is <see langword="null"/>.</exception>
     public static int CleanupExpiredSuppressions(
         this SuppressionManager manager)
     {
-        if (manager is null)
-            throw new ArgumentNullException(nameof(manager));
+        ArgumentNullException.ThrowIfNull(manager);
 
         var allSuppressions = manager.GetSuppressions();
         var expiredCount = 0;
@@ -188,15 +181,14 @@ public static class SuppressionManagerExtensions
     /// <param name="manager">The suppression manager.</param>
     /// <param name="ruleId">The rule ID to check.</param>
     /// <returns>True if the rule has active suppressions; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="manager"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="ruleId"/> is null or whitespace.</exception>
     public static bool HasActiveSuppressionsForRule(
         this SuppressionManager manager,
         string ruleId)
     {
-        if (manager is null)
-            throw new ArgumentNullException(nameof(manager));
-
-        if (string.IsNullOrWhiteSpace(ruleId))
-            throw new ArgumentException("Rule ID cannot be null or empty.", nameof(ruleId));
+        ArgumentNullException.ThrowIfNull(manager);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleId);
 
         var suppressions = manager.GetSuppressions(ruleId);
         return suppressions.Any(record =>
