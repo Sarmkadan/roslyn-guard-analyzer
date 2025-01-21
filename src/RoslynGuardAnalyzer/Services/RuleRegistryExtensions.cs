@@ -25,13 +25,12 @@ public static class RuleRegistryExtensions
     /// <param name="registry">The rule registry instance.</param>
     /// <param name="ruleId">The ID of the rule to retrieve.</param>
     /// <returns>The found analysis rule.</returns>
-    /// <exception cref="KeyNotFoundException">Thrown when the rule ID is not found in the registry.</exception>
+    /// <exception cref="ArgumentNullException"><paramref name="registry"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="ruleId"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
+    /// <exception cref="KeyNotFoundException">The rule ID is not found in the registry.</exception>
     public static AnalysisRule GetRequiredRule(this RuleRegistry registry, string ruleId)
     {
-        if (registry is null)
-        {
-            throw new ArgumentNullException(nameof(registry));
-        }
+        ArgumentNullException.ThrowIfNull(registry);
 
         if (string.IsNullOrWhiteSpace(ruleId))
         {
@@ -48,19 +47,12 @@ public static class RuleRegistryExtensions
     /// <param name="registry">The rule registry instance.</param>
     /// <param name="ruleId">The ID of the rule to check.</param>
     /// <returns>True if the rule exists; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="registry"/> is <see langword="null"/>.</exception>
     public static bool ContainsRule(this RuleRegistry registry, string ruleId)
     {
-        if (registry is null)
-        {
-            throw new ArgumentNullException(nameof(registry));
-        }
+        ArgumentNullException.ThrowIfNull(registry);
 
-        if (string.IsNullOrWhiteSpace(ruleId))
-        {
-            return false;
-        }
-
-        return registry.GetRule(ruleId) is not null;
+        return !string.IsNullOrWhiteSpace(ruleId) && registry.GetRule(ruleId) is not null;
     }
 
     /// <summary>
@@ -69,19 +61,14 @@ public static class RuleRegistryExtensions
     /// <param name="registry">The rule registry instance.</param>
     /// <param name="category">The category to count rules for.</param>
     /// <returns>The count of rules in the specified category.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="registry"/> is <see langword="null"/>.</exception>
     public static int GetRuleCountByCategory(this RuleRegistry registry, string category)
     {
-        if (registry is null)
-        {
-            throw new ArgumentNullException(nameof(registry));
-        }
+        ArgumentNullException.ThrowIfNull(registry);
 
-        if (string.IsNullOrWhiteSpace(category))
-        {
-            return 0;
-        }
-
-        return registry.GetRulesByCategory(category).Count;
+        return string.IsNullOrWhiteSpace(category)
+            ? 0
+            : registry.GetRulesByCategory(category).Count;
     }
 
     /// <summary>
@@ -89,12 +76,10 @@ public static class RuleRegistryExtensions
     /// </summary>
     /// <param name="registry">The rule registry instance.</param>
     /// <returns>A read-only list of all registered rule IDs.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="registry"/> is <see langword="null"/>.</exception>
     public static IReadOnlyList<string> GetAllRuleIds(this RuleRegistry registry)
     {
-        if (registry is null)
-        {
-            throw new ArgumentNullException(nameof(registry));
-        }
+        ArgumentNullException.ThrowIfNull(registry);
 
         return registry.GetAllRules()
             .Select(r => r.Id)
