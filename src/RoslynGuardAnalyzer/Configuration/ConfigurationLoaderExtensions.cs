@@ -20,6 +20,11 @@ namespace RoslynGuardAnalyzer.Configuration;
 public static class ConfigurationLoaderExtensions
 {
     /// <summary>
+    /// Seals the class to prevent inheritance.
+    /// </summary>
+    static ConfigurationLoaderExtensions() { }
+
+    /// <summary>
     /// Loads configuration from a specific file path with validation.
     /// </summary>
     /// <param name="loader">The configuration loader instance.</param>
@@ -34,8 +39,7 @@ public static class ConfigurationLoaderExtensions
         string filePath,
         bool validate = true)
     {
-        if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Configuration file not found: {filePath}");
@@ -58,21 +62,21 @@ public static class ConfigurationLoaderExtensions
     /// <param name="baseConfig">The base configuration to merge with defaults.</param>
     /// <param name="projectPath">Path to search for default configuration.</param>
     /// <returns>Merged configuration with defaults applied where not specified.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when baseConfig is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when projectPath is null or empty.</exception>
     public static async Task<AnalysisConfig> MergeWithDefaultAsync(
         this ConfigurationLoader loader,
         AnalysisConfig baseConfig,
         string projectPath)
     {
-        if (baseConfig is null)
-            throw new ArgumentNullException(nameof(baseConfig));
-
-        if (string.IsNullOrWhiteSpace(projectPath))
-            throw new ArgumentException("Project path cannot be null or empty", nameof(projectPath));
+        ArgumentNullException.ThrowIfNull(baseConfig);
+        ArgumentException.ThrowIfNullOrWhiteSpace(projectPath);
 
         var defaultConfig = await ConfigurationLoader.TryLoadDefaultAsync(projectPath);
 
         if (defaultConfig is null)
             return baseConfig;
+
 
         // Merge configurations: base config takes precedence over defaults
         var merged = new AnalysisConfig
@@ -122,16 +126,15 @@ public static class ConfigurationLoaderExtensions
     /// <param name="config">The configuration to check.</param>
     /// <param name="ruleId">The rule identifier to check.</param>
     /// <returns>True if the rule is enabled; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when ruleId is null or empty.</exception>
     public static bool IsRuleEnabled(
         this ConfigurationLoader loader,
         AnalysisConfig config,
         string ruleId)
     {
-        if (config is null)
-            throw new ArgumentNullException(nameof(config));
-
-        if (string.IsNullOrWhiteSpace(ruleId))
-            throw new ArgumentException("Rule ID cannot be null or empty", nameof(ruleId));
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleId);
 
         if (config.EnabledRules.Count == 0)
             return true; // All rules enabled if none specified
@@ -146,16 +149,15 @@ public static class ConfigurationLoaderExtensions
     /// <param name="config">The configuration containing exclude patterns.</param>
     /// <param name="filePath">The file path to check.</param>
     /// <returns>True if the file should be excluded; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when filePath is null or empty.</exception>
     public static bool IsPathExcluded(
         this ConfigurationLoader loader,
         AnalysisConfig config,
         string filePath)
     {
-        if (config is null)
-            throw new ArgumentNullException(nameof(config));
-
-        if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         if (config.ExcludePatterns.Count == 0)
             return false; // No patterns means nothing excluded
@@ -199,8 +201,14 @@ public static class ConfigurationLoaderExtensions
     /// <summary>
     /// Simple wildcard pattern matching implementation.
     /// </summary>
+    /// <param name="pattern">The pattern to match against, may contain wildcards (* and ?).</param>
+    /// <param name="input">The input string to test.</param>
+    /// <returns>True if the input matches the pattern; otherwise false.</returns>
     private static bool SimpleMatch(string pattern, string input)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(pattern);
+        ArgumentException.ThrowIfNullOrWhiteSpace(input);
+
         var patternIndex = 0;
         var inputIndex = 0;
         var patternLength = pattern.Length;
@@ -210,7 +218,8 @@ public static class ConfigurationLoaderExtensions
 
         while (inputIndex < inputLength)
         {
-            if (patternIndex < patternLength && (pattern[patternIndex] == '?' || pattern[patternIndex] == input[inputIndex]))
+            if (patternIndex < patternLength &&
+                (pattern[patternIndex] == '?' || pattern[patternIndex] == input[inputIndex]))
             {
                 patternIndex++;
                 inputIndex++;
@@ -247,10 +256,10 @@ public static class ConfigurationLoaderExtensions
     /// <param name="loader">The configuration loader instance.</param>
     /// <param name="config">The configuration to copy.</param>
     /// <returns>A new independent copy of the configuration.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
     public static AnalysisConfig Clone(this ConfigurationLoader loader, AnalysisConfig config)
     {
-        if (config is null)
-            throw new ArgumentNullException(nameof(config));
+        ArgumentNullException.ThrowIfNull(config);
 
         var clone = new AnalysisConfig();
         clone.EnabledRules.AddRange(config.EnabledRules);
@@ -269,17 +278,14 @@ public static class ConfigurationLoaderExtensions
     /// <param name="config">The configuration to check.</param>
     /// <param name="forceDisable">Whether to force disable caching regardless of config.</param>
     /// <returns>True if caching should be enabled; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when config is null.</exception>
     public static bool ShouldEnableCaching(
         this ConfigurationLoader loader,
         AnalysisConfig config,
         bool forceDisable = false)
     {
-        if (config is null)
-            throw new ArgumentNullException(nameof(config));
+        ArgumentNullException.ThrowIfNull(config);
 
-        if (forceDisable)
-            return false;
-
-        return config.EnableCaching;
+        return !forceDisable && config.EnableCaching;
     }
 }
