@@ -24,27 +24,13 @@ public static class JsonFormatterExtensions
     /// <param name="formatter">The formatter instance.</param>
     /// <param name="violation">The violation to format.</param>
     /// <returns>JSON representation of the violation.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="formatter"/> or <paramref name="violation"/> is null.</exception>
     public static string FormatViolation(this JsonFormatter formatter, RuleViolation violation)
     {
-        if (formatter is null)
-            throw new ArgumentNullException(nameof(formatter));
-
-        if (violation is null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(formatter);
+        ArgumentNullException.ThrowIfNull(violation);
 
         var violationsList = new List<RuleViolation> { violation };
-        var output = new
-        {
-            violation.RuleId,
-            violation.RuleName,
-            Severity = violation.Severity.ToString(),
-            violation.Message,
-            violation.FilePath,
-            violation.LineNumber,
-            violation.ColumnNumber,
-            violation.CodeSnippet,
-            TimestampUtc = DateTime.UtcNow.ToString("O")
-        };
 
         var result = new AnalysisResult
         {
@@ -66,13 +52,11 @@ public static class JsonFormatterExtensions
     /// <param name="formatter">The formatter instance.</param>
     /// <param name="violations">The violations to format.</param>
     /// <returns>JSON representation with severity grouping.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="formatter"/> or <paramref name="violations"/> is null.</exception>
     public static string FormatViolationsBySeverity(this JsonFormatter formatter, IEnumerable<RuleViolation> violations)
     {
-        if (formatter is null)
-            throw new ArgumentNullException(nameof(formatter));
-
-        if (violations is null)
-            throw new ArgumentNullException(nameof(violations));
+        ArgumentNullException.ThrowIfNull(formatter);
+        ArgumentNullException.ThrowIfNull(violations);
 
         var violationsList = violations.ToList();
         var grouped = violationsList
@@ -115,16 +99,13 @@ public static class JsonFormatterExtensions
     /// <param name="violations">The violations to filter and format.</param>
     /// <param name="ruleId">The rule ID to filter by.</param>
     /// <returns>JSON representation of filtered violations.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="formatter"/> or <paramref name="violations"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="ruleId"/> is null or whitespace.</exception>
     public static string FormatViolationsByRule(this JsonFormatter formatter, IEnumerable<RuleViolation> violations, string ruleId)
     {
-        if (formatter is null)
-            throw new ArgumentNullException(nameof(formatter));
-
-        if (violations is null)
-            throw new ArgumentNullException(nameof(violations));
-
-        if (string.IsNullOrWhiteSpace(ruleId))
-            throw new ArgumentException("Rule ID cannot be null or whitespace.", nameof(ruleId));
+        ArgumentNullException.ThrowIfNull(formatter);
+        ArgumentNullException.ThrowIfNull(violations);
+        ArgumentException.ThrowIfNullOrWhiteSpace(ruleId);
 
         var filtered = violations.Where(v => v.RuleId.Equals(ruleId, StringComparison.OrdinalIgnoreCase)).ToList();
 
@@ -148,19 +129,13 @@ public static class JsonFormatterExtensions
     /// <param name="formatter">The formatter instance.</param>
     /// <param name="violations">The violations to summarize.</param>
     /// <returns>Compact JSON summary suitable for dashboards.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="formatter"/> or <paramref name="violations"/> is null.</exception>
     public static string FormatViolationSummary(this JsonFormatter formatter, IEnumerable<RuleViolation> violations)
     {
-        if (formatter is null)
-            throw new ArgumentNullException(nameof(formatter));
-
-        if (violations is null)
-            throw new ArgumentNullException(nameof(violations));
+        ArgumentNullException.ThrowIfNull(formatter);
+        ArgumentNullException.ThrowIfNull(violations);
 
         var violationsList = violations.ToList();
-        var criticalCount = violationsList.Count(v => v.Severity == SeverityLevel.Critical);
-        var errorCount = violationsList.Count(v => v.Severity == SeverityLevel.Error);
-        var warningCount = violationsList.Count(v => v.Severity == SeverityLevel.Warning);
-        var infoCount = violationsList.Count(v => v.Severity == SeverityLevel.Info);
 
         var result = new AnalysisResult
         {
