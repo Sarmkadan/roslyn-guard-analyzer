@@ -1097,6 +1097,58 @@ Detailed guides are available in the [`docs/`](./docs/) directory:
 | [FAQ](./docs/faq.md) | Common questions and troubleshooting |
 | [Migration v2](./docs/MIGRATION_v2.md) | Upgrading from v1 to v2 |
 
+## RuleViolationExtensions
+
+The `RuleViolationExtensions` class provides a set of fluent extension methods for working with `RuleViolation` objects. These methods enable you to:
+
+- Create modified copies of violations with updated properties using `WithMessage`, `WithLocation`, `WithSeverity`, `WithMetadata`, and `WithDetectedAt`
+- Query violation categories using `HasCategory` and `HasAnyCategory`
+- Format code snippets with line numbers using `GetFormattedCodeSnippet`
+
+All methods return new `RuleViolation` instances rather than modifying the original, following immutable design patterns for thread safety and predictable behavior.
+
+### Usage Example
+
+```csharp
+// Start with a violation from the rule engine
+var violations = await ruleEngine.ExecuteRulesAsync(codeElement);
+var originalViolation = violations.First();
+
+// Use extension methods to create modified copies
+var updatedViolation = originalViolation
+    .WithMessage("Method 'ProcessData' must be marked as async")
+    .WithSeverity(SeverityLevel.Warning)
+    .WithMetadata("suppressionId", "SUP-123")
+    .WithMetadata("reviewer", "john.doe@company.com")
+    .WithDetectedAt(DateTime.UtcNow.AddDays(-1));
+
+// Check violation categories
+if (originalViolation.HasCategory(RuleCategory.AsyncPattern))
+{
+    Console.WriteLine("This is an async pattern violation");
+}
+
+if (originalViolation.HasAnyCategory(RuleCategory.AsyncPattern, RuleCategory.LayerDependencies))
+{
+    Console.WriteLine("This is either an async or layer violation");
+}
+
+// Get formatted code snippet with line numbers
+var snippet = originalViolation.GetFormattedCodeSnippet();
+if (snippet != null)
+{
+    Console.WriteLine("Code snippet:");
+    Console.WriteLine(snippet);
+}
+
+// Create a new violation at a different location
+var relocatedViolation = originalViolation.WithLocation(
+    "src/Services/UserService.cs",
+    42,
+    5
+);
+```
+
 ## Related Projects
 
 Part of a collection of .NET libraries and tools. See more at [github.com/sarmkadan](https://github.com/sarmkadan).
