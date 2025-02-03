@@ -43,3 +43,45 @@ Console.WriteLine($"Removed {removedCount} expired suppressions");
 var count = suppressionManager.GetSuppressionCount();
 Console.WriteLine($"Total suppressions: {count}");
 ```
+
+## ResultAggregatorExtensions
+
+The `ResultAggregatorExtensions` class provides utility methods to aggregate and categorize analysis results. It enables summarizing violations by file, rule, and severity, while supporting bulk additions of analysis results.
+
+### Usage Example
+```csharp
+var aggregator = new ResultAggregator();
+var results = new List<AnalysisResult>
+{
+    new AnalysisResult { Violations = new List<RuleViolation> { new RuleViolation { RuleId = "LYR001", Severity = "High" } } },
+    new AnalysisResult { Violations = new List<RuleViolation> { new RuleViolation { RuleId = "LYR002", Severity = "Medium" } } }
+};
+
+// Add results in bulk
+ResultAggregatorExtensions.AddRange(aggregator, results);
+
+// Get total violations
+int total = ResultAggregatorExtensions.GetTotalViolations(aggregator);
+Console.WriteLine($"Total violations: {total}");
+
+// Group violations by file
+var violationsByFile = ResultAggregatorExtensions.GetViolationsByFile(aggregator);
+foreach (var file in violationsByFile)
+{
+    Console.WriteLine($"File: {file.Key}, Violations: {file.Value.Count}");
+}
+
+// Group violations by rule
+var violationsByRule = ResultAggregatorExtensions.GetViolationsByRule(aggregator);
+foreach (var rule in violationsByRule)
+{
+    Console.WriteLine($"Rule: {rule.Key}, Violations: {rule.Value.Count}");
+}
+
+// Group violations by severity
+var violationsBySeverity = ResultAggregatorExtensions.GetViolationsBySeverity(aggregator);
+foreach (var severity in violationsBySeverity)
+{
+    Console.WriteLine($"Severity: {severity.Key}, Violations: {severity.Value.Count}");
+}
+```
