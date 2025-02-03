@@ -85,3 +85,30 @@ foreach (var severity in violationsBySeverity)
     Console.WriteLine($"Severity: {severity.Key}, Violations: {severity.Value.Count}");
 }
 ```
+
+## ConfigurationLoaderExtensions
+
+The `ConfigurationLoaderExtensions` class provides utility methods for loading, merging, and querying analysis configurations. It enables rule enablement checks, path exclusion validation, and caching configuration evaluation.
+
+### Usage Example
+```csharp
+var config = await ConfigurationLoaderExtensions.LoadFromFileAsync("analysis-config.json");
+var mergedConfig = await ConfigurationLoaderExtensions.MergeWithDefaultAsync(config);
+
+if (ConfigurationLoaderExtensions.IsRuleEnabled(mergedConfig, "LYR001"))
+{
+    Console.WriteLine("Rule LYR001 is enabled");
+}
+
+if (ConfigurationLoaderExtensions.IsPathExcluded(mergedConfig, "src/Domain/ExcludedFile.cs"))
+{
+    Console.WriteLine("Path is excluded from analysis");
+}
+
+if (ConfigurationLoaderExtensions.ShouldEnableCaching(mergedConfig))
+{
+    Console.WriteLine("Caching is enabled for this configuration");
+}
+
+var clonedConfig = ConfigurationLoaderExtensions.Clone(mergedConfig);
+```
