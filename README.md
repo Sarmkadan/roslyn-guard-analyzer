@@ -86,6 +86,31 @@ foreach (var severity in violationsBySeverity)
 }
 ```
 
+## RuleEngineBenchmarksExtensions
+
+The `RuleEngineBenchmarksExtensions` class provides benchmarking utilities to measure performance characteristics of the rule engine. It supports individual rule benchmarking, scalability testing, and overhead measurement through configurable iterations and element counts.
+
+### Usage Example
+```csharp
+var benchmarks = new RuleEngineBenchmarksExtensions
+{
+    WarmupIterations = 5,
+    BenchmarkIterations = 10,
+    ElementCount = 1000
+};
+
+// Benchmark single rule performance
+var ruleResult = await benchmarks.BenchmarkRuleAsync("LYR001", 500);
+Console.WriteLine($"Rule LYR001: {ruleResult}");
+
+// Benchmark scalability across element counts
+var scalabilityResults = await benchmarks.BenchmarkScalabilityAsync(100, 1000);
+foreach (var result in scalabilityResults)
+{
+    Console.WriteLine($"Elements: {result.Key}, {result.Value}");
+}
+```
+
 ## ConfigurationLoaderExtensions
 
 The `ConfigurationLoaderExtensions` class provides utility methods for loading, merging, and querying analysis configurations. It enables rule enablement checks, path exclusion validation, and caching configuration evaluation.
