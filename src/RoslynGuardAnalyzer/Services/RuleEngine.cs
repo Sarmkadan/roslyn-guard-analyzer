@@ -300,8 +300,17 @@ public sealed class RuleEngine : IRuleEngine
         return violations;
     }
 
+    private static readonly HashSet<string> ValueTypeKeywords = new(StringComparer.Ordinal)
+    {
+        "bool", "byte", "sbyte", "char", "decimal", "double", "float", "int", "uint",
+        "long", "ulong", "short", "ushort", "void", "nint", "nuint", "System.Guid", "Guid"
+    };
+
     /// <summary>
     /// Checks for null safety violations.
+    /// Flags public non-nullable reference-type properties and fields that are not
+    /// value types, since they cannot be guaranteed to hold a non-null value without
+    /// explicit initialization or nullable annotation.
     /// </summary>
     private List<RuleViolation> CheckNullSafety(AnalysisRule rule, List<CodeElement> elements)
     {
@@ -309,15 +318,39 @@ public sealed class RuleEngine : IRuleEngine
 
         foreach (var element in elements)
         {
-            // Check if non-nullable types are properly handled
-            if (element.ElementType == CodeElementType.Property || element.ElementType == CodeElementType.Field)
+            if (element.ElementType != CodeElementType.Property && element.ElementType != CodeElementType.Field)
+                continue;
+
+            if (string.IsNullOrEmpty(element.ReturnType))
+                continue;
+
+            var baseType = element.ReturnType.TrimEnd('[', ']');
+
+            if (baseType.Contains('?', StringComparison.Ordinal))
+                continue;
+
+            if (ValueTypeKeywords.Contains(baseType))
+                continue;
+
+            if (!element.IsPublic)
+                continue;
+
+            var sev = GetSeverity(rule, element.FilePath);
+            if (!sev.HasValue)
+                continue;
+
+            var kind = element.ElementType == CodeElementType.Property ? "Property" : "Field";
+            violations.Add(new RuleViolation(
+                rule.Id,
+                rule.Name,
+                $"{kind} '{element.Name}' of reference type '{element.ReturnType}' is not nullable-annotated; " +
+                "mark it as nullable ('?') or ensure it is always initialized to a non-null value",
+                element.FilePath)
             {
-                if (!string.IsNullOrEmpty(element.ReturnType) && !element.ReturnType.Contains("?", StringComparison.Ordinal))
-                {
-                    // Non-nullable type without proper initialization detection
-                    // Simplified check - would need deeper semantic analysis in production
-                }
-            }
+                LineNumber = element.StartLineNumber,
+                Severity = sev.Value,
+                Category = rule.Category
+            });
         }
 
         return violations;

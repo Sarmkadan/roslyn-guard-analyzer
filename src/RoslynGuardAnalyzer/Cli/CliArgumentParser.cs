@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace RoslynGuardAnalyzer.Cli;
@@ -109,40 +110,40 @@ public sealed class CliArgumentParser
             }
             else if (arg.StartsWith("--timeout="))
             {
-                if (int.TryParse(arg.Substring(10), out var timeout))
+                if (int.TryParse(arg.Substring(10), NumberStyles.Integer, CultureInfo.InvariantCulture, out var timeout))
                     options.AnalysisTimeoutSeconds = timeout;
                 _index++;
             }
             else if (arg == "--timeout")
             {
                 var value = GetNextValue("--timeout");
-                if (int.TryParse(value, out var timeout))
+                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var timeout))
                     options.AnalysisTimeoutSeconds = timeout;
                 _index++;
             }
             else if (arg.StartsWith("--threads="))
             {
-                if (int.TryParse(arg.Substring(10), out var threads))
+                if (int.TryParse(arg.Substring(10), NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
                     options.MaxParallelThreads = threads;
                 _index++;
             }
             else if (arg == "--threads")
             {
                 var value = GetNextValue("--threads");
-                if (int.TryParse(value, out var threads))
+                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
                     options.MaxParallelThreads = threads;
                 _index++;
             }
             else if (arg.StartsWith("--log-level="))
             {
-                if (int.TryParse(arg.Substring(12), out var level))
+                if (int.TryParse(arg.Substring(12), NumberStyles.Integer, CultureInfo.InvariantCulture, out var level))
                     options.LogLevel = level;
                 _index++;
             }
             else if (arg == "--log-level")
             {
                 var value = GetNextValue("--log-level");
-                if (int.TryParse(value, out var level))
+                if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var level))
                     options.LogLevel = level;
                 _index++;
             }
