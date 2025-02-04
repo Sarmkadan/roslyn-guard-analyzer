@@ -5,6 +5,8 @@
 // =====================================================================
 
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -52,7 +54,7 @@ public static class CliArgumentParserJsonExtensions
         ArgumentNullException.ThrowIfNull(json);
 
         var options = JsonSerializer.Deserialize<CliOptions>(json, _jsonOptions);
-        return options is not null ? new CliArgumentParser([]) : null;
+        return options is not null ? new CliArgumentParser(ToArgs(options)) : null;
     }
 
     /// <summary>
@@ -73,7 +75,7 @@ public static class CliArgumentParserJsonExtensions
             var options = JsonSerializer.Deserialize<CliOptions>(json, _jsonOptions);
             if (options is not null)
             {
-                value = new CliArgumentParser([]);
+                value = new CliArgumentParser(ToArgs(options));
                 return true;
             }
 
@@ -83,5 +85,48 @@ public static class CliArgumentParserJsonExtensions
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Reconstructs an equivalent argument array from a <see cref="CliOptions"/> instance so that
+    /// re-parsing it via <see cref="CliArgumentParser"/> yields the same effective options.
+    /// </summary>
+    private static string[] ToArgs(CliOptions options)
+    {
+        var args = new List<string>();
+
+        if (options.ShowHelp)
+            args.Add("--help");
+        if (options.ShowVersion)
+            args.Add("--version");
+        if (options.Verbose)
+            args.Add("--verbose");
+        if (options.SkipCache)
+            args.Add("--skip-cache");
+        if (!string.IsNullOrEmpty(options.ProjectPath))
+            args.Add($"--project={options.ProjectPath}");
+        if (!string.IsNullOrEmpty(options.FilePath))
+            args.Add($"--file={options.FilePath}");
+        if (!string.IsNullOrEmpty(options.OutputFile))
+            args.Add($"--output={options.OutputFile}");
+        if (!string.IsNullOrEmpty(options.OutputFormat))
+            args.Add($"--format={options.OutputFormat}");
+        if (!string.IsNullOrEmpty(options.ConfigFile))
+            args.Add($"--config={options.ConfigFile}");
+
+        args.Add($"--timeout={options.AnalysisTimeoutSeconds.ToString(CultureInfo.InvariantCulture)}");
+        args.Add($"--threads={options.MaxParallelThreads.ToString(CultureInfo.InvariantCulture)}");
+        args.Add($"--log-level={options.LogLevel.ToString(CultureInfo.InvariantCulture)}");
+
+        if (options.RuleFilter.Count > 0)
+            args.Add($"--rule-filter={string.Join(",", options.RuleFilter)}");
+        if (!options.FailOnViolations)
+            args.Add("--no-fail-on-violations");
+        if (!options.GenerateReport)
+            args.Add("--no-report");
+        if (!string.IsNullOrEmpty(options.ReportType))
+            args.Add($"--report-type={options.ReportType}");
+
+        return [.. args];
     }
 }

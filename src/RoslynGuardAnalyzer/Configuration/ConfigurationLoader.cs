@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading.Tasks;
 using RoslynGuardAnalyzer.Utilities;
@@ -110,13 +111,13 @@ public sealed class ConfigurationLoader
         if (json.Contains("\"maxViolations\""))
         {
             var value = ExtractJsonValue(json, "maxViolations");
-            if (int.TryParse(value, out var max))
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var max))
                 config.MaxViolationsToReport = max;
         }
 
         if (json.Contains("\"enableCaching\""))
         {
-            var value = ExtractJsonValue(json, "enableCaching").ToLower();
+            var value = ExtractJsonValue(json, "enableCaching").ToLowerInvariant();
             config.EnableCaching = value == "true";
         }
 

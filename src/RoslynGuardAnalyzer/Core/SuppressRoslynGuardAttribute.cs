@@ -16,7 +16,6 @@ namespace RoslynGuardAnalyzer
         /// <summary>
         /// Gets or sets the justification for suppressing the rule.
         /// </summary>
-        /// <param name="justification">The justification for suppressing the rule.</param>
         public string? Justification { get; set; }
 
         /// <summary>

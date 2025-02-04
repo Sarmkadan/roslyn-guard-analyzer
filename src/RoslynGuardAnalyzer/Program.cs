@@ -6,6 +6,7 @@
 // =============================================================================
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -207,13 +208,13 @@ internal sealed class Program
                     options.LogLevel = 0;
                     break;
                 case var arg when arg.StartsWith("--max-threads="):
-                    if (int.TryParse(arg["--max-threads=".Length..], out var threads))
+                    if (int.TryParse(arg["--max-threads=".Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
                     {
                         options.MaxParallelThreads = threads;
                     }
                     break;
                 case var arg when arg.StartsWith("--timeout="):
-                    if (int.TryParse(arg["--timeout=".Length..], out var timeout))
+                    if (int.TryParse(arg["--timeout=".Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var timeout))
                     {
                         options.AnalysisTimeoutSeconds = timeout;
                     }
