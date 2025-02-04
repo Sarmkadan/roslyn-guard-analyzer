@@ -2,6 +2,25 @@
 
 ...
 
+## ServiceCollectionExtensions
+
+The `ServiceCollectionExtensions` class provides utility methods for registering and configuring services related to the Roslyn Guard Analyzer. It enables registration of analyzer services, validation-only services, and reporting-only services, as well as configuration of various settings such as data directory, analysis timeout, and log level.
+
+### Usage Example
+```csharp
+var services = new ServiceCollection();
+ServiceCollectionExtensions.RegisterAnalyzerServices(services);
+ServiceCollectionExtensions.RegisterValidationOnly(services);
+ServiceCollectionExtensions.RegisterReportingOnly(services);
+
+var serviceProvider = services.BuildServiceProvider();
+var analyzer = serviceProvider.GetService<Analyzer>();
+var validationService = serviceProvider.GetService<ValidationService>();
+var reportingService = serviceProvider.GetService<ReportingService>();
+
+await ServiceCollectionExtensions.InitializeAnalyzerAsync(services);
+```
+
 ## SuppressionManagerExtensions
 
 The `SuppressionManagerExtensions` class provides utility methods to easily interact with suppression records. These extensions enable you to add, remove, and query suppressions for rule violations.
