@@ -156,3 +156,67 @@ if (ConfigurationLoaderExtensions.ShouldEnableCaching(mergedConfig))
 
 var clonedConfig = ConfigurationLoaderExtensions.Clone(mergedConfig);
 ```
+
+## RoslynGuardException
+
+The `RoslynGuardException` is the base exception class for all Roslyn Guard Analyzer errors. It provides standardized error handling with error codes, timestamps, and formatted exception messages. All analyzer-specific exceptions inherit from this base class, ensuring consistent error reporting across the entire codebase.
+
+### Key Properties
+
+- `ErrorCode` - A unique identifier for the error type
+- `OccurredAt` - The UTC timestamp when the exception occurred
+- `ToString()` - Returns a formatted string including error code, message, and timestamp
+
+### Usage Example
+
+```csharp
+try
+{
+    var analyzer = new Analyzer();
+    await analyzer.AnalyzeProjectAsync("src/MyProject.csproj");
+}
+catch (RoslynGuardException ex) when (ex.ErrorCode == "ERR001")
+{
+    // Handle specific error code
+    Console.WriteLine($"Error occurred: {ex.ToString()}");
+    Console.WriteLine($"Error code: {ex.ErrorCode}");
+    Console.WriteLine($"Timestamp: {ex.OccurredAt:yyyy-MM-dd HH:mm:ss}");
+}
+catch (RuleNotFoundException ruleEx)
+{
+    // Handle rule not found scenario
+    Console.WriteLine($"Rule '{ruleEx.RuleId}' was not found in configuration.");
+    Console.WriteLine($"Full error: {ruleEx.ToString()}");
+}
+catch (AnalysisException analysisEx)
+{
+    // Handle analysis failure with project details
+    Console.WriteLine($"Analysis failed for project: {analysisEx.ProjectPath}");
+    foreach (var detail in analysisEx.Details)
+    {
+        Console.WriteLine($"Detail: {detail}");
+    }
+    Console.WriteLine($"Error: {analysisEx.ToString()}");
+}
+catch (ConfigurationException configEx)
+{
+    // Handle configuration issues
+    if (configEx.ConfigKey != null)
+    {
+        Console.WriteLine($"Invalid configuration key: {configEx.ConfigKey}");
+    }
+    Console.WriteLine($"Configuration error: {configEx.ToString()}");
+}
+catch (FileAccessException fileEx)
+{
+    // Handle file I/O errors
+    Console.WriteLine($"File access error in: {fileEx.FilePath}");
+    Console.WriteLine($"Error: {fileEx.ToString()}");
+}
+catch (ParseException parseEx)
+{
+    // Handle parsing failures
+    Console.WriteLine($"Parse error in file: {parseEx.FilePath}");
+    Console.WriteLine($"Error: {parseEx.ToString()}");
+}
+```
