@@ -2,6 +2,27 @@
 
 ...
 
+## AnalysisStartedEvent
+
+The `AnalysisStartedEvent` is a notification event that is triggered when an analysis is initiated. It provides information about the project being analyzed, including the project path, analysis ID, and configuration file path.
+
+### Usage Example
+```csharp
+var eventBus = new EventBus();
+eventBus.Subscribe<AnalysisStartedEvent>(handler);
+
+// Subscribe to events of type AnalysisStartedEvent
+eventBus.Subscribe<AnalysisStartedEvent>(handler);
+
+// Usage example:
+eventBus.Subscribe<AnalysisStartedEvent>(handler => {
+    var event = handler.GetEvent();
+    Console.WriteLine($"Analysis started for project: {event.ProjectPath}");
+    Console.WriteLine($"Analysis ID: {event.AnalysisId}");
+    Console.WriteLine($"Config file path: {event.ConfigFilePath}");
+});
+```
+
 ## EventBus
 
 The `EventBus` class is a publish-subscribe event bus that enables decoupling of event producers and consumers. It allows for the registration of event handlers and the publication of events to all subscribed handlers.
