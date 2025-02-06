@@ -199,6 +199,58 @@ if (ConfigurationLoaderExtensions.ShouldEnableCaching(mergedConfig))
 var clonedConfig = ConfigurationLoaderExtensions.Clone(mergedConfig);
 ```
 
+## WebhookHandler
+
+The `WebhookHandler` class manages webhook registrations and dispatches analysis results to external endpoints. It's designed for CI/CD pipeline integrations and real-time notifications when analysis events occur. The handler supports registering, unregistering, and deactivating webhooks, as well as triggering webhooks for specific event types with custom payloads.
+
+### Usage Example
+```csharp
+// Create webhook handler with optional HTTP client factory
+var webhookHandler = new WebhookHandler();
+
+// Register a webhook for analysis completion events
+var webhookId = webhookHandler.RegisterWebhook(
+    url: "https://my-ci-server.example.com/api/webhooks/analysis-completed",
+    eventType: "AnalysisCompleted",
+    headers: new Dictionary<string, string>
+    {
+        {"Authorization", "Bearer my-secret-token"},
+        {"X-Custom-Header", "custom-value"}
+    }
+);
+
+// Register another webhook for violation detection events
+var violationWebhookId = webhookHandler.RegisterWebhook(
+    url: "https://monitoring.example.com/webhooks/violations",
+    eventType: "ViolationDetected"
+);
+
+// Get all registered webhooks
+var allWebhooks = webhookHandler.GetAllWebhooks();
+Console.WriteLine($"Total webhooks registered: {allWebhooks.Count}");
+
+// Get webhooks for a specific event type
+var analysisWebhooks = webhookHandler.GetWebhooksForEvent("AnalysisCompleted");
+Console.WriteLine($"Analysis webhooks: {analysisWebhooks.Count}");
+
+// Trigger webhooks for an event
+var analysisResult = new { 
+    ProjectName = "MyProject",
+    ViolationsFound = 5,
+    AnalysisId = Guid.NewGuid().ToString()
+};
+string jsonPayload = JsonSerializer.Serialize(analysisResult);
+
+await webhookHandler.TriggerWebhooksAsync("AnalysisCompleted", jsonPayload);
+
+// Deactivate a webhook (keeps it registered but inactive)
+webhookHandler.DeactivateWebhook(webhookId);
+
+// Unregister a webhook completely
+bool removed = webhookHandler.UnregisterWebhook(violationWebhookId);
+Console.WriteLine($"Webhook removed: {removed}");
+```
+
 ## IFixAllProvider
 
 The `IFixAllProvider` interface coordinates bulk preview and application of code fixes for collections of rule violations. It enables applying fixes to multiple violations at once with configurable filtering options such as severity thresholds, rule selection, and breaking change handling. The provider returns detailed results including execution metrics, success status, and any violations that could not be fixed.
