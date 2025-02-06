@@ -199,6 +199,76 @@ if (ConfigurationLoaderExtensions.ShouldEnableCaching(mergedConfig))
 var clonedConfig = ConfigurationLoaderExtensions.Clone(mergedConfig);
 ```
 
+## IFixAllProvider
+
+The `IFixAllProvider` interface coordinates bulk preview and application of code fixes for collections of rule violations. It enables applying fixes to multiple violations at once with configurable filtering options such as severity thresholds, rule selection, and breaking change handling. The provider returns detailed results including execution metrics, success status, and any violations that could not be fixed.
+
+### Usage Example
+
+```csharp
+// Create required services
+var codeFixService = new CodeFixService();
+var logger = new Logger<FixAllProvider>(new LoggerFactory());
+var fixAllProvider = new FixAllProvider(codeFixService, logger);
+
+// Define violations to fix (typically from analysis results)
+var violations = new List<RuleViolation>
+{
+    new RuleViolation
+    {
+        Id = "LYR001-001",
+        RuleId = "LYR001",
+        FilePath = "src/Domain/UserRepository.cs",
+        LineNumber = 42,
+        Message = "Consider using nullable reference types",
+        Severity = SeverityLevel.Warning
+    },
+    new RuleViolation
+    {
+        Id = "LYR002-002",
+        RuleId = "LYR002",
+        FilePath = "src/Application/Services/UserService.cs",
+        LineNumber = 87,
+        Message = "Exception should not be caught in application layer",
+        Severity = SeverityLevel.Error
+    }
+};
+
+// Configure fix options
+var options = new FixAllOptions
+{
+    DryRun = false, // Set to true to preview changes without applying
+    MinimumSeverity = SeverityLevel.Warning, // Only fix warnings and errors
+    RuleIds = new List<string> { "LYR001" }, // Only fix specific rules
+    SkipBreakingChanges = true, // Skip fixes marked as breaking changes
+    MaxFixes = 10 // Limit number of fixes applied
+};
+
+// Apply all fixes
+var result = await fixAllProvider.ApplyAllAsync(violations, options);
+
+// Inspect results
+Console.WriteLine($"Total violations: {result.TotalViolations}");
+Console.WriteLine($"Fixable violations: {result.FixableViolations}");
+Console.WriteLine($"Fixes applied: {result.FixResult.AppliedFixes.Count}");
+Console.WriteLine($"Duration: {result.Duration.TotalMilliseconds}ms");
+Console.WriteLine($"Success: {result.IsSuccess}");
+
+if (result.UnfixableViolations.Any())
+{
+    Console.WriteLine($"Could not fix {result.UnfixableViolations.Count} violations:");
+    foreach (var violation in result.UnfixableViolations)
+    {
+        Console.WriteLine($"  - {violation.RuleId} at {violation.FilePath}:{violation.LineNumber}");
+    }
+}
+
+foreach (var message in result.Messages)
+{
+    Console.WriteLine(message);
+}
+```
+
 ## RoslynGuardException
 
 The `RoslynGuardException` is the base exception class for all Roslyn Guard Analyzer errors. It provides standardized error handling with error codes, timestamps, and formatted exception messages. All analyzer-specific exceptions inherit from this base class, ensuring consistent error reporting across the entire codebase.
