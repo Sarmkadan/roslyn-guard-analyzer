@@ -69,4 +69,67 @@ var totalViolations = report.GetTotalViolationCount();
 var fileViolations = report.GetViolationsFromFile("Program.cs");
 ```
 
+## AnalysisResult
+
+The `AnalysisResult` class contains the complete results of a code analysis execution. It includes all violations found, analysis statistics, and metadata about the analyzed project. This class serves as the primary container for analysis data and provides methods for querying violations and generating reports.
+
+### Usage Example
+
+```csharp
+// Create a new analysis result for a project
+var result = new AnalysisResult("MyWebApplication", @"/projects/MyWebApplication/MyWebApplication.csproj")
+{
+    AnalysisStartTime = DateTime.UtcNow.AddMinutes(-10)
+};
+
+// Add analyzed code elements
+result.AddAnalyzedElement(new CodeElement("Program.cs", CodeElementType.Class, 42));
+result.AddAnalyzedElement(new CodeElement("Startup.cs", CodeElementType.Class, 28));
+
+// Add violations found during analysis
+result.AddViolation(new RuleViolation("RG001", "SecurityRisk", "Hardcoded connection string", "appsettings.json")
+{
+    LineNumber = 15,
+    ColumnNumber = 8,
+    Severity = SeverityLevel.Critical,
+    Category = RuleCategory.Security
+});
+
+result.AddViolation(new RuleViolation("RG005", "NamingConvention", "Method name not PascalCase", "UserService.cs")
+{
+    LineNumber = 42,
+    ColumnNumber = 12,
+    Severity = SeverityLevel.Error,
+    Category = RuleCategory.CodeStructure
+});
+
+// Access analysis statistics
+Console.WriteLine($"Total violations: {result.ViolationCount}");
+Console.WriteLine($"Total elements analyzed: {result.TotalElementsAnalyzed}");
+Console.WriteLine($"Analysis duration: {result.GetDuration().TotalSeconds} seconds");
+Console.WriteLine($"Success percentage: {result.GetSuccessPercentage():F2}%");
+
+// Get violations by severity
+var criticalViolations = result.GetCriticalViolations();
+var errorViolations = result.GetViolationCountBySeverity(SeverityLevel.Error);
+var warningViolations = result.GetViolationCountBySeverity(SeverityLevel.Warning);
+
+// Get violations grouped by rule
+var violationsByRule = result.GetViolationsByRule();
+foreach (var ruleGroup in violationsByRule)
+{
+    Console.WriteLine($"Rule {ruleGroup.Key}: {ruleGroup.Value.Count} violations");
+}
+
+// Get violations in specific file
+var fileViolations = result.GetViolationsInFile("UserService.cs");
+
+// Mark analysis as completed
+result.MarkAsCompleted();
+
+// Access summary statistics
+Console.WriteLine($"Violations by category: {string.Join(", ", result.ViolationsByCategory.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
+Console.WriteLine($"Violations by severity: {string.Join(", ", result.ViolationsBySeverity.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
+```
+
 ...
