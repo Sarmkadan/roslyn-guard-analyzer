@@ -2,25 +2,26 @@
 
 ...
 
-## CommandLineProcessor
+## HelpGenerator
 
-The `CommandLineProcessor` class is a high-level CLI command processor that orchestrates parsing and validation of command-line arguments. It acts as a facade for CLI argument parsing and help text generation.
+The `HelpGenerator` class is responsible for generating help text for the CLI application. It provides methods for generating full help text, brief help text, version information, error messages, and usage summaries.
 
 ### Usage Example
 ```csharp
-var processor = new CommandLineProcessor(new[] { "--help" });
-var (success, options, errors) = processor.Process();
-if (success)
-{
-    processor.PrintOptionsSummary();
-}
-else
-{
-    foreach (var error in errors)
-    {
-        Console.Error.WriteLine($"  - {error}");
-    }
-}
+var fullHelp = HelpGenerator.GenerateFullHelp();
+Console.WriteLine(fullHelp);
+
+var briefHelp = HelpGenerator.GenerateBriefHelp();
+Console.WriteLine(briefHelp);
+
+var version = HelpGenerator.GenerateVersion();
+Console.WriteLine(version);
+
+var errorMessage = HelpGenerator.GenerateErrorMessage("Invalid option");
+Console.WriteLine(errorMessage);
+
+var usageSummary = HelpGenerator.GenerateUsageSummary();
+Console.WriteLine(usageSummary);
 ```
 
 ...
