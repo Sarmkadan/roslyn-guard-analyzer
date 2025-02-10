@@ -2,6 +2,59 @@
 
 ...
 
+## RuleConfiguration
+
+The `RuleConfiguration` class represents a configuration object that controls how analysis rules are applied during code analysis. It allows you to customize rule selection, define exclusions, set analysis limits, and configure reporting behavior.
+
+### Usage Example
+
+```csharp
+// Create a new rule configuration
+var config = new RuleConfiguration("Security Rules", "Configuration for security-focused analysis")
+{
+    Description = "Applies security best practices and vulnerability detection",
+    MaxViolationsToReport = 100,
+    AnalysisTimeoutSeconds = 300,
+    MinimumReportedSeverity = SeverityLevel.Error,
+    FailOnError = true,
+    GenerateDetailedReport = true
+};
+
+// Add some rules
+config.AddRule(new AnalysisRule("SG001", "PasswordStorage", "Enforces secure password storage practices"));
+config.AddRule(new AnalysisRule("SG002", "Cryptography", "Validates cryptographic algorithm usage"));
+config.AddRule(new AnalysisRule("SG003", "InputValidation", "Checks for proper input validation"));
+
+// Exclude specific namespaces and files
+config.ExcludeNamespace("Legacy.System");
+config.ExcludeNamespace("Tests.Integration");
+config.ExcludeFile("*.Designer.cs");
+
+// Set custom settings
+config.SetCustomSetting("reportFormat", "html");
+config.SetCustomSetting("maxDepth", "5");
+
+// Check if configuration is valid
+if (config.IsValid())
+{
+    Console.WriteLine($"Configuration '{config.Name}' is valid with {config.GetEnabledRuleCount()} enabled rules");
+}
+
+// Get a specific rule
+var rule = config.GetRule("SG001");
+if (rule != null)
+{
+    Console.WriteLine($"Found rule: {rule.Name}");
+}
+
+// Remove a rule
+config.RemoveRule("SG002");
+
+// Create a copy for modification
+var configCopy = config.CreateCopy();
+configCopy.Name = "Security Rules - Modified";
+```
+
 ## DomainExtensions
 
 The `DomainExtensions` class provides a set of extension methods for domain models and common types. It offers various utility methods for working with `RuleViolation` objects, such as grouping by file, filtering by severity, and exporting to text.
