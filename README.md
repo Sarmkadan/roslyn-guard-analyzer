@@ -2,53 +2,56 @@
 
 ...
 
-## HelpGenerator
+## DomainExtensions
 
-The `HelpGenerator` class is responsible for generating help text for the CLI application. It provides methods for generating full help text, brief help text, version information, error messages, and usage summaries.
-
-### Usage Example
-```csharp
-var fullHelp = HelpGenerator.GenerateFullHelp();
-Console.WriteLine(fullHelp);
-
-var briefHelp = HelpGenerator.GenerateBriefHelp();
-Console.WriteLine(briefHelp);
-
-var version = HelpGenerator.GenerateVersion();
-Console.WriteLine(version);
-
-var errorMessage = HelpGenerator.GenerateErrorMessage("Invalid option");
-Console.WriteLine(errorMessage);
-
-var usageSummary = HelpGenerator.GenerateUsageSummary();
-Console.WriteLine(usageSummary);
-```
-
-## CliOptions
-
-The `CliOptions` class represents parsed command-line options for the analyzer. It provides a way to validate and access the options before use.
+The `DomainExtensions` class provides a set of extension methods for domain models and common types. It offers various utility methods for working with `RuleViolation` objects, such as grouping by file, filtering by severity, and exporting to text.
 
 ### Usage Example
 ```csharp
-var options = new CliOptions();
-options.ProjectPath = "/path/to/project";
-options.OutputFormat = "json";
-options.Verbose = true;
-options.MaxParallelThreads = 4;
+var violations = new List<RuleViolation>
+{
+    new RuleViolation { Severity = SeverityLevel.Error, FilePath = "path/to/file1.cs", LineNumber = 10 },
+    new RuleViolation { Severity = SeverityLevel.Warning, FilePath = "path/to/file2.cs", LineNumber = 20 },
+    new RuleViolation { Severity = SeverityLevel.Error, FilePath = "path/to/file1.cs", LineNumber = 30 },
+};
 
-if (options.Validate(out var errors))
+var groupedViolations = violations.GroupByFileAndSort();
+foreach (var fileViolations in groupedViolations)
 {
-    Console.WriteLine("Options are valid");
-    Console.WriteLine(options.ToString());
-}
-else
-{
-    Console.WriteLine("Errors:");
-    foreach (var error in errors)
+    Console.WriteLine($"File: {fileViolations.Key}");
+    foreach (var violation in fileViolations.Value)
     {
-        Console.WriteLine(error);
+        Console.WriteLine($"  Severity: {violation.Severity.GetDisplayName()}, Line: {violation.LineNumber}");
     }
 }
+
+var filteredViolations = violations.FilterBySeverity(SeverityLevel.Error);
+foreach (var violation in filteredViolations)
+{
+    Console.WriteLine($"Severity: {violation.Severity.GetDisplayName()}, Line: {violation.LineNumber}");
+}
+
+var summary = violations.SummarizeByCategory();
+foreach (var category in summary)
+{
+    Console.WriteLine($"Category: {category.Key}, Count: {category.Value}");
+}
+
+var percentages = violations.CalculateSeverityPercentages();
+foreach (var severity in percentages)
+{
+    Console.WriteLine($"Severity: {severity.Key}, Percentage: {severity.Value:F2}%");
+}
+
+var mostCommonRule = violations.GetMostCommonRule();
+Console.WriteLine($"Most Common Rule: {mostCommonRule}");
+
+var mostProblematicFile = violations.GetMostProblematicFile();
+Console.WriteLine($"Most Problematic File: {mostProblematicFile}");
+
+var exportText = violations.ExportToText("Violations Export");
+Console.WriteLine(exportText);
 ```
 
 ...
+```
