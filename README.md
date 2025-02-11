@@ -69,6 +69,35 @@ var totalViolations = report.GetTotalViolationCount();
 var fileViolations = report.GetViolationsFromFile("Program.cs");
 ```
 
+## AnalysisRule
+
+The `AnalysisRule` class defines an architectural or coding rule used by the analyzer to inspect code. It encapsulates all necessary metadata, severity settings, and configuration parameters to identify violations effectively. This class allows developers to define, customize, and validate specific rules to maintain codebase integrity.
+
+### Usage Example
+
+```csharp
+// Create a new analysis rule
+var rule = new AnalysisRule("AR001", "InterfaceNaming", "Interfaces must start with 'I'", RuleCategory.CodeStructure)
+{
+    DefaultSeverity = SeverityLevel.Warning,
+    IsEnabled = true,
+    Author = "SecurityTeam"
+};
+
+// Configure the rule
+rule.SetConfigurationValue("MinInterfaceNameLength", 3);
+rule.MarkAsModified();
+
+// Validate and use the rule
+if (rule.IsValid())
+{
+    var severityOverride = rule.WithSeverity(SeverityLevel.Error);
+    var minLength = rule.GetConfigurationValue<int>("MinInterfaceNameLength", 2);
+    Console.WriteLine($"Rule {rule.Name} is valid. Min length: {minLength}");
+}
+```
+
+
 ## AnalysisResult
 
 The `AnalysisResult` class contains the complete results of a code analysis execution. It includes all violations found, analysis statistics, and metadata about the analyzed project. This class serves as the primary container for analysis data and provides methods for querying violations and generating reports.
