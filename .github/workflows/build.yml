@@ -1,0 +1,146 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dotnet-version: [ '10.0.x' ]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ matrix.dotnet-version }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build Release
+      run: dotnet build -c Release --no-restore
+
+    - name: Run code analysis
+      run: |
+        dotnet run --project src/RoslynGuardAnalyzer -c Release -- ./src \
+          --format json \
+          --output analysis.json
+
+    - name: Check analysis results
+      run: |
+        ERRORS=$(jq '.violations | map(select(.severity=="error")) | length' analysis.json)
+        if [ "$ERRORS" -gt 0 ]; then
+          echo "❌ Architecture violations found: $ERRORS"
+          jq '.violations[] | select(.severity=="error") | "\(.filePath):\(.line) - \(.message)"' analysis.json | head -20
+          exit 1
+        fi
+        echo "✅ Architecture analysis passed"
+
+    - name: Publish analysis report
+      uses: actions/upload-artifact@v3
+      with:
+        name: analysis-report
+        path: analysis.json
+        retention-days: 30
+      if: always()
+
+    - name: Generate test report
+      run: |
+        dotnet run --project src/RoslynGuardAnalyzer -c Release -- ./src \
+          --format html \
+          --output analysis-report.html
+
+    - name: Publish HTML report
+      uses: actions/upload-artifact@v3
+      with:
+        name: html-report
+        path: analysis-report.html
+        retention-days: 30
+      if: always()
+
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Build project
+      run: dotnet build -c Release
+
+    - name: Analyze code style
+      run: |
+        dotnet format --verify-no-changes --include src/ || true
+
+    - name: Check for security vulnerabilities
+      run: |
+        dotnet build /p:EnableTrimAnalyzer=true src/RoslynGuardAnalyzer.csproj || true
+
+  cross-platform:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        dotnet-version: [ '10.0.x' ]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ matrix.dotnet-version }}
+
+    - name: Build
+      run: dotnet build -c Release
+
+    - name: Test analyzer
+      run: |
+        dotnet run --project src/RoslynGuardAnalyzer -c Release -- ./src
+
+  package:
+    runs-on: ubuntu-latest
+    needs: [ build, code-quality, cross-platform ]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Build Release Package
+      run: |
+        dotnet pack src/RoslynGuardAnalyzer -c Release -o ./nupkg
+
+    - name: Publish NuGet Package
+      run: |
+        dotnet nuget push ./nupkg/*.nupkg \
+          --api-key ${{ secrets.NUGET_API_KEY }} \
+          --source https://api.nuget.org/v3/index.json \
+          --skip-duplicate
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      continue-on-error: true
+
+    - name: Upload package artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: nuget-packages
+        path: ./nupkg
+        retention-days: 90

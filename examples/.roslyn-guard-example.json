@@ -1,0 +1,64 @@
+{
+  "projectPath": "./src",
+  "analysisTimeout": 600,
+  "maxViolationsToReport": 1000,
+  "logLevel": 2,
+  "rules": {
+    "LYR001": {
+      "enabled": true,
+      "severity": "error",
+      "description": "Layer Dependency Rule",
+      "configuration": {
+        "comment": "Prevents repositories from depending on services or controllers"
+      }
+    },
+    "NAM001": {
+      "enabled": true,
+      "severity": "warning",
+      "description": "Naming Convention Rule",
+      "configuration": {
+        "comment": "Enforces PascalCase for classes/methods, snake_case for fields"
+      }
+    },
+    "ASY001": {
+      "enabled": true,
+      "severity": "error",
+      "description": "Async Pattern Rule",
+      "configuration": {
+        "comment": "Validates proper async/await patterns"
+      }
+    },
+    "NUL001": {
+      "enabled": true,
+      "severity": "warning",
+      "description": "Null Safety Rule",
+      "configuration": {
+        "comment": "Enforces nullable reference type handling"
+      }
+    }
+  },
+  "excludePatterns": [
+    "**/bin/**",
+    "**/obj/**",
+    "**/*.Generated.cs",
+    "**/*.Designer.cs",
+    "**/Properties/**"
+  ],
+  "includePatterns": [
+    "**/*.cs"
+  ],
+  "webhookConfiguration": {
+    "enabled": false,
+    "url": "https://api.example.com/analysis-complete",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer ${WEBHOOK_TOKEN}"
+    },
+    "comment": "Optional: send results to external service"
+  },
+  "reportingConfiguration": {
+    "includeSuggestions": true,
+    "includeSourceCode": false,
+    "maxViolationDetails": 100
+  }
+}
