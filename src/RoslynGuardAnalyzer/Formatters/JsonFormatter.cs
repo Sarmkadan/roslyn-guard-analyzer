@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -111,7 +112,7 @@ public sealed class JsonFormatter : IOutputFormatter
     /// </summary>
     private static string JsonSerialize(object obj)
     {
-        if (obj == null)
+        if (obj is null)
             return "null";
 
         var type = obj.GetType();

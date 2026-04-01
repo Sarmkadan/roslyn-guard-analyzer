@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -28,7 +29,7 @@ public abstract class RepositoryBase<T> where T : class
         if (string.IsNullOrWhiteSpace(id))
             throw new ArgumentException("ID cannot be null or empty.", nameof(id));
 
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         lock (_lockObject)
@@ -74,7 +75,7 @@ public abstract class RepositoryBase<T> where T : class
         if (string.IsNullOrWhiteSpace(id))
             throw new ArgumentException("ID cannot be null or empty.", nameof(id));
 
-        if (entity == null)
+        if (entity is null)
             throw new ArgumentNullException(nameof(entity));
 
         lock (_lockObject)
@@ -141,7 +142,7 @@ public abstract class RepositoryBase<T> where T : class
     /// </summary>
     public virtual void AddRange(Dictionary<string, T> entities)
     {
-        if (entities == null || !entities.Any())
+        if (entities is null || !entities.Any())
             return;
 
         lock (_lockObject)
@@ -161,7 +162,7 @@ public abstract class RepositoryBase<T> where T : class
     /// </summary>
     public virtual IReadOnlyList<T> Find(Func<T, bool> predicate)
     {
-        if (predicate == null)
+        if (predicate is null)
             throw new ArgumentNullException(nameof(predicate));
 
         lock (_lockObject)
