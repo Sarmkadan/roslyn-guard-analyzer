@@ -1,0 +1,61 @@
+# =============================================================================
+# Docker ignore file for Roslyn Guard Analyzer
+# Prevents unnecessary files from being copied into Docker images
+# =============================================================================
+
+# Build output directories
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+
+# Version control
+.git/
+.gitignore
+
+# Test files
+**/tests/
+**/*.Tests.csproj
+**/*Tests.cs
+
+# Documentation
+**/docs/
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+LICENSE
+SECURITY.md
+
+# Build and CI files
+Makefile
+.github/
+*.yml
+*.yaml
+
+# Temporary files
+*.tmp
+*.cache
+*.bak
+*.swp
+.DS_Store
+
+# IDE specific
+.vs/
+.idea/
+.atom/
+.vscode/
+*.userprefs
+
+# Package files
+**/packages/
+**/*.nupkg
+**/*.snupkg
+
+# Logs
+**/logs/
+*.log
+
+# Runtime data
+/data/
+/reports/
