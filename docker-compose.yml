@@ -2,11 +2,9 @@
 # Author: Vladyslav Zaiets | https://sarmkadan.com
 # CTO & Software Architect
 # =============================================================================
-# Docker Compose configuration for Roslyn Guard Analyzer
-# Enables easy containerized analysis and CI/CD integration
+# Docker Compose configuration for Roslyn Guard Analyzer v2
+# Supports containerized analysis, health monitoring, and CI/CD integration
 # =============================================================================
-
-version: '3.8'
 
 services:
   analyzer:
@@ -14,7 +12,11 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: roslyn-guard-analyzer
-    image: roslyn-guard-analyzer:latest
+    image: roslyn-guard-analyzer:2.0.0
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
 
     # Mount source code for analysis
     volumes:
@@ -23,9 +25,6 @@ services:
 
     # Working directory inside container
     working_dir: /workspace
-
-    # Run as non-root user
-    user: analyzer
 
     # Resource limits
     deploy:
@@ -39,14 +38,16 @@ services:
 
     # Health check
     healthcheck:
-      test: ["CMD", "./RoslynGuardAnalyzer", "--help"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
+      start_period: 5s
       retries: 3
 
     # Environment variables
     environment:
       - DOTNET_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
       - ANALYSIS_TIMEOUT=600
       - LOG_LEVEL=2
 
@@ -62,17 +63,18 @@ services:
     image: python:3.11-slim
     container_name: analyzer-results-viewer
     depends_on:
-      - analyzer
+      analyzer:
+        condition: service_healthy
 
     volumes:
       - ./reports:/reports:ro
 
     working_dir: /reports
 
-    command: python3 -m http.server 8080 --bind 0.0.0.0
+    command: python3 -m http.server 9090 --bind 0.0.0.0
 
     ports:
-      - "8080:8080"
+      - "9090:9090"
 
     # Only run this if you want to view results
     profiles:
