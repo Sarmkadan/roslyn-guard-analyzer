@@ -5,6 +5,28 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-03-05
+
+### Added
+- **HTTP Health Endpoint**: Container exposes `/health` on port 8080 for orchestrator liveness probes
+- **HEALTHCHECK Instruction**: Dockerfile includes native Docker health check (30s interval, 3 retries)
+- **Docker Layer Caching**: Multi-stage build copies `.csproj` first for optimized NuGet restore caching
+- **Migration Guide**: `docs/MIGRATION_v2.md` documenting all breaking changes and upgrade steps
+
+### Changed
+- **Runtime Base Image**: Switched from `dotnet/runtime:10.0` to `dotnet/aspnet:10.0` to support HTTP endpoints
+- **Container Port**: Analyzer now listens on port 8080 (`ASPNETCORE_URLS=http://+:8080`)
+- **Entrypoint**: Changed from `./RoslynGuardAnalyzer` binary to `dotnet RoslynGuardAnalyzer.dll`
+- **Docker Compose**: Removed deprecated `version` field; added restart policy; viewer port moved to 9090
+- **Service Dependencies**: Results viewer uses `condition: service_healthy` for startup ordering
+- **Image Tag**: Docker Compose pins `2.0.0` tag instead of `latest`
+
+### Breaking
+- Port 8080 now exposed by default (previously CLI-only, no port)
+- Base image changed to `aspnet` - update security scan allowlists if applicable
+- Entrypoint format changed - update overrides in Kubernetes/Compose manifests
+- Results viewer port moved from 8080 to 9090
+
 ## [1.0.0] - 2025-09-08
 
 ### Added
