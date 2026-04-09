@@ -66,7 +66,7 @@ public sealed class PerformanceMetricsMiddleware : IMiddleware
     public static void RecordComponentTiming(PipelineContext context, string componentName, long milliseconds)
     {
         var metrics = context.GetItem<PerformanceMetrics>(MetricsKey);
-        if (metrics != null)
+        if (metrics is not null)
         {
             if (!metrics.ComponentTimingsMs.ContainsKey(componentName))
                 metrics.ComponentTimingsMs[componentName] = 0;
