@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -68,7 +69,7 @@ public sealed class ConfigurationValidator
     {
         var result = new ValidationResult { IsValid = true };
 
-        if (config == null)
+        if (config is null)
         {
             result.AddError("Configuration cannot be null");
             return result;
@@ -125,7 +126,7 @@ public sealed class ConfigurationValidator
     {
         var result = new ValidationResult { IsValid = true };
 
-        if (options == null)
+        if (options is null)
         {
             result.AddError("Options cannot be null");
             return result;
@@ -172,7 +173,7 @@ public sealed class ConfigurationValidator
     {
         var result = new ValidationResult { IsValid = true };
 
-        if (ruleNames == null || supportedRules == null)
+        if (ruleNames is null || supportedRules is null)
         {
             result.AddError("Rule names and supported rules cannot be null");
             return result;
@@ -198,10 +199,10 @@ public sealed class ConfigurationValidator
     {
         var results = new List<ValidationResult>();
 
-        if (analysisConfig != null)
+        if (analysisConfig is not null)
             results.Add(ValidateAnalysisConfig(analysisConfig));
 
-        if (cliOptions != null)
+        if (cliOptions is not null)
             results.Add(ValidateCliOptions(cliOptions));
 
         var combined = new ValidationResult { IsValid = true };

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -95,7 +96,7 @@ public sealed class AnalysisResultRepository : RepositoryBase<AnalysisResult>
     /// </summary>
     public async Task SaveAsync(AnalysisResult result)
     {
-        if (result == null)
+        if (result is null)
             throw new ArgumentNullException(nameof(result));
 
         var fileName = $"{result.Id}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
@@ -136,7 +137,7 @@ public sealed class AnalysisResultRepository : RepositoryBase<AnalysisResult>
                     var json = await File.ReadAllTextAsync(file);
                     var result = System.Text.Json.JsonSerializer.Deserialize<AnalysisResult>(json);
 
-                    if (result != null)
+                    if (result is not null)
                     {
                         Add(result.Id, result);
                     }

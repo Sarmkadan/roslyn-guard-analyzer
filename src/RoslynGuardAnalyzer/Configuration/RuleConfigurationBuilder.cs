@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -69,7 +70,7 @@ public sealed class RuleConfigurationBuilder
     /// </summary>
     public RuleConfigurationBuilder WithParameters(Dictionary<string, object> parameters)
     {
-        if (parameters != null)
+        if (parameters is not null)
         {
             foreach (var (key, value) in parameters)
                 WithParameter(key, value);

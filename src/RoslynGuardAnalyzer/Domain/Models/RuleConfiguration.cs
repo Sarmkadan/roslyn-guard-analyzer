@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -61,7 +62,7 @@ public sealed class RuleConfiguration
     /// </summary>
     public void AddRule(AnalysisRule rule)
     {
-        if (rule != null && !EnabledRules.Any(r => r.Id == rule.Id))
+        if (rule is not null && !EnabledRules.Any(r => r.Id == rule.Id))
         {
             EnabledRules.Add(rule);
         }
@@ -73,7 +74,7 @@ public sealed class RuleConfiguration
     public bool RemoveRule(string ruleId)
     {
         var rule = EnabledRules.FirstOrDefault(r => r.Id == ruleId);
-        if (rule != null)
+        if (rule is not null)
         {
             EnabledRules.Remove(rule);
             return true;

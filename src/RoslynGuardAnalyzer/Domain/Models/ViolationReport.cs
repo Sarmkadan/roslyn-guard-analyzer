@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -52,7 +53,7 @@ public sealed class ViolationReport
     /// </summary>
     public void AddViolationGroup(ViolationGroup group)
     {
-        if (group != null)
+        if (group is not null)
         {
             ViolationGroups.Add(group);
             UpdateStatistics();
@@ -171,7 +172,7 @@ public sealed class ViolationGroup
     /// </summary>
     public void AddViolation(RuleViolation violation)
     {
-        if (violation != null && !Violations.Any(v => v.Id == violation.Id))
+        if (violation is not null && !Violations.Any(v => v.Id == violation.Id))
         {
             Violations.Add(violation);
         }

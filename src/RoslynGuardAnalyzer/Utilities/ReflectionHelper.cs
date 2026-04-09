@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -171,7 +172,7 @@ public static class ReflectionHelper
     public static IEnumerable<Type> GetInheritanceHierarchy(Type type)
     {
         var current = type;
-        while (current != null && current != typeof(object))
+        while (current is not null && current != typeof(object))
         {
             yield return current;
             current = current.BaseType;

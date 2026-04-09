@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -30,7 +31,7 @@ public sealed class OutputWriter
     /// </summary>
     public async Task WriteResultAsync(AnalysisResult result, string format, string? outputFilePath = null)
     {
-        if (result == null)
+        if (result is null)
             throw new ArgumentNullException(nameof(result));
 
         if (string.IsNullOrWhiteSpace(format))
@@ -59,7 +60,7 @@ public sealed class OutputWriter
         string format,
         string? outputFilePath = null)
     {
-        if (violations == null)
+        if (violations is null)
             throw new ArgumentNullException(nameof(violations));
 
         var formatter = _formatterRegistry.GetFormatterOrThrow(format);
@@ -83,7 +84,7 @@ public sealed class OutputWriter
         string format,
         string? outputFilePath = null)
     {
-        if (report == null)
+        if (report is null)
             throw new ArgumentNullException(nameof(report));
 
         var formatter = _formatterRegistry.GetFormatterOrThrow(format);

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -95,7 +96,7 @@ public sealed class CommandLineProcessor
     {
         var errors = new List<string>();
 
-        if (_parsedOptions == null)
+        if (_parsedOptions is null)
         {
             errors.Add("Options not processed yet");
             return (false, errors);
@@ -126,7 +127,7 @@ public sealed class CommandLineProcessor
     /// </summary>
     public void PrintOptionsSummary()
     {
-        if (_parsedOptions == null)
+        if (_parsedOptions is null)
             return;
 
         Console.WriteLine("Configuration:");

@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -31,7 +32,7 @@ public sealed class EventBus : IEventBus
     /// </summary>
     public async Task PublishAsync(IEvent @event)
     {
-        if (@event == null)
+        if (@event is null)
             throw new ArgumentNullException(nameof(@event));
 
         lock (_lockObject)
@@ -52,7 +53,7 @@ public sealed class EventBus : IEventBus
                 if (subscription.Handler is Delegate handler)
                 {
                     var task = (Task?)handler.DynamicInvoke(@event);
-                    if (task != null)
+                    if (task is not null)
                         await task;
                 }
             }
@@ -69,7 +70,7 @@ public sealed class EventBus : IEventBus
     /// </summary>
     public void Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
     {
-        if (handler == null)
+        if (handler is null)
             throw new ArgumentNullException(nameof(handler));
 
         lock (_lockObject)
@@ -88,7 +89,7 @@ public sealed class EventBus : IEventBus
     /// </summary>
     public void Unsubscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
     {
-        if (handler == null)
+        if (handler is null)
             throw new ArgumentNullException(nameof(handler));
 
         lock (_lockObject)

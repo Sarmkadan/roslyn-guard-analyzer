@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -51,7 +52,7 @@ public static class ValidationExtensions
     public static bool HasItems<T>(this IEnumerable<T>? collection, out string? error)
     {
         error = null;
-        if (collection == null || !collection.Any())
+        if (collection is null || !collection.Any())
         {
             error = "Collection cannot be null or empty";
             return false;

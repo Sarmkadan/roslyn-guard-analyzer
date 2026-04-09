@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -111,7 +112,7 @@ public static class CacheKeyGenerator
     /// </summary>
     public static string CreateCompositeKey(params string[] components)
     {
-        if (components == null || components.Length == 0)
+        if (components is null || components.Length == 0)
             throw new ArgumentException("At least one component required");
 
         var combined = string.Join("|", components);

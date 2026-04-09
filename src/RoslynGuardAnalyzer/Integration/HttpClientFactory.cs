@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -61,10 +62,10 @@ public sealed class HttpClientFactory
         HttpClient client,
         Func<HttpClient, Task<HttpResponseMessage>> request)
     {
-        if (client == null)
+        if (client is null)
             throw new ArgumentNullException(nameof(client));
 
-        if (request == null)
+        if (request is null)
             throw new ArgumentNullException(nameof(request));
 
         HttpResponseMessage? lastResponse = null;
@@ -97,7 +98,7 @@ public sealed class HttpClientFactory
             }
         }
 
-        if (lastException != null)
+        if (lastException is not null)
             throw lastException;
 
         return lastResponse ?? throw new HttpRequestException("Request failed after all retries");

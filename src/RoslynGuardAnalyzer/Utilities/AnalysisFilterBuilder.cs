@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -113,7 +114,7 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder Where(Func<RuleViolation, bool> predicate)
     {
-        if (predicate == null)
+        if (predicate is null)
             throw new ArgumentNullException(nameof(predicate));
 
         _predicates.Add(predicate);

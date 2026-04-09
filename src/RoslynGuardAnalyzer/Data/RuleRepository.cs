@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -71,7 +72,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     public bool DisableRule(string ruleId)
     {
         var rule = GetById(ruleId);
-        if (rule == null)
+        if (rule is null)
             return false;
 
         rule.IsEnabled = false;
@@ -86,7 +87,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     public bool EnableRule(string ruleId)
     {
         var rule = GetById(ruleId);
-        if (rule == null)
+        if (rule is null)
             return false;
 
         rule.IsEnabled = true;
@@ -134,7 +135,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
 
             Clear();
 
-            if (rules != null)
+            if (rules is not null)
             {
                 foreach (var rule in rules)
                 {
@@ -181,7 +182,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
             var json = await File.ReadAllTextAsync(filePath);
             var rules = System.Text.Json.JsonSerializer.Deserialize<List<AnalysisRule>>(json);
 
-            if (rules != null)
+            if (rules is not null)
             {
                 foreach (var rule in rules)
                 {

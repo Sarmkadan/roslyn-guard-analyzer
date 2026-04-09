@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -48,7 +49,7 @@ public sealed class ConfigurationLoader
     {
         var directory = new DirectoryInfo(projectPath);
 
-        while (directory != null)
+        while (directory is not null)
         {
             var configPath = Path.Combine(directory.FullName, DefaultConfigFileName);
 

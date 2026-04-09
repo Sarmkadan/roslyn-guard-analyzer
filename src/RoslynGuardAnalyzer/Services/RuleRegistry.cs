@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -32,7 +33,7 @@ public sealed class RuleRegistry : IRuleRegistry
     /// </summary>
     public void RegisterRule(AnalysisRule rule)
     {
-        if (rule == null)
+        if (rule is null)
             throw new ArgumentNullException(nameof(rule));
 
         if (!rule.IsValid())

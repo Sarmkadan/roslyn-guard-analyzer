@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -23,7 +24,7 @@ public sealed class ResultAggregator
     /// </summary>
     public void Add(AnalysisResult result)
     {
-        if (result == null)
+        if (result is null)
             throw new ArgumentNullException(nameof(result));
 
         _results.Add(result);

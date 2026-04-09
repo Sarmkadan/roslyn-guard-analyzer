@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -52,7 +53,7 @@ public sealed class CacheService
         if (string.IsNullOrWhiteSpace(key))
             throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
 
-        if (value == null)
+        if (value is null)
             throw new ArgumentNullException(nameof(value));
 
         var entry = new CacheEntry<T>
@@ -195,7 +196,7 @@ public sealed class CacheService
         if (type.IsGenericType && type.GetGenericTypeDefinition().Name.Contains("CacheEntry"))
         {
             var expiresAtProperty = type.GetProperty("ExpiresAt");
-            if (expiresAtProperty != null)
+            if (expiresAtProperty is not null)
             {
                 var expiresAt = (DateTime)expiresAtProperty.GetValue(entry)!;
                 return DateTime.UtcNow > expiresAt;
