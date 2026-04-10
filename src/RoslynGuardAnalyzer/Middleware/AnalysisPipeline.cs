@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -26,7 +27,7 @@ public sealed class AnalysisPipeline
     /// </summary>
     public AnalysisPipeline Use(IMiddleware middleware)
     {
-        if (middleware == null)
+        if (middleware is null)
             throw new ArgumentNullException(nameof(middleware));
 
         _middlewares.Add(middleware);
@@ -38,7 +39,7 @@ public sealed class AnalysisPipeline
     /// </summary>
     public AnalysisPipeline UseHandler(MiddlewareDelegate handler)
     {
-        if (handler == null)
+        if (handler is null)
             throw new ArgumentNullException(nameof(handler));
 
         _finalHandler = handler;
@@ -51,7 +52,7 @@ public sealed class AnalysisPipeline
     /// </summary>
     public async Task ExecuteAsync(PipelineContext context)
     {
-        if (context == null)
+        if (context is null)
             throw new ArgumentNullException(nameof(context));
 
         var handler = BuildMiddlewareChain();
