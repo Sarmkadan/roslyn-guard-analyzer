@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -25,7 +26,7 @@ public sealed class ValidationService : IValidationService
     {
         var errors = new List<string>();
 
-        if (config == null)
+        if (config is null)
         {
             errors.Add("Configuration cannot be null");
             return (false, errors);
@@ -67,7 +68,7 @@ public sealed class ValidationService : IValidationService
     {
         var errors = new List<string>();
 
-        if (rule == null)
+        if (rule is null)
         {
             errors.Add("Rule cannot be null");
             return (false, errors);
@@ -146,7 +147,7 @@ public sealed class ValidationService : IValidationService
     {
         var errors = new List<string>();
 
-        if (element == null)
+        if (element is null)
         {
             errors.Add("Code element cannot be null");
             return (false, errors);
@@ -194,7 +195,7 @@ public sealed class ValidationService : IValidationService
     {
         var errors = new List<string>();
 
-        if (result == null)
+        if (result is null)
         {
             errors.Add("Analysis result cannot be null");
             return (false, errors);

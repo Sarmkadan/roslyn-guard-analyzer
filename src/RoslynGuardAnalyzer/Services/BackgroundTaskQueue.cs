@@ -1,3 +1,4 @@
+#nullable enable
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -35,7 +36,7 @@ public sealed class BackgroundTaskQueue
     /// </summary>
     public string EnqueueTask(Func<CancellationToken, Task> work, int priority = 0)
     {
-        if (work == null)
+        if (work is null)
             throw new ArgumentNullException(nameof(work));
 
         var task = new BackgroundTask
@@ -143,7 +144,7 @@ public sealed class BackgroundTaskProcessor : IDisposable
     /// </summary>
     public void Start()
     {
-        if (_processingTask != null)
+        if (_processingTask is not null)
             return;
 
         _queue.Start();
@@ -158,7 +159,7 @@ public sealed class BackgroundTaskProcessor : IDisposable
         _queue.Stop();
         _cancellationTokenSource.Cancel();
 
-        if (_processingTask != null)
+        if (_processingTask is not null)
         {
             try
             {
@@ -181,7 +182,7 @@ public sealed class BackgroundTaskProcessor : IDisposable
             try
             {
                 var task = await _queue.DequeueAsync(cancellationToken);
-                if (task != null)
+                if (task is not null)
                 {
                     try
                     {
