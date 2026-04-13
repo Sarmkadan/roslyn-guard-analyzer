@@ -128,7 +128,7 @@ public static class PathNormalizer
     }
 }
 
-internal class RuntimeInformation
+internal sealed class RuntimeInformation
 {
     public static bool IsOSPlatform(OSPlatform platform)
     {
@@ -136,7 +136,7 @@ internal class RuntimeInformation
     }
 }
 
-public class OSPlatform
+public sealed class OSPlatform
 {
     public static readonly OSPlatform Windows = new();
     public static readonly OSPlatform Linux = new();
