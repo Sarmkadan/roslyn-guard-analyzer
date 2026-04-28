@@ -76,6 +76,74 @@ The analyzer ships with four foundational rules covering the most common archite
 | `ASY001` | Async Patterns | Validates async/await patterns and proper Task handling |
 | `NUL001` | Null Safety | Checks nullable reference type handling and null-coalescing patterns |
 
+### Diagnostic Codes Examples
+
+#### LYR001: Layer Dependencies
+**Non-compliant:**
+```csharp
+public class UserRepository
+{
+    private readonly UserService _service; // RGD001: Repository depends on service
+}
+```
+**Compliant:**
+```csharp
+public class UserService
+{
+    private readonly UserRepository _repository; // OK
+}
+```
+
+#### NAM001: Naming Conventions
+**Non-compliant:**
+```csharp
+public class my_class
+{
+    private int PublicField;
+}
+```
+**Compliant:**
+```csharp
+public class MyClass
+{
+    private int _publicField;
+}
+```
+
+#### ASY001: Async Patterns (RGD003, RGD004)
+**Non-compliant:**
+```csharp
+public Task DoWork() // Returns Task but not marked async
+{
+    return Task.FromResult(0);
+}
+public async Task DoWork2() // Missing Async suffix
+{
+}
+```
+**Compliant:**
+```csharp
+public async Task DoWorkAsync()
+{
+}
+```
+
+#### NUL001: Null Safety (RGD008, RGD009)
+**Non-compliant:**
+```csharp
+public class MyClass
+{
+    public string Name { get; set; } // Non-nullable without initialization
+}
+```
+**Compliant:**
+```csharp
+public class MyClass
+{
+    public string Name { get; set; } = string.Empty; // Initialized
+}
+```
+
 ## Quick Start
 
 ### Prerequisites
