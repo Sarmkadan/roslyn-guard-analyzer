@@ -41,12 +41,16 @@ public sealed class RuleEngine : IRuleEngine
         if (!rule.IsEnabled || elements is null || !elements.Any())
             return Task.FromResult(new List<RuleViolation>());
 
+        var activeElements = elements.Where(e => !e.Attributes.Any(a => 
+            a.Contains("SuppressRoslynGuard", StringComparison.OrdinalIgnoreCase) && 
+            a.Contains(rule.Id, StringComparison.OrdinalIgnoreCase))).ToList();
+
         var violations = rule.Category switch
         {
-            RuleCategory.LayerDependency => CheckLayerDependencies(rule, elements),
-            RuleCategory.NamingConvention => CheckNamingConventions(rule, elements),
-            RuleCategory.AsyncPattern => CheckAsyncPatterns(rule, elements),
-            RuleCategory.NullSafety => CheckNullSafety(rule, elements),
+            RuleCategory.LayerDependency => CheckLayerDependencies(rule, activeElements),
+            RuleCategory.NamingConvention => CheckNamingConventions(rule, activeElements),
+            RuleCategory.AsyncPattern => CheckAsyncPatterns(rule, activeElements),
+            RuleCategory.NullSafety => CheckNullSafety(rule, activeElements),
             _ => new List<RuleViolation>()
         };
 
