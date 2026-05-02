@@ -167,7 +167,34 @@ public sealed class AnalysisService : IAnalysisService
             }
         }
 
-        return elements;
+        // Merge partial classes across multiple files
+        var mergedElements = new List<CodeElement>();
+        var groupedClasses = elements
+            .Where(e => e.ElementType == CodeElementType.Class)
+            .GroupBy(e => new { e.Namespace, e.Name })
+            .ToList();
+
+        foreach (var group in groupedClasses)
+        {
+            var first = group.First();
+            if (group.Count() > 1)
+            {
+                // Merge attributes and dependencies
+                foreach (var other in group.Skip(1))
+                {
+                    first.Attributes.AddRange(other.Attributes);
+                    first.Dependencies.AddRange(other.Dependencies);
+                    first.Attributes = first.Attributes.Distinct().ToList();
+                    first.Dependencies = first.Dependencies.Distinct().ToList();
+                }
+            }
+            mergedElements.Add(first);
+        }
+
+        // Add non-class elements
+        mergedElements.AddRange(elements.Where(e => e.ElementType != CodeElementType.Class));
+
+        return mergedElements;
     }
 
     /// <summary>
