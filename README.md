@@ -98,6 +98,67 @@ if (rule.IsValid())
 ```
 
 
+## CodeElement
+
+The `CodeElement` class represents a structural element of code (such as classes, methods, properties, interfaces, etc.) that has been analyzed by the Roslyn Guard Analyzer. It captures detailed metadata about the code element including its location, type, accessibility, complexity metrics, and relationships with other elements. This class is used internally by the analyzer to track what elements were processed and to associate violations with specific code locations.
+
+### Usage Example
+
+```csharp
+// Create a code element representing a public class
+var programClass = new CodeElement("Program.cs", CodeElementType.Class, 12)
+{
+    Id = "CE001",
+    Name = "Program",
+    ElementType = CodeElementType.Class,
+    FilePath = "Program.cs",
+    StartLineNumber = 12,
+    EndLineNumber = 25,
+    Namespace = "MyApplication",
+    ParentName = null,
+    FullyQualifiedName = "MyApplication.Program",
+    Attributes = new List<string> { "[Serializable]" },
+    Dependencies = new List<string> { "System", "System.Collections.Generic" },
+    SuppressDirectives = new List<string>(),
+    IsPublic = true,
+    IsAsync = false,
+    IsStatic = false,
+    IsAbstract = false,
+    ReturnType = null,
+    Parameters = new List<string>(),
+    Complexity = 3,
+    AnalyzedAt = DateTime.UtcNow
+};
+
+// Create a code element representing a method
+var mainMethod = new CodeElement("Program.cs", CodeElementType.Method, 42)
+{
+    Id = "CE002",
+    Name = "Main",
+    ElementType = CodeElementType.Method,
+    FilePath = "Program.cs",
+    StartLineNumber = 42,
+    EndLineNumber = 48,
+    Namespace = "MyApplication",
+    ParentName = "Program",
+    FullyQualifiedName = "MyApplication.Program.Main(string[])",
+    Attributes = new List<string>(),
+    Dependencies = new List<string> { "System", "System.Threading.Tasks" },
+    SuppressDirectives = new List<string>(),
+    IsPublic = true,
+    IsAsync = true,
+    IsStatic = true,
+    IsAbstract = false,
+    ReturnType = "Task",
+    Parameters = new List<string> { "string[] args" },
+    Complexity = 2,
+    AnalyzedAt = DateTime.UtcNow
+};
+
+Console.WriteLine($"Analyzed element: {programClass.FullyQualifiedName} at {programClass.FilePath}:{programClass.StartLineNumber}");
+Console.WriteLine($"Method: {mainMethod.Name}, Async: {mainMethod.IsAsync}, Complexity: {mainMethod.Complexity}");
+```
+
 ## AnalysisResult
 
 The `AnalysisResult` class contains the complete results of a code analysis execution. It includes all violations found, analysis statistics, and metadata about the analyzed project. This class serves as the primary container for analysis data and provides methods for querying violations and generating reports.
