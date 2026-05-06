@@ -47,7 +47,7 @@ jobs:
         echo "✅ Architecture analysis passed"
 
     - name: Publish analysis report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: analysis-report
         path: analysis.json
@@ -61,7 +61,7 @@ jobs:
           --output analysis-report.html
 
     - name: Publish HTML report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: html-report
         path: analysis-report.html
@@ -139,7 +139,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload package artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: nuget-packages
         path: ./nupkg
