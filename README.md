@@ -22,6 +22,7 @@ Enforce architectural rules, naming conventions, async patterns, and null safety
 - [Troubleshooting](#troubleshooting)
 - [Testing](#testing)
 - [Performance](#performance)
+- [Documentation](#documentation)
 - [Related Projects](#related-projects)
 - [Contributing](#contributing)
 
@@ -894,6 +895,20 @@ Benchmarks measured on .NET 10.0, Intel Core i7-12700H, 32 GB RAM, SSD storage. 
   }
 }
 ```
+
+## Documentation
+
+Detailed guides are available in the [`docs/`](./docs/) directory:
+
+| Document | Description |
+|---|---|
+| [Getting Started](./docs/getting-started.md) | Installation, first analysis, and built-in rules |
+| [Custom Rule Development](./docs/custom-rule-development.md) | Writing, configuring, and testing your own rules |
+| [API Reference](./docs/api-reference.md) | Full interface and model documentation |
+| [Architecture Guide](./docs/architecture.md) | Internal design decisions |
+| [Deployment Guide](./docs/deployment.md) | CI/CD and production setup |
+| [FAQ](./docs/faq.md) | Common questions and troubleshooting |
+| [Migration v2](./docs/MIGRATION_v2.md) | Upgrading from v1 to v2 |
 
 ## Related Projects
 
