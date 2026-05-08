@@ -72,6 +72,21 @@ public static class AnalyzerConstants
         public const string AsyncPatternRule = "ASY001";
         public const string NullSafetyRule = "NUL001";
     }
+
+    public static class Suppression
+    {
+        /// <summary>
+        /// Inline comment directive that suppresses all rules for the next code element.
+        /// Usage: // GUARD_SKIP
+        /// </summary>
+        public const string GuardSkipAll = "GUARD_SKIP";
+
+        /// <summary>
+        /// Inline comment directive prefix that suppresses a specific rule for the next code element.
+        /// Usage: // GUARD_SKIP:LYR001
+        /// </summary>
+        public const string GuardSkipPrefix = "GUARD_SKIP:";
+    }
 }
 
 /// <summary>
