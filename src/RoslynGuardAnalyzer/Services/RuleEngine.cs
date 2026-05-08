@@ -43,7 +43,8 @@ public sealed class RuleEngine : IRuleEngine
 
         var activeElements = elements.Where(e => !e.Attributes.Any(a => 
             a.Contains("SuppressRoslynGuard", StringComparison.OrdinalIgnoreCase) && 
-            a.Contains(rule.Id, StringComparison.OrdinalIgnoreCase))).ToList();
+            a.Contains(rule.Id, StringComparison.OrdinalIgnoreCase)) &&
+            !IsGuardSkipped(e, rule.Id)).ToList();
 
         var violations = rule.Category switch
         {
@@ -137,6 +138,45 @@ public sealed class RuleEngine : IRuleEngine
     }
 
     private readonly Dictionary<string, string[]> _editorConfigCache = new();
+    private readonly Dictionary<string, string[]> _fileLineCache = new();
+
+    /// <summary>
+    /// Checks whether a code element carries a GUARD_SKIP inline suppression directive
+    /// for the given rule. Looks at:
+    /// 1. <see cref="CodeElement.SuppressDirectives"/> set programmatically by parsers.
+    /// 2. The line immediately preceding the element's declaration in its source file,
+    ///    which may contain <c>// GUARD_SKIP</c> (all rules) or
+    ///    <c>// GUARD_SKIP:RULE_ID</c> (specific rule).
+    /// </summary>
+    private bool IsGuardSkipped(CodeElement element, string ruleId)
+    {
+        // Check programmatically-set suppression directives first.
+        if (element.SuppressDirectives.Any(d =>
+            d.Equals(AnalyzerConstants.Suppression.GuardSkipAll, StringComparison.OrdinalIgnoreCase) ||
+            d.Equals($"{AnalyzerConstants.Suppression.GuardSkipPrefix}{ruleId}", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        // Fall back to reading the source file for inline comment directives.
+        if (string.IsNullOrEmpty(element.FilePath) || element.StartLineNumber <= 1 || !System.IO.File.Exists(element.FilePath))
+            return false;
+
+        if (!_fileLineCache.TryGetValue(element.FilePath, out var lines))
+        {
+            lines = System.IO.File.ReadAllLines(element.FilePath);
+            _fileLineCache[element.FilePath] = lines;
+        }
+
+        var prevLineIndex = element.StartLineNumber - 2; // convert 1-based to 0-based, then go back one line
+        if (prevLineIndex < 0 || prevLineIndex >= lines.Length)
+            return false;
+
+        var prevLine = lines[prevLineIndex].Trim();
+
+        return prevLine.Equals($"// {AnalyzerConstants.Suppression.GuardSkipAll}", StringComparison.OrdinalIgnoreCase) ||
+               prevLine.StartsWith($"// {AnalyzerConstants.Suppression.GuardSkipPrefix}{ruleId}", StringComparison.OrdinalIgnoreCase);
+    }
 
     private SeverityLevel? GetSeverity(AnalysisRule rule, string filePath)
     {
