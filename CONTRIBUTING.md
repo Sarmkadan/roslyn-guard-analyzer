@@ -1,45 +1,73 @@
 # Contributing to RoslynGuardAnalyzer
 
-First off, thank you for considering contributing to RoslynGuardAnalyzer!
+Thank you for considering contributing to RoslynGuardAnalyzer!
 
-## Getting Started
+## Requirements
 
-1. **Fork** the repository on GitHub.
-2. **Clone** your fork locally:
+- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
+- Git
+
+## Building Locally
+
+```bash
+# Clone your fork
+git clone https://github.com/your-username/roslyn-guard-analyzer.git
+cd roslyn-guard-analyzer
+
+# Restore dependencies
+dotnet restore
+
+# Build in Release configuration
+dotnet build -c Release
+
+# Or use the Makefile
+make build
+```
+
+## Running Tests
+
+```bash
+# Run all tests
+dotnet test --verbosity normal
+
+# Run tests with detailed output and generate a TRX report
+dotnet test --verbosity normal --logger "trx" --results-directory TestResults
+
+# Run a specific test project
+dotnet test tests/roslyn-guard-analyzer.Tests/
+```
+
+## Code Style
+
+This project follows standard .NET conventions enforced via `.editorconfig`:
+
+- **Naming**: PascalCase for public types and members, camelCase for parameters and locals, `_camelCase` for private fields, `I` prefix for interfaces, `Async` suffix for async methods.
+- **Braces**: Always use braces for control flow blocks.
+- **Nullability**: Enable nullable reference types (`<Nullable>enable</Nullable>`); avoid `null` suppression operators unless unavoidable.
+- **XML docs**: Add or update `<summary>` documentation for all public APIs.
+
+Run `dotnet format --verify-no-changes` to confirm your changes comply before opening a PR.
+
+## Branching & Pull Requests
+
+1. **Fork** the repository and create a branch from `main`:
    ```bash
-   git clone https://github.com/your-username/roslyn-guard-analyzer.git
+   git checkout -b feature/my-feature
    ```
-3. **Create a branch** for your feature or bug fix:
-   ```bash
-   git checkout -b my-new-feature
-   ```
-
-## Development Requirements
-
-- **.NET 10.0 SDK** or later.
-
-## Making Changes
-
-- Ensure you adhere to the project's **Code Style**:
-  - Follow existing conventions.
-  - Add or update XML documentation for public APIs.
-  - **Keep author headers** in files where they already exist.
-- **Run tests** to ensure your changes don't break existing functionality before submitting.
-
-## Submitting a Pull Request
-
-1. Commit your changes and push them to your fork.
-2. Submit a Pull Request against the original repository.
-3. Describe your changes in detail in the PR description.
+2. Make focused, well-scoped changes. One feature or fix per PR.
+3. Ensure all tests pass and no new build warnings are introduced.
+4. Write a clear PR description explaining _what_ changed and _why_.
+5. Reference any related issues with `Fixes #<issue>` in the PR body.
 
 ## Reporting Issues
 
-If you find a bug or have a feature request, please use **GitHub Issues**. 
-When reporting a bug, please include:
-- A clear description of the issue.
-- Minimal reproduction steps.
-- Expected and actual behavior.
+Use [GitHub Issues](https://github.com/sarmkadan/roslyn-guard-analyzer/issues). When reporting a bug, include:
+
+- A clear description of the problem.
+- Minimal reproduction steps or a failing test case.
+- Expected vs. actual behaviour.
+- SDK version (`dotnet --version`) and OS.
 
 ## License
 
-By contributing to this project, you agree that your contributions will be licensed under its **MIT License**.
+By contributing, you agree that your contributions will be licensed under the project's **MIT License**.
