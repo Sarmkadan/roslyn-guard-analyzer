@@ -27,44 +27,53 @@ public sealed class HtmlFormatter : IOutputFormatter
 
     public string FormatResult(AnalysisResult result)
     {
-        var sb = new StringBuilder();
+        return BuildHtml(result.ProjectName, result.ProjectPath, result.Violations);
+    }
 
+    public string FormatViolations(IEnumerable<RuleViolation> violations)
+    {
+        return BuildHtml("Violations Report", string.Empty, violations.ToList());
+    }
+
+    public string FormatReport(ViolationReport report)
+    {
+        return BuildHtml(report.Title, report.ProjectName, report.ViolationGroups.SelectMany(g => g.Violations).ToList());
+    }
+
+    private static string BuildHtml(string title, string projectPath, IReadOnlyList<RuleViolation> violations)
+    {
+        var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html>");
         sb.AppendLine("<html>");
         sb.AppendLine("<head>");
         sb.AppendLine("<meta charset=\"utf-8\">");
-        sb.AppendLine("<title>Analysis Report - " + HtmlEscape(result.ProjectName) + "</title>");
+        sb.AppendLine("<title>Analysis Report - " + HtmlEscape(title) + "</title>");
         sb.AppendLine(GetStyles());
         sb.AppendLine("</head>");
         sb.AppendLine("<body>");
-
-        // Header
         sb.AppendLine("<div class=\"container\">");
         sb.AppendLine("<h1>Roslyn Guard Analyzer Report</h1>");
         sb.AppendLine("<div class=\"header-info\">");
-        sb.AppendLine($"<p><strong>Project:</strong> {HtmlEscape(result.ProjectName)}</p>");
-        sb.AppendLine($"<p><strong>Path:</strong> {HtmlEscape(result.ProjectPath)}</p>");
+        sb.AppendLine($"<p><strong>Project:</strong> {HtmlEscape(title)}</p>");
+        if (!string.IsNullOrWhiteSpace(projectPath))
+            sb.AppendLine($"<p><strong>Path:</strong> {HtmlEscape(projectPath)}</p>");
         sb.AppendLine($"<p><strong>Generated:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>");
         sb.AppendLine("</div>");
-
-        // Summary
         sb.AppendLine("<div class=\"summary\">");
-        sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{result.ViolationCount}</div><div class=\"stat-label\">Total Violations</div></div>");
-        sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{result.TotalFilesAnalyzed}</div><div class=\"stat-label\">Files Analyzed</div></div>");
-        sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{result.TotalElementsAnalyzed}</div><div class=\"stat-label\">Elements Analyzed</div></div>");
+        sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{violations.Count}</div><div class=\"stat-label\">Total Violations</div></div>");
+        sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{violations.Select(v => v.FilePath).Distinct().Count()}</div><div class=\"stat-label\">Affected Files</div></div>");
         sb.AppendLine("</div>");
 
-        // Violations table
-        if (result.Violations.Count > 0)
+        if (violations.Count > 0)
         {
             sb.AppendLine("<h2>Violations</h2>");
             sb.AppendLine("<table class=\"violations-table\">");
             sb.AppendLine("<thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>File</th><th>Line</th></tr></thead>");
             sb.AppendLine("<tbody>");
 
-            foreach (var violation in result.Violations.OrderByDescending(v => v.Severity))
+            foreach (var violation in violations.OrderByDescending(v => v.Severity))
             {
-                var severityClass = violation.Severity.ToLowerInvariant();
+                var severityClass = violation.Severity.ToString().ToLowerInvariant();
                 sb.AppendLine($"<tr class=\"severity-{severityClass}\">");
                 sb.AppendLine($"<td>{HtmlEscape(violation.RuleName)}</td>");
                 sb.AppendLine($"<td>{violation.Severity}</td>");
@@ -85,57 +94,7 @@ public sealed class HtmlFormatter : IOutputFormatter
         sb.AppendLine("</div>");
         sb.AppendLine("</body>");
         sb.AppendLine("</html>");
-
         return sb.ToString();
-    }
-
-    public string FormatViolations(IEnumerable<RuleViolation> violations)
-    {
-        var violationList = violations.ToList();
-
-        var sb = new StringBuilder();
-
-        sb.AppendLine("<!DOCTYPE html>");
-        sb.AppendLine("<html>");
-        sb.AppendLine("<head>");
-        sb.AppendLine("<meta charset=\"utf-8\">");
-        sb.AppendLine("<title>Violations Report</title>");
-        sb.AppendLine(GetStyles());
-        sb.AppendLine("</head>");
-        sb.AppendLine("<body>");
-
-        sb.AppendLine("<div class=\"container\">");
-        sb.AppendLine($"<h1>Violations Report ({violationList.Count} violations)</h1>");
-
-        sb.AppendLine("<table class=\"violations-table\">");
-        sb.AppendLine("<thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>File</th><th>Line:Column</th></tr></thead>");
-        sb.AppendLine("<tbody>");
-
-        foreach (var violation in violationList.OrderByDescending(v => v.Severity))
-        {
-            var severityClass = violation.Severity.ToLowerInvariant();
-            sb.AppendLine($"<tr class=\"severity-{severityClass}\">");
-            sb.AppendLine($"<td>{HtmlEscape(violation.RuleName)}</td>");
-            sb.AppendLine($"<td>{violation.Severity}</td>");
-            sb.AppendLine($"<td>{HtmlEscape(violation.Message)}</td>");
-            sb.AppendLine($"<td>{HtmlEscape(System.IO.Path.GetFileName(violation.FilePath))}</td>");
-            sb.AppendLine($"<td>{violation.LineNumber}:{violation.ColumnNumber}</td>");
-            sb.AppendLine("</tr>");
-        }
-
-        sb.AppendLine("</tbody>");
-        sb.AppendLine("</table>");
-
-        sb.AppendLine("</div>");
-        sb.AppendLine("</body>");
-        sb.AppendLine("</html>");
-
-        return sb.ToString();
-    }
-
-    public string FormatReport(ViolationReport report)
-    {
-        return FormatResult(null!); // Simplified for now
     }
 
     /// <summary>
@@ -161,12 +120,7 @@ body {
 h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
 h2 { color: #34495e; margin-top: 30px; }
 .header-info { background: #ecf0f1; padding: 15px; border-radius: 4px; }
-.summary {
-    display: flex;
-    gap: 20px;
-    margin: 20px 0;
-    flex-wrap: wrap;
-}
+.summary { display: flex; gap: 20px; margin: 20px 0; flex-wrap: wrap; }
 .stat-box {
     flex: 1;
     min-width: 150px;
@@ -178,54 +132,22 @@ h2 { color: #34495e; margin-top: 30px; }
 }
 .stat-value { font-size: 32px; font-weight: bold; }
 .stat-label { font-size: 14px; opacity: 0.9; }
-.violations-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-}
-.violations-table th {
-    background: #34495e;
-    color: white;
-    padding: 12px;
-    text-align: left;
-    font-weight: 600;
-}
-.violations-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #ecf0f1;
-}
-.violations-table tr:hover {
-    background: #f9f9f9;
-}
-.severity-critical { background: #fee; border-left: 4px solid #e74c3c; }
-.severity-high { background: #ffeaa7; border-left: 4px solid #f39c12; }
-.severity-medium { background: #e8f4f8; border-left: 4px solid #3498db; }
-.severity-low { background: #eafaf1; border-left: 4px solid #27ae60; }
-.success {
-    background: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
-    padding: 15px;
-    border-radius: 4px;
-    text-align: center;
-    font-weight: 500;
-}
+.violations-table { width: 100%; border-collapse: collapse; }
+.violations-table th, .violations-table td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+.severity-critical { background: #fee2e2; }
+.severity-error { background: #ffedd5; }
+.severity-warning { background: #fef3c7; }
+.severity-info { background: #dbeafe; }
+.success { background: #dcfce7; padding: 16px; border-radius: 4px; }
 </style>";
     }
 
-    /// <summary>
-    /// Escapes special HTML characters to prevent XSS.
-    /// </summary>
     private static string HtmlEscape(string text)
     {
-        if (string.IsNullOrEmpty(text))
-            return text;
-
         return text
-            .Replace("&", "&amp;")
-            .Replace("<", "&lt;")
-            .Replace(">", "&gt;")
-            .Replace("\"", "&quot;")
-            .Replace("'", "&#39;");
+            .Replace("&", "&amp;", StringComparison.Ordinal)
+            .Replace("<", "&lt;", StringComparison.Ordinal)
+            .Replace(">", "&gt;", StringComparison.Ordinal)
+            .Replace("\"", "&quot;", StringComparison.Ordinal);
     }
 }

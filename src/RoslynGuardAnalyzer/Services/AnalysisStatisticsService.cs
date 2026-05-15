@@ -7,8 +7,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
-using RoslynGuardAnalyzer.Utilities;
 
 namespace RoslynGuardAnalyzer.Services;
 
@@ -30,7 +30,7 @@ public sealed class AnalysisStatisticsService
         public int LowCount { get; set; }
         public Dictionary<string, int> ByRule { get; } = [];
         public Dictionary<string, int> ByFile { get; } = [];
-        public Dictionary<string, int> BySeverity { get; } = [];
+        public Dictionary<SeverityLevel, int> BySeverity { get; } = [];
         public int AffectedFiles { get; set; }
         public int AffectedRules { get; set; }
     }
@@ -38,30 +38,27 @@ public sealed class AnalysisStatisticsService
     /// <summary>
     /// Calculates statistics from a list of violations.
     /// </summary>
-    public static ViolationStatistics CalculateStatistics(IEnumerable<RuleViolation> violations)
+    public static ViolationStatistics CalculateStatistics(IEnumerable<RuleViolation>? violations)
     {
         var violationList = violations?.ToList() ?? [];
 
         var stats = new ViolationStatistics
         {
             TotalCount = violationList.Count,
-            CriticalCount = violationList.Count(v => v.Severity == "Critical"),
-            HighCount = violationList.Count(v => v.Severity == "High"),
-            MediumCount = violationList.Count(v => v.Severity == "Medium"),
-            LowCount = violationList.Count(v => v.Severity == "Low"),
+            CriticalCount = violationList.Count(v => v.Severity == SeverityLevel.Critical),
+            HighCount = violationList.Count(v => v.Severity == SeverityLevel.Error),
+            MediumCount = violationList.Count(v => v.Severity == SeverityLevel.Warning),
+            LowCount = violationList.Count(v => v.Severity == SeverityLevel.Info),
             AffectedFiles = violationList.Select(v => v.FilePath).Distinct().Count(),
             AffectedRules = violationList.Select(v => v.RuleName).Distinct().Count()
         };
 
-        // By rule
         foreach (var group in violationList.GroupBy(v => v.RuleName))
             stats.ByRule[group.Key] = group.Count();
 
-        // By file
         foreach (var group in violationList.GroupBy(v => v.FilePath))
             stats.ByFile[group.Key] = group.Count();
 
-        // By severity
         foreach (var group in violationList.GroupBy(v => v.Severity))
             stats.BySeverity[group.Key] = group.Count();
 
@@ -71,7 +68,7 @@ public sealed class AnalysisStatisticsService
     /// <summary>
     /// Calculates statistics from an analysis result.
     /// </summary>
-    public static ViolationStatistics CalculateStatistics(AnalysisResult result)
+    public static ViolationStatistics CalculateStatistics(AnalysisResult? result)
     {
         return CalculateStatistics(result?.Violations);
     }
@@ -85,7 +82,7 @@ public sealed class AnalysisStatisticsService
     {
         return violations
             .GroupBy(v => v.RuleName)
-            .Select(g => (g.Key, g.Count()))
+            .Select(g => (Rule: g.Key, Count: g.Count()))
             .OrderByDescending(x => x.Count)
             .Take(count)
             .ToList();
@@ -100,7 +97,7 @@ public sealed class AnalysisStatisticsService
     {
         return violations
             .GroupBy(v => System.IO.Path.GetFileName(v.FilePath))
-            .Select(g => (g.Key, g.Count()))
+            .Select(g => (File: g.Key, Count: g.Count()))
             .OrderByDescending(x => x.Count)
             .Take(count)
             .ToList();
@@ -161,14 +158,10 @@ public sealed class AnalysisStatisticsService
 
     /// <summary>
     /// Calculates the risk score (0-100) based on violations.
-    /// Takes severity into account with heavier weighting for critical issues.
     /// </summary>
     public static int CalculateRiskScore(ViolationStatistics stats)
     {
-        // Weighted calculation: Critical=10, High=5, Medium=2, Low=1
         var score = (stats.CriticalCount * 10) + (stats.HighCount * 5) + (stats.MediumCount * 2) + stats.LowCount;
-
-        // Cap at 100
         return Math.Min(100, score / 10);
     }
 

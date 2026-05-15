@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System;
 using System.IO;
 
+using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
 namespace RoslynGuardAnalyzer.Services;
 
