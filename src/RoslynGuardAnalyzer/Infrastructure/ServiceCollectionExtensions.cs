@@ -4,14 +4,16 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System;
+using System.IO;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
+
+using RoslynGuardAnalyzer.Data;
+using RoslynGuardAnalyzer.Rules;
+using RoslynGuardAnalyzer.Services;
+
 namespace RoslynGuardAnalyzer.Infrastructure;
 
 /// <summary>
@@ -27,19 +29,18 @@ public static class ServiceCollectionExtensions
         if (services is null)
             throw new ArgumentNullException(nameof(services));
 
-        // Register repositories
         services.AddSingleton<RuleRepository>();
         services.AddSingleton<AnalysisResultRepository>();
         services.AddSingleton<ProjectRepository>();
 
-        // Register services
         services.AddSingleton<IRuleRegistry, RuleRegistry>();
+        services.AddSingleton<ICustomRuleRegistry, CustomRuleRegistry>();
         services.AddSingleton<IRuleEngine, RuleEngine>();
+        services.AddSingleton<CustomRuleEngine>();
         services.AddSingleton<IReportingService, ReportingService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<IAnalysisService, AnalysisService>();
 
-        // Register configuration
         services.AddSingleton<AnalyzerConfiguration>();
     }
 
@@ -51,19 +52,18 @@ public static class ServiceCollectionExtensions
         if (services is null)
             throw new ArgumentNullException(nameof(services));
 
-        // Register repositories with custom data directory
         services.AddSingleton(new RuleRepository(dataDirectory));
         services.AddSingleton(new AnalysisResultRepository(dataDirectory));
         services.AddSingleton(new ProjectRepository(dataDirectory));
 
-        // Register services
         services.AddSingleton<IRuleRegistry, RuleRegistry>();
+        services.AddSingleton<ICustomRuleRegistry, CustomRuleRegistry>();
         services.AddSingleton<IRuleEngine, RuleEngine>();
+        services.AddSingleton<CustomRuleEngine>();
         services.AddSingleton<IReportingService, ReportingService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<IAnalysisService, AnalysisService>();
 
-        // Register configuration
         services.AddSingleton(new AnalyzerConfiguration { DataDirectory = dataDirectory });
     }
 
@@ -159,7 +159,7 @@ public sealed class AnalyzerConfiguration
     /// <summary>
     /// Gets or sets whether to fail on analysis errors.
     /// </summary>
-    public bool FailOnError { get; set; } = false;
+    public bool FailOnError { get; set; }
 
     /// <summary>
     /// Gets or sets whether to generate detailed reports.

@@ -141,7 +141,7 @@ public sealed class AnalysisProject
     /// </summary>
     public string GetDirectoryPath()
     {
-        return Directory.Exists(Path) ? Path : Path.GetDirectoryName(Path) ?? string.Empty;
+        return Directory.Exists(Path) ? Path : System.IO.Path.GetDirectoryName(Path) ?? string.Empty;
     }
 }
 

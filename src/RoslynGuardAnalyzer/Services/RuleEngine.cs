@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
 
 namespace RoslynGuardAnalyzer.Services;
 
@@ -46,6 +47,9 @@ public sealed class RuleEngine : IRuleEngine
             a.Contains(rule.Id, StringComparison.OrdinalIgnoreCase)) &&
             !IsGuardSkipped(e, rule.Id)).ToList();
 
+        if (rule is CustomAnalysisRule customRule)
+            return customRule.EvaluateAsync(activeElements);
+
         var violations = rule.Category switch
         {
             RuleCategory.LayerDependency => CheckLayerDependencies(rule, activeElements),
@@ -67,7 +71,7 @@ public sealed class RuleEngine : IRuleEngine
             return new List<RuleViolation>();
 
         var violations = new List<RuleViolation>();
-        var enabledRules = _ruleRegistry.GetEnabledRules();
+        var enabledRules = _ruleRegistry.GetAllRules().Where(r => r.IsEnabled).ToList();
 
         foreach (var rule in enabledRules)
         {
