@@ -13,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RoslynGuardAnalyzer.Data;
 using RoslynGuardAnalyzer.Rules;
 using RoslynGuardAnalyzer.Services;
+using RoslynGuardAnalyzer.Suppressions;
 
 namespace RoslynGuardAnalyzer.Infrastructure;
 
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
         if (services is null)
             throw new ArgumentNullException(nameof(services));
 
+        services.AddSingleton(typeof(Microsoft.Extensions.Logging.ILogger<>), typeof(Microsoft.Extensions.Logging.Abstractions.NullLogger<>));
         services.AddSingleton<RuleRepository>();
         services.AddSingleton<AnalysisResultRepository>();
         services.AddSingleton<ProjectRepository>();
@@ -52,6 +54,7 @@ public static class ServiceCollectionExtensions
         if (services is null)
             throw new ArgumentNullException(nameof(services));
 
+        services.AddSingleton(typeof(Microsoft.Extensions.Logging.ILogger<>), typeof(Microsoft.Extensions.Logging.Abstractions.NullLogger<>));
         services.AddSingleton(new RuleRepository(dataDirectory));
         services.AddSingleton(new AnalysisResultRepository(dataDirectory));
         services.AddSingleton(new ProjectRepository(dataDirectory));
