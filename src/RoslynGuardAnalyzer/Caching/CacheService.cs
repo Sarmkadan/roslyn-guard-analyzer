@@ -38,16 +38,26 @@ public sealed class CacheService
     public int Count => _cache.Count;
 
     /// <summary>
-    /// Sets a value in the cache with the default expiration time.
+    /// Sets a value in the cache using the default expiration time configured at construction.
     /// </summary>
+    /// <typeparam name="T">The type of value to cache.</typeparam>
+    /// <param name="key">A unique cache key. Must not be null or whitespace.</param>
+    /// <param name="value">The value to store. Must not be null.</param>
     public void Set<T>(string key, T value)
     {
         Set(key, value, _defaultExpiration);
     }
 
     /// <summary>
-    /// Sets a value in the cache with a custom expiration time.
+    /// Sets a value in the cache with a custom expiration time. Replaces any existing
+    /// entry for the same key.
     /// </summary>
+    /// <typeparam name="T">The type of value to cache.</typeparam>
+    /// <param name="key">A unique cache key. Must not be null or whitespace.</param>
+    /// <param name="value">The value to store. Must not be null.</param>
+    /// <param name="expiration">The time-to-live for this cache entry.</param>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="key"/> is null or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
     public void Set<T>(string key, T value, TimeSpan expiration)
     {
         if (string.IsNullOrWhiteSpace(key))
