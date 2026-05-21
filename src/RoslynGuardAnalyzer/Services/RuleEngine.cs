@@ -28,31 +28,29 @@ public sealed class RuleEngine : IRuleEngine
     }
 
     /// <summary>
-    /// Executes a specific rule against code elements asynchronously.
+    /// Executes a specific rule against code elements.
+    /// All checks are synchronous CPU-bound work - no need for Task.Run
+    /// since callers (BackgroundTaskQueue, AnalysisService) already run
+    /// on background threads.
     /// </summary>
-    public async Task<List<RuleViolation>> ExecuteRuleAsync(AnalysisRule rule, List<CodeElement> elements)
+    public Task<List<RuleViolation>> ExecuteRuleAsync(AnalysisRule rule, List<CodeElement> elements)
     {
         if (rule is null)
             throw new ArgumentNullException(nameof(rule));
 
-        var violations = new List<RuleViolation>();
-
         if (!rule.IsEnabled || elements is null || !elements.Any())
-            return violations;
+            return Task.FromResult(new List<RuleViolation>());
 
-        await Task.Run(() =>
+        var violations = rule.Category switch
         {
-            violations.AddRange(rule.Category switch
-            {
-                RuleCategory.LayerDependency => CheckLayerDependencies(rule, elements),
-                RuleCategory.NamingConvention => CheckNamingConventions(rule, elements),
-                RuleCategory.AsyncPattern => CheckAsyncPatterns(rule, elements),
-                RuleCategory.NullSafety => CheckNullSafety(rule, elements),
-                _ => new List<RuleViolation>()
-            });
-        });
+            RuleCategory.LayerDependency => CheckLayerDependencies(rule, elements),
+            RuleCategory.NamingConvention => CheckNamingConventions(rule, elements),
+            RuleCategory.AsyncPattern => CheckAsyncPatterns(rule, elements),
+            RuleCategory.NullSafety => CheckNullSafety(rule, elements),
+            _ => new List<RuleViolation>()
+        };
 
-        return violations;
+        return Task.FromResult(violations);
     }
 
     /// <summary>
