@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using RoslynGuardAnalyzer.CodeFixes;
 using RoslynGuardAnalyzer.Data;
 using RoslynGuardAnalyzer.Rules;
 using RoslynGuardAnalyzer.Services;
@@ -39,6 +40,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICustomRuleRegistry, CustomRuleRegistry>();
         services.AddSingleton<IRuleEngine, RuleEngine>();
         services.AddSingleton<CustomRuleEngine>();
+        services.AddSingleton<ISuppressionManager, SuppressionManager>();
+        services.AddSingleton<ICodeFixService, CodeFixService>();
+        services.AddSingleton<IFixAllProvider, FixAllProvider>();
         services.AddSingleton<IReportingService, ReportingService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<IAnalysisService, AnalysisService>();
@@ -63,6 +67,9 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<ICustomRuleRegistry, CustomRuleRegistry>();
         services.AddSingleton<IRuleEngine, RuleEngine>();
         services.AddSingleton<CustomRuleEngine>();
+        services.AddSingleton<ISuppressionManager, SuppressionManager>();
+        services.AddSingleton<ICodeFixService, CodeFixService>();
+        services.AddSingleton<IFixAllProvider, FixAllProvider>();
         services.AddSingleton<IReportingService, ReportingService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<IAnalysisService, AnalysisService>();
