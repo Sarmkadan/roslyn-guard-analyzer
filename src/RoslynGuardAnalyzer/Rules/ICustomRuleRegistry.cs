@@ -16,6 +16,7 @@ public interface ICustomRuleRegistry
     /// <summary>
     /// Registers a custom rule instance.
     /// </summary>
+    /// <param name="rule">The custom analysis rule to register.</param>
     void RegisterCustomRule(CustomAnalysisRule rule);
 
     /// <summary>

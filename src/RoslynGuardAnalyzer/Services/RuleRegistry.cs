@@ -32,6 +32,9 @@ public sealed class RuleRegistry : IRuleRegistry
     /// <summary>
     /// Registers a new rule in the registry.
     /// </summary>
+    /// <param name="rule">The analysis rule to register.</param>
+    /// <exception cref="ArgumentNullException">Thrown if rule is null.</exception>
+    /// <exception cref="ConfigurationException">Thrown if rule is invalid or already registered.</exception>
     public void RegisterRule(AnalysisRule rule)
     {
         if (rule is null)
