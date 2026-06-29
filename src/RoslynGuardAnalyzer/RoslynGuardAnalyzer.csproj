@@ -7,10 +7,10 @@
     <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <PackageId>Zaiets.roslyn.guard.analyzer</PackageId>
-    <Version>2.0.2</Version>
+    <PackageId>RoslynGuardAnalyzer</PackageId>
+    <Version>1.0.0</Version>
     <Authors>Vladyslav Zaiets</Authors>
-    <Description>Roslyn-based code analyzer enforcing architectural rules - layer dependencies, naming, async patterns, null safety</Description>
+    <Description>RoslynGuardAnalyzer is a powerful tool for enforcing architectural and coding standards through automated Roslyn-based analysis.</Description>
     <PackageTags>roslyn analyzer code-analysis architecture rules csharp</PackageTags>
     <RepositoryUrl>https://github.com/sarmkadan/roslyn-guard-analyzer</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
