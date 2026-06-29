@@ -436,6 +436,14 @@ public class CustomLayerRule : AnalysisRule
 }
 ```
 
+## Code-Based Examples
+
+In addition to CLI-based examples, you can integrate Roslyn Guard Analyzer directly into your .NET applications. Check out the following examples in the [examples/](./examples/) directory:
+
+- [BasicUsage.cs](./examples/BasicUsage.cs): Demonstrates minimal setup and running a basic project analysis.
+- [AdvancedUsage.cs](./examples/AdvancedUsage.cs): Shows how to use custom configurations, custom rule registration, suppression management, and the fix-all provider.
+- [IntegrationExample.cs](./examples/IntegrationExample.cs): Illustrates how to wire the analyzer into an ASP.NET Core DI container.
+
 ## Architecture
 
 ```
