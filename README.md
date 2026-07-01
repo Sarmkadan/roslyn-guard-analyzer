@@ -259,10 +259,38 @@ roslyn-guard-analyzer --version
 
 ### Method 3: Docker Container
 
+Run the analyzer in a containerized environment without installing .NET:
+
 ```bash
+# Build the Docker image
 docker build -t roslyn-guard-analyzer .
-docker run --rm -v $(pwd):/workspace roslyn-guard-analyzer /workspace/MyProject.csproj
+
+# Quick start: Analyze this repository
+# (Mounts current directory and analyzes the analyzer itself)
+docker run --rm -v $(pwd):/workspace roslyn-guard-analyzer /workspace/src/RoslynGuardAnalyzer/RoslynGuardAnalyzer.csproj
+
+# Analyze your own project (replace PROJECT_PATH with your .csproj file or directory)
+docker run --rm -v /path/to/your/project:/workspace roslyn-guard-analyzer /workspace/YourProject.csproj
+
+# Or use docker-compose for more complex scenarios
+# Copy and customize the docker-compose configuration
+cp docker-compose.yml docker-compose.override.yml
+# Edit docker-compose.override.yml to set your project path
+nano docker-compose.override.yml
+
+# Run the analyzer
+docker-compose up analyzer
+
+# Run in detached mode
+docker-compose up -d analyzer
 ```
+
+**Usage Notes:**
+- The Docker image includes the Roslyn Guard Analyzer CLI tool
+- Mount your source code with `-v` flag to analyze your projects
+- The container runs as non-root user for security
+- Resource limits are configured for optimal performance
+- Reports can be saved to the `./reports` directory
 
 ### Method 4: Using Makefile
 
