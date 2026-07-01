@@ -3,7 +3,7 @@
 # CTO & Software Architect
 # =============================================================================
 # Multi-stage build for Roslyn Guard Analyzer v2
-# Optimized for containerized analysis with health monitoring
+# Optimized for containerized analysis
 # =============================================================================
 
 # Build stage
@@ -30,8 +30,8 @@ RUN dotnet publish src/RoslynGuardAnalyzer/RoslynGuardAnalyzer.csproj \
     -o /app/publish \
     --no-build
 
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+# Runtime stage - using Debian-based .NET runtime for proper user management
+FROM mcr.microsoft.com/dotnet/runtime:10.0 AS final
 
 LABEL maintainer="Vladyslav Zaiets <https://sarmkadan.com>"
 LABEL description="Roslyn-based code analyzer enforcing architectural rules"
@@ -39,21 +39,12 @@ LABEL version="2.0.0"
 
 WORKDIR /app
 
-ENV ASPNETCORE_URLS=http://+:8080
-ENV DOTNET_ENVIRONMENT=Production
-
-EXPOSE 8080
-
 # Copy published application
 COPY --from=publish /app/publish .
 
 # Create non-root user for security
-RUN useradd -m -u 1000 analyzer && \
-    chown -R analyzer:analyzer /app
+RUN useradd -m -u 1001 analyzer
 
 USER analyzer
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "RoslynGuardAnalyzer.dll"]
