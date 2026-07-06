@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using System;
 using System.IO;
 
+using Microsoft.Extensions.Logging;
+
 using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
 using RoslynGuardAnalyzer.Exceptions;
