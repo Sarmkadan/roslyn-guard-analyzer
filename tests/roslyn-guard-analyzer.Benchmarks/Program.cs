@@ -7,6 +7,9 @@ using RoslynGuardAnalyzer.Rules;
 
 namespace RoslynGuardAnalyzer.Benchmarks;
 
+/// <summary>
+/// Benchmark class for RuleEngine performance.
+/// </summary>
 [MemoryDiagnoser]
 public class RuleEngineBenchmarks
 {
@@ -14,6 +17,9 @@ public class RuleEngineBenchmarks
     private List<CodeElement>? _elements;
     private AnalysisRule? _sampleRule;
 
+    /// <summary>
+    /// Initializes the benchmark setup.
+    /// </summary>
     [GlobalSetup]
     public void Setup()
     {
@@ -42,12 +48,20 @@ public class RuleEngineBenchmarks
         _sampleRule = new AnalysisRule("R001", "NamingRule", "Description", RuleCategory.NamingConvention);
     }
 
+    /// <summary>
+    /// Executes a single rule asynchronously.
+    /// </summary>
+    /// <returns>A task representing the execution of the rule.</returns>
     [Benchmark]
     public async Task ExecuteRuleAsync()
     {
         await _ruleEngine!.ExecuteRuleAsync(_sampleRule!, _elements!);
     }
 
+    /// <summary>
+    /// Executes all rules asynchronously.
+    /// </summary>
+    /// <returns>A task representing the execution of all rules.</returns>
     [Benchmark]
     public async Task ExecuteAllRulesAsync()
     {
@@ -55,8 +69,15 @@ public class RuleEngineBenchmarks
     }
 }
 
+/// <summary>
+/// Program entry point for benchmarking.
+/// </summary>
 public class Program
 {
+    /// <summary>
+    /// Runs the benchmark.
+    /// </summary>
+    /// <param name="args">Command line arguments.</param>
     public static void Main(string[] args)
     {
         BenchmarkRunner.Run<RuleEngineBenchmarks>();
