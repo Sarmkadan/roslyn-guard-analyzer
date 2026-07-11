@@ -11,26 +11,28 @@ namespace RoslynGuardAnalyzer.Services
     public static class OutputWriterExtensions
     {
         /// <summary>
-        /// Returns the supported output formats as a read‑only list.
+        /// Returns the supported output formats as a read-only list.
         /// </summary>
         /// <param name="writer">The <see cref="OutputWriter"/> instance.</param>
-        /// <returns>A read‑only list of format strings.</returns>
+        /// <returns>A read-only list of format strings.</returns>
+        /// <exception cref="ArgumentNullException"><paramref name="writer"/> is <see langword="null"/>.</exception>
         public static IReadOnlyList<string> GetSupportedFormatsList(this OutputWriter writer)
-        {
-            if (writer == null) throw new ArgumentNullException(nameof(writer));
-            // Materialise the enumerable to a list and expose it as read‑only.
-            return writer.GetSupportedFormats().ToList().AsReadOnly();
-        }
+            => writer?.GetSupportedFormats().ToList().AsReadOnly()
+               ?? throw new ArgumentNullException(nameof(writer));
 
         /// <summary>
         /// Throws a <see cref="NotSupportedException"/> if the specified format is not supported.
         /// </summary>
         /// <param name="writer">The <see cref="OutputWriter"/> instance.</param>
         /// <param name="format">The format to validate.</param>
+        /// <exception cref="ArgumentNullException">
+        ///   <paramref name="writer"/> or <paramref name="format"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException"><paramref name="format"/> is empty or whitespace.</exception>
         public static void EnsureFormatSupported(this OutputWriter writer, string format)
         {
-            if (writer == null) throw new ArgumentNullException(nameof(writer));
-            if (format == null) throw new ArgumentNullException(nameof(format));
+            ArgumentNullException.ThrowIfNull(writer);
+            ArgumentException.ThrowIfNullOrWhiteSpace(format);
 
             if (!writer.IsFormatSupported(format))
             {
@@ -45,11 +47,18 @@ namespace RoslynGuardAnalyzer.Services
         /// <param name="format">The format to be used for the write operation.</param>
         /// <param name="writeAsync">A delegate that performs the actual write operation.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public static async Task WriteIfSupportedAsync(this OutputWriter writer, string format, Func<Task> writeAsync)
+        /// <exception cref="ArgumentNullException">
+        ///   <paramref name="writer"/>, <paramref name="format"/>, or <paramref name="writeAsync"/> is <see langword="null"/>.
+        /// </exception>
+        /// <exception cref="ArgumentException"><paramref name="format"/> is empty or whitespace.</exception>
+        public static async Task WriteIfSupportedAsync(
+            this OutputWriter writer,
+            string format,
+            Func<Task> writeAsync)
         {
-            if (writer == null) throw new ArgumentNullException(nameof(writer));
-            if (format == null) throw new ArgumentNullException(nameof(format));
-            if (writeAsync == null) throw new ArgumentNullException(nameof(writeAsync));
+            ArgumentNullException.ThrowIfNull(writer);
+            ArgumentException.ThrowIfNullOrWhiteSpace(format);
+            ArgumentNullException.ThrowIfNull(writeAsync);
 
             writer.EnsureFormatSupported(format);
             await writeAsync().ConfigureAwait(false);
