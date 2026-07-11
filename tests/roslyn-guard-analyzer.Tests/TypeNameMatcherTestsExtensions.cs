@@ -5,6 +5,7 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using FluentAssertions;
 using RoslynGuardAnalyzer.Utilities;
 using Xunit;
@@ -12,6 +13,13 @@ using Xunit;
 /// <summary>
 /// Extension methods for <see cref="TypeNameMatcherTests"/> to provide additional testing utilities.
 /// </summary>
+/// <exception cref="ArgumentNullException"><paramref name="typeNamePattern"/> is <see langword="null"/></exception>
+/// <exception cref="ArgumentNullException"><paramref name="expectedMatches"/> is <see langword="null"/></exception>
+/// <exception cref="ArgumentNullException"><paramref name="expectedNonMatches"/> is <see langword="null"/></exception>
+/// <exception cref="ArgumentNullException"><paramref name="namespacePattern"/> is <see langword="null"/></exception>
+/// <exception cref="ArgumentNullException"><paramref name="testNamespace"/> is <see langword="null"/></exception>
+/// <exception cref="ArgumentNullException"><paramref name="namespaceVariations"/> is <see langword="null"/></exception>
+/// <exception cref="ArgumentNullException"><paramref name="typeName"/> is <see langword="null"/></exception>
 namespace RoslynGuardAnalyzer.Tests;
 
 public static class TypeNameMatcherTestsExtensions
@@ -22,8 +30,15 @@ public static class TypeNameMatcherTestsExtensions
     /// <param name="typeNamePattern">The type name pattern to match against.</param>
     /// <param name="expectedMatches">Types that should match the pattern.</param>
     /// <param name="expectedNonMatches">Types that should not match the pattern.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="typeNamePattern"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentNullException"><paramref name="expectedMatches"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentNullException"><paramref name="expectedNonMatches"/> is <see langword="null"/></exception>
     public static void ShouldMatchTypes(this TypeNameMatcherTests _, string typeNamePattern, string[] expectedMatches, string[] expectedNonMatches)
     {
+        ArgumentNullException.ThrowIfNull(typeNamePattern);
+        ArgumentNullException.ThrowIfNull(expectedMatches);
+        ArgumentNullException.ThrowIfNull(expectedNonMatches);
+
         // Arrange
         var matcher = new TypeNameMatcher(typeNamePattern);
 
@@ -46,8 +61,13 @@ public static class TypeNameMatcherTestsExtensions
     /// <param name="namespacePattern">The namespace pattern to test.</param>
     /// <param name="testNamespace">The namespace to test against.</param>
     /// <param name="shouldMatch">Whether the namespace should match the pattern.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="namespacePattern"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentNullException"><paramref name="testNamespace"/> is <see langword="null"/></exception>
     public static void ShouldMatchNamespace(this TypeNameMatcherTests _, string namespacePattern, string testNamespace, bool shouldMatch)
     {
+        ArgumentNullException.ThrowIfNull(namespacePattern);
+        ArgumentNullException.ThrowIfNull(testNamespace);
+
         // Arrange
         var matcher = new NamespaceMatcher(namespacePattern);
 
@@ -63,8 +83,15 @@ public static class TypeNameMatcherTestsExtensions
     /// <param name="namespaceVariations">Namespace variations to test.</param>
     /// <param name="typeName">The type name to match.</param>
     /// <param name="shouldMatch">Whether all variations should match.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="typeNamePattern"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentNullException"><paramref name="namespaceVariations"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentNullException"><paramref name="typeName"/> is <see langword="null"/></exception>
     public static void ShouldMatchFullyQualifiedWithVariations(this TypeNameMatcherTests _, string typeNamePattern, string[] namespaceVariations, string typeName, bool shouldMatch)
     {
+        ArgumentNullException.ThrowIfNull(typeNamePattern);
+        ArgumentNullException.ThrowIfNull(namespaceVariations);
+        ArgumentNullException.ThrowIfNull(typeName);
+
         // Arrange
         var matcher = new TypeNameMatcher(typeNamePattern);
 
@@ -81,8 +108,11 @@ public static class TypeNameMatcherTestsExtensions
     /// Tests that a pattern matches nothing (negative test case).
     /// </summary>
     /// <param name="typeNamePattern">The type name pattern that should match nothing.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="typeNamePattern"/> is <see langword="null"/></exception>
     public static void ShouldMatchNothing(this TypeNameMatcherTests _, string typeNamePattern)
     {
+        ArgumentNullException.ThrowIfNull(typeNamePattern);
+
         // Arrange
         var matcher = new TypeNameMatcher(typeNamePattern);
 
