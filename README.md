@@ -2,6 +2,27 @@
 
 ...
 
+## EventBus
+
+The `EventBus` class is a publish-subscribe event bus that enables decoupling of event producers and consumers. It allows for the registration of event handlers and the publication of events to all subscribed handlers.
+
+### Usage Example
+```csharp
+var eventBus = new EventBus();
+
+// Subscribe to events of type MyEvent
+eventBus.Subscribe<MyEvent>(handler);
+
+// Publish an event
+await eventBus.PublishAsync(new MyEvent());
+
+// Unsubscribe from events of type MyEvent
+eventBus.Unsubscribe<MyEvent>(handler);
+
+// Clear all subscriptions
+eventBus.ClearSubscriptions();
+```
+
 ## ServiceCollectionExtensions
 
 The `ServiceCollectionExtensions` class provides utility methods for registering and configuring services related to the Roslyn Guard Analyzer. It enables registration of analyzer services, validation-only services, and reporting-only services, as well as configuration of various settings such as data directory, analysis timeout, and log level.
