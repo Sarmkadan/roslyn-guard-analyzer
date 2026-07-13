@@ -48,7 +48,7 @@
     <PackageReference Include="System.Text.Json" Version="10.0.0">
       <NoWarn>NU1510</NoWarn>
     </PackageReference>
-    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog" Version="4.4.0" />
   </ItemGroup>
 
 </Project>
