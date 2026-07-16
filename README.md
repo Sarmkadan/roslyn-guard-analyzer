@@ -549,6 +549,73 @@ var comprehensiveValidation = ConfigurationValidator.ValidateComprehensive(analy
 Console.WriteLine(comprehensiveValidation.ToString());
 ```
 
+## ConfigurationLoader
+
+The `ConfigurationLoader` class is responsible for loading and parsing configuration files for the Roslyn Guard Analyzer. It supports loading from specific file paths or automatically searching for default configuration files (`.roslyn-guard.json`) in project directories and parent directories. The loader parses JSON configuration into strongly-typed `AnalysisConfig` objects with support for rules, exclusion patterns, severity levels, and output formatting options.
+
+### Usage Example
+
+```csharp
+// Load configuration from a specific file path
+var config = await ConfigurationLoader.LoadFromFileAsync(".roslyn-guard.json");
+
+Console.WriteLine($"Loaded {config.EnabledRules.Count} enabled rules");
+Console.WriteLine($"Exclude patterns: {string.Join(", ", config.ExcludePatterns)}");
+Console.WriteLine($"Minimum severity: {config.MinimumSeverity}");
+Console.WriteLine($"Max violations to report: {config.MaxViolationsToReport}");
+Console.WriteLine($"Enable caching: {config.EnableCaching}");
+Console.WriteLine($"Output format: {config.OutputFormat}");
+
+// Search for default configuration in project directory and parents
+var projectPath = "./src/MySolution.sln";
+var defaultConfig = await ConfigurationLoader.TryLoadDefaultAsync(projectPath);
+
+if (defaultConfig != null)
+{
+  Console.WriteLine("Successfully loaded default configuration");
+  
+  // Validate the loaded configuration
+  if (defaultConfig.Validate(out var errors))
+  {
+    Console.WriteLine("Configuration is valid");
+  }
+  else
+  {
+    Console.WriteLine("Configuration errors:");
+    foreach (var error in errors)
+    {
+      Console.WriteLine($"- {error}");
+    }
+  }
+}
+else
+{
+  Console.WriteLine("No default configuration found");
+}
+
+// Create and save a configuration file
+var customConfig = new RoslynGuardAnalyzer.Configuration.AnalysisConfig
+{
+  EnabledRules = new List<string> { "LayerDependency", "NamingConvention", "AsyncPatterns" },
+  ExcludePatterns = new List<string> { "**/Tests/**", "**/bin/**", "**/obj/**" },
+  MinimumSeverity = "High",
+  MaxViolationsToReport = 500,
+  EnableCaching = true,
+  OutputFormat = "json"
+};
+
+var json = @"{
+  \"enabledRules\": [\"LayerDependency\", \"NamingConvention\", \"AsyncPatterns\"],
+  \"excludePatterns\": [\"**/Tests/**\", \"**/bin/**\", \"**/obj/**\"],
+  \"severity\": \"High\",
+  \"maxViolations\": 500,
+  \"enableCaching\": true,
+  \"outputFormat\": \"json\"
+}";
+
+await File.WriteAllTextAsync(".roslyn-guard.json", json);
+```
+
 ## RuleConfigurationBuilder
 
 The `RuleConfigurationBuilder` class provides a fluent interface for creating and configuring rule configurations with type safety. It simplifies the creation of rule configurations by providing a chainable API with sensible defaults and validation, making it easier to define rules programmatically.
