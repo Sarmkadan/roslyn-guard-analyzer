@@ -257,6 +257,38 @@ registry.Clear();
 registry.GetRuleCount().Should().Be(0);
 ```
 
+## StringExtensionsTests
+
+The `StringExtensionsTests` class contains comprehensive unit tests for the `StringExtensions` utility methods, verifying correct behavior for string naming convention conversions, distance calculations, and substring counting. It tests methods that convert between different naming formats (PascalCase, camelCase, snake_case), calculate Levenshtein distance for fuzzy string matching, and count substring occurrences for pattern analysis.
+
+### Usage Example
+
+```csharp
+using FluentAssertions;
+using RoslynGuardAnalyzer.Utilities;
+using Xunit;
+
+// Test PascalCase conversion from underscore-separated input
+var pascalCaseResult = "hello_world_foo".ToPascalCase();
+pascalCaseResult.Should().Be("HelloWorldFoo");
+
+// Test camelCase conversion from hyphen-separated input
+var camelCaseResult = "hello-world".ToCamelCase();
+camelCaseResult.Should().Be("helloWorld");
+
+// Test snake_case conversion from PascalCase input
+var snakeCaseResult = "AnalysisService".ToSnakeCase();
+snakeCaseResult.Should().Be("analysis_service");
+
+// Test Levenshtein distance calculation for fuzzy matching
+var distance = "kitten".LevenshteinDistance("sitting");
+distance.Should().Be(3);
+
+// Test substring occurrence counting
+var occurrences = "abababab".CountOccurrences("ab");
+occurrences.Should().Be(4);
+```
+
 ## ValidationExtensions
 
 The `ValidationExtensions` class provides a comprehensive set of extension methods for common validation scenarios in C# applications. It offers fluent validation patterns with detailed error messages for strings, collections, file paths, numeric ranges, and type compatibility checks. Each method follows a consistent pattern returning a boolean success indicator along with an optional error message.
