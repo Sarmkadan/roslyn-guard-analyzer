@@ -481,6 +481,57 @@ userRepository.Clear();
 Console.WriteLine($"Repository cleared. Count: {userRepository.Count()}");
 ```
 
+## RuleConfigurationBuilder
+
+The `RuleConfigurationBuilder` class provides a fluent interface for creating and configuring rule configurations with type safety. It simplifies the creation of rule configurations by providing a chainable API with sensible defaults and validation, making it easier to define rules programmatically.
+
+
+### Usage Example
+
+```csharp
+// Create a custom rule configuration using the builder
+var customRuleConfig = new RuleConfigurationBuilder("CustomSecurityRule")
+    .WithEnabled(true)
+    .WithSeverity("High")
+    .WithDescription("Ensures security best practices are followed")
+    .WithParameter("RequireEncryption", true)
+    .WithParameter("MinimumKeyLength", 256)
+    .WithParameter("AllowLegacyAlgorithms", false)
+    .Build();
+
+// Use one of the predefined builder methods for common rule types
+var namingRuleConfig = RuleConfigurationBuilder.CreateNamingConvention()
+    .WithSeverity("Critical")
+    .WithParameter("CheckPublicMembers", true)
+    .WithParameter("CheckPrivateMembers", true)
+    .WithDescription("Strict naming conventions for all public members")
+    .Build();
+
+var layerRuleConfig = RuleConfigurationBuilder.CreateLayerDependency()
+    .WithSeverity("High")
+    .WithParameter("StrictMode", true)
+    .WithDescription("Enforce strict layer boundaries")
+    .Build();
+
+var asyncRuleConfig = RuleConfigurationBuilder.CreateAsyncPatterns()
+    .WithSeverity("Medium")
+    .WithParameter("RequireAsyncSuffix", true)
+    .WithDescription("Ensure proper async/await patterns")
+    .Build();
+
+var nullSafetyConfig = RuleConfigurationBuilder.CreateNullSafety()
+    .WithSeverity("High")
+    .WithParameter("RequireNullChecks", true)
+    .WithDescription("Enforce null safety throughout the codebase")
+    .Build();
+
+// Access the built configuration
+Console.WriteLine($"Rule: {customRuleConfig.Name}");
+Console.WriteLine($"Description: {customRuleConfig.Description}");
+Console.WriteLine($"Enabled: {customRuleConfig.GetCustomSetting("Enabled")}");
+Console.WriteLine($"Severity: {customRuleConfig.GetCustomSetting("Severity")}");
+```
+
 ## RoslynGuardAnalyzerOptions
 
 The `RoslynGuardAnalyzerOptions` class provides strongly-typed configuration for the Roslyn Guard Analyzer using the IOptions pattern. It supports validation via DataAnnotations and allows customization of analysis behavior through various properties such as project path, timeout settings, output format, and rule filtering.
