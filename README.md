@@ -481,4 +481,55 @@ userRepository.Clear();
 Console.WriteLine($"Repository cleared. Count: {userRepository.Count()}");
 ```
 
+## RoslynGuardAnalyzerOptions
+
+The `RoslynGuardAnalyzerOptions` class provides strongly-typed configuration for the Roslyn Guard Analyzer using the IOptions pattern. It supports validation via DataAnnotations and allows customization of analysis behavior through various properties such as project path, timeout settings, output format, and rule filtering.
+
+### Usage Example
+
+```csharp
+// Create configuration with default values
+var options = new RoslynGuardAnalyzer.Configuration.RoslynGuardAnalyzerOptions
+{
+    ProjectPath = "./src/MySolution.sln",
+    AnalysisTimeoutSeconds = 900,
+    MaxViolationsToReport = 500,
+    LogLevel = 3, // Info level
+    OutputFormat = "json",
+    OutputFile = "analysis-results.json",
+    GenerateReport = true,
+    ReportType = "detailed",
+    FailOnViolations = true,
+    SkipCache = false,
+    MaxParallelThreads = Environment.ProcessorCount,
+    RuleFilter = new List<string> { "LayerDependency", "NamingConvention" },
+    ExcludePatterns = new List<string> { "**/Tests/**", "**/bin/**" },
+    MinimumSeverity = "High",
+    ConfigFile = ".roslyn-guard.json"
+};
+
+// Validate configuration
+var validationErrors = options.Validate();
+if (validationErrors.Any())
+{
+    Console.WriteLine("Configuration errors:");
+    foreach (var error in validationErrors)
+    {
+        Console.WriteLine($"- {error}");
+    }
+}
+
+// Merge with CLI options (CLI options take priority)
+var cliOptions = new RoslynGuardAnalyzer.Cli.CliOptions
+{
+    ProjectPath = "./src/MyProject.csproj",
+    OutputFormat = "html",
+    OutputFile = "report.html"
+};
+options.MergeWithCliOptions(cliOptions);
+
+// Display configuration summary
+Console.WriteLine(options.ToString());
+```
+
 ...
