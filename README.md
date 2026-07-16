@@ -282,6 +282,77 @@ await projectRepository.RemoveProjectAsync("MyWebApp");
 projectRepository.ValidateAndCleanup();
 ```
 
+## RuleRepository
+
+The `RuleRepository` class manages persistence of analysis rules, providing methods for querying, saving, loading, enabling/disabling rules, and managing rule configurations. It serves as a centralized repository for all rules used by the Roslyn Guard Analyzer, enabling efficient filtering by category, severity, creation date, and enabled status.
+
+### Usage Example
+
+```csharp
+// Create a rule repository with default data directory
+var ruleRepository = new RuleRepository();
+
+// Load rules from disk
+await ruleRepository.LoadAsync();
+
+// Add a new rule
+var newRule = new AnalysisRule(
+    "my-rule",
+    "My Rule",
+    "This is my custom rule",
+    RuleCategory.LayerDependency)
+{
+    DefaultSeverity = SeverityLevel.Error,
+    Author = "John Doe",
+    Version = new Version(1, 0, 0),
+    IsEnabled = true
+};
+ruleRepository.Add(newRule.Id, newRule);
+
+// Get rules by category
+var layerRules = ruleRepository.GetByCategory(RuleCategory.LayerDependency);
+
+// Get enabled rules only
+var enabledRules = ruleRepository.GetEnabledRules();
+
+// Get rules by severity
+var errorRules = ruleRepository.GetBySeverity(SeverityLevel.Error);
+
+// Get rules created after a specific date
+var recentRules = ruleRepository.GetCreatedAfter(DateTime.Now.AddDays(-30));
+
+// Disable a rule
+var disableSuccess = ruleRepository.DisableRule("my-rule");
+
+// Enable a rule
+var enableSuccess = ruleRepository.EnableRule("my-rule");
+
+// Get repository statistics
+var stats = ruleRepository.GetStatistics();
+Console.WriteLine($"Total rules: {stats.TotalRules}");
+Console.WriteLine($"Enabled rules: {stats.EnabledRules}");
+Console.WriteLine($"Disabled rules: {stats.DisabledRules}");
+Console.WriteLine($"Enabled percentage: {stats.GetEnabledPercentage():F2}%");
+Console.WriteLine("Rules by category:");
+foreach (var kvp in stats.RulesByCategory)
+{
+    Console.WriteLine($"  {kvp.Key}: {kvp.Value}");
+}
+
+// Save rules to disk
+await ruleRepository.SaveAsync();
+
+// Export rules to a file
+await ruleRepository.ExportAsync("rules-backup.json");
+
+// Import rules from a file
+await ruleRepository.ImportAsync("rules-backup.json");
+
+// Get the data directory path
+var dataDir = ruleRepository.GetDataDirectory();
+Console.WriteLine($"Data directory: {dataDir}");
+```
+
 ## RepositoryBase
 
 The `RepositoryBase<T>` class is an abstract base repository that provides common CRUD operations for managing entities in memory. It serves as a foundation for concrete repository implementations, offering thread-safe methods for adding, retrieving, updating, and removing entities, along with additional utility methods for bulk operations and searching.
