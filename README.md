@@ -481,6 +481,74 @@ userRepository.Clear();
 Console.WriteLine($"Repository cleared. Count: {userRepository.Count()}");
 ```
 
+## ConfigurationValidator
+
+The `ConfigurationValidator` class provides comprehensive validation capabilities for configuration objects used throughout the Roslyn Guard Analyzer. It validates analysis configurations, CLI options, rule names, and performs comprehensive cross-validation across all configuration components. The validator collects both errors and warnings, providing detailed feedback about configuration issues.
+
+### Usage Example
+
+```csharp
+// Validate an analysis configuration
+var analysisConfig = new AnalysisConfig
+{
+    MinimumSeverity = "High",
+    MaxViolationsToReport = 100,
+    OutputFormat = "json",
+    EnabledRules = new List<string> { "LayerDependency", "NamingConvention" },
+    ExcludePatterns = new List<string> { "**/Tests/**", "**/bin/**" }
+};
+
+var analysisValidation = ConfigurationValidator.ValidateAnalysisConfig(analysisConfig);
+if (!analysisValidation.IsValid)
+{
+    Console.WriteLine("Analysis configuration errors:");
+    foreach (var error in analysisValidation.Errors)
+    {
+        Console.WriteLine($"- {error}");
+    }
+}
+
+// Validate CLI options
+var cliOptions = new Cli.CliOptions
+{
+    ProjectPath = "./src/MySolution.sln",
+    AnalysisTimeoutSeconds = 900,
+    MaxParallelThreads = Environment.ProcessorCount,
+    OutputFormat = "json"
+};
+
+var cliValidation = ConfigurationValidator.ValidateCliOptions(cliOptions);
+if (!cliValidation.IsValid)
+{
+    Console.WriteLine("CLI options errors:");
+    foreach (var error in cliValidation.Errors)
+    {
+        Console.WriteLine($"- {error}");
+    }
+}
+
+// Validate rule names against supported rules
+var supportedRules = new List<string> { "LayerDependency", "NamingConvention", "AsyncPatterns" };
+var ruleValidation = ConfigurationValidator.ValidateRuleNames(
+    new List<string> { "LayerDependency", "UnknownRule" },
+    supportedRules
+);
+
+if (!ruleValidation.IsValid)
+{
+    Console.WriteLine("Invalid rule names:");
+    foreach (var error in ruleValidation.Errors)
+    {
+        Console.WriteLine($"- {error}");
+    }
+}
+
+// Perform comprehensive validation combining multiple configuration components
+var comprehensiveValidation = ConfigurationValidator.ValidateComprehensive(analysisConfig, cliOptions);
+
+Console.WriteLine(comprehensiveValidation.ToString());
+```
+
 ## RuleConfigurationBuilder
 
 The `RuleConfigurationBuilder` class provides a fluent interface for creating and configuring rule configurations with type safety. It simplifies the creation of rule configurations by providing a chainable API with sensible defaults and validation, making it easier to define rules programmatically.
