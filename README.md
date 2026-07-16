@@ -675,6 +675,77 @@ var fileHash = CacheKeyGenerator.ComputeFileHash(filePath);
 Console.WriteLine($"File hash: {fileHash}");
 ```
 
+## CacheService
+
+The `CacheService` class provides an in-memory caching service for storing analysis results and derived data. It supports expiration policies, automatic cleanup of expired entries, and various cache management operations including pattern-based invalidation.
+
+### Usage Example
+
+```csharp
+// Create a cache service with a default expiration of 2 hours
+var cacheService = new CacheService(TimeSpan.FromHours(2));
+
+// Set a value in the cache with default expiration
+cacheService.Set("my-analysis-result", analysisResult);
+
+// Set a value with custom expiration
+cacheService.Set("temporary-data", tempData, TimeSpan.FromMinutes(30));
+
+// Try to get a value (returns false if not found or expired)
+if (cacheService.TryGet("my-analysis-result", out AnalysisResult? cachedResult))
+{
+    Console.WriteLine("Retrieved cached analysis result");
+    analysisResult = cachedResult!;
+}
+
+// Get a value (throws if not found or expired)
+try
+{
+    var result = cacheService.Get<AnalysisResult>("my-analysis-result");
+    Console.WriteLine("Successfully retrieved cached result");
+}
+catch (KeyNotFoundException)
+{
+    Console.WriteLine("Cache entry not found or expired");
+}
+
+// Get a value or return default if not found
+var defaultResult = cacheService.GetOrDefault("missing-key", new AnalysisResult());
+
+// Get a value or compute and cache it if not found
+var computedResult = await cacheService.GetOrComputeAsync(
+    "expensive-computation",
+    async () => await PerformExpensiveAnalysisAsync()
+);
+
+// Remove a specific key
+var wasRemoved = cacheService.Remove("temporary-data");
+Console.WriteLine($"Key removed: {wasRemoved}");
+
+// Check if a key exists
+var containsKey = cacheService.Contains("my-analysis-result");
+Console.WriteLine($"Cache contains key: {containsKey}");
+
+// Get all keys in the cache
+var allKeys = cacheService.GetKeys();
+Console.WriteLine($"Total keys: {allKeys.Count()}");
+
+// Invalidate all keys matching a pattern
+var invalidatedCount = cacheService.InvalidateByPattern("analysis_");
+Console.WriteLine($"Invalidated {invalidatedCount} keys with pattern 'analysis_'");
+
+// Remove all expired entries
+var expiredCount = cacheService.RemoveExpired();
+Console.WriteLine($"Removed {expiredCount} expired entries");
+
+// Clear the entire cache
+cacheService.Clear();
+Console.WriteLine("Cache cleared");
+
+// Get current cache statistics
+Console.WriteLine($"Cache contains {cacheService.Count} items");
+```
+
 ## RuleConfigurationBuilder
 
 The `RuleConfigurationBuilder` class provides a fluent interface for creating and configuring rule configurations with type safety. It simplifies the creation of rule configurations by providing a chainable API with sensible defaults and validation, making it easier to define rules programmatically.
