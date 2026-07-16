@@ -359,6 +359,76 @@ await suppressionManager.SaveAsync();
 await suppressionManager.LoadAsync();
 ```
 
+## IMiddleware
+
+The `IMiddleware` interface defines the contract for middleware components in the Roslyn Guard Analyzer pipeline. Middleware can inspect, transform, or short-circuit the analysis flow by implementing the `InvokeAsync` method. This pattern allows for cross-cutting concerns like logging, performance tracking, validation, and error handling to be cleanly separated from the core analysis logic.
+
+
+
+### Usage Example
+
+```csharp
+// Define a custom middleware component
+public class LoggingMiddleware : IMiddleware
+{
+    public string Name => "LoggingMiddleware";
+
+    public async Task InvokeAsync(PipelineContext context, MiddlewareDelegate next)
+    {
+        Console.WriteLine($"Starting analysis for project: {context.ProjectPath}");
+        Console.WriteLine($"Analysis ID: {context.AnalysisId}");
+
+        try
+        {
+            // Store start time
+            context.StartTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            // Call the next middleware in the pipeline
+            await next(context);
+
+            // Store end time
+            context.EndTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            Console.WriteLine($"Analysis completed successfully in {context.GetElapsedMilliseconds()}ms");
+        }
+        catch (Exception ex)
+        {
+            context.ErrorMessage = ex.Message;
+            context.EndTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            Console.WriteLine($"Analysis failed: {ex.Message}");
+            throw;
+        }
+    }
+}
+
+// Create a pipeline and add middleware
+var pipeline = new AnalysisPipeline();
+pipeline.Use(new LoggingMiddleware());
+pipeline.UsePerformanceMetrics();
+pipeline.UseRuleValidation();
+
+// Execute the pipeline
+var context = new PipelineContext
+{
+    ProjectPath = @"/projects/MySolution/MyProject.csproj",
+    AnalysisId = Guid.NewGuid().ToString()
+};
+
+context.SetItem("AnalysisConfig", new AnalysisConfiguration());
+
+await pipeline.ExecuteAsync(context);
+
+// Access context properties
+Console.WriteLine($"Project: {context.ProjectPath}");
+Console.WriteLine($"Analysis ID: {context.AnalysisId}");
+Console.WriteLine($"Duration: {context.GetElapsedMilliseconds()}ms");
+Console.WriteLine($"Error: {context.ErrorMessage ?? "None"}");
+
+// Access typed items from the context
+var config = context.GetItem<AnalysisConfiguration>("AnalysisConfig");
+```
+
+
 ## PerformanceMetricsMiddleware
 
 The `PerformanceMetricsMiddleware` class captures performance metrics during analysis execution and stores them in the pipeline context. It measures total execution time, peak memory usage, and component-level timings, making it useful for identifying performance bottlenecks and regressions in the analysis pipeline.
