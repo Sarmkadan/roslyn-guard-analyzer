@@ -237,4 +237,53 @@ var statistics = project.GetStatistics();
 Console.WriteLine($"Total files: {statistics.TotalFiles}, C# files: {statistics.CSharpFiles}");
 ```
 
+## SuppressionRecord
+
+The `SuppressionRecord` class represents a persisted rule suppression entry that allows specific rule violations to be temporarily or permanently suppressed. It stores metadata about which rule is being suppressed, the target file and element, justification, expiration date, and author information. This class is used internally to track suppression rules and determine if a given violation should be suppressed during analysis.
+
+### Usage Example
+
+```csharp
+// Create a new suppression record for a specific rule violation
+var suppression = new SuppressionRecord
+{
+    RuleId = "RG001",
+    TargetFile = "Program.cs",
+    TargetElement = "Main",
+    Justification = "Temporary suppression for legacy code migration",
+    Author = "SecurityTeam",
+    ExpiresAt = DateTime.UtcNow.AddMonths(3),
+    IsActive = true
+};
+
+// Check if a violation matches this suppression
+var violation = new RuleViolation("RG001", "SecurityRisk", "Hardcoded connection string", "Program.cs")
+{
+    LineNumber = 42,
+    ColumnNumber = 15,
+    Severity = SeverityLevel.Warning,
+    Category = RuleCategory.Security
+};
+
+if (suppression.Matches(violation))
+{
+    Console.WriteLine("Violation is suppressed by this record");
+}
+
+// Create a permanent suppression (no expiration)
+var permanentSuppression = new SuppressionRecord
+{
+    RuleId = "RG005",
+    Justification = "Approved exception for performance optimization",
+    Author = "ArchitectureTeam"
+};
+
+// Access suppression properties
+Console.WriteLine($"Suppression ID: {suppression.Id}");
+Console.WriteLine($"Rule: {suppression.RuleId}");
+Console.WriteLine($"Target: {suppression.TargetFile}::{suppression.TargetElement}");
+Console.WriteLine($"Active: {suppression.IsActive}");
+Console.WriteLine($"Expires: {suppression.ExpiresAt?.ToString("yyyy-MM-dd") ?? "Never"}");
+```
+
 ...
