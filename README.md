@@ -206,6 +206,57 @@ public class Program
     }
 }
 ``` 739
+## RuleRegistryTests
+
+The `RuleRegistryTests` class provides comprehensive unit tests for the `RuleRegistry` class, verifying its behavior for rule registration, retrieval, filtering, and execution. It tests default initialization, duplicate rule handling, null safety, rule categorization, enablement states, and async rule execution with mocked engines. These tests ensure the rule registry correctly manages analysis rules and their metadata throughout the application lifecycle.
+
+### Usage Example
+
+```csharp
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using FluentAssertions;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Exceptions;
+using RoslynGuardAnalyzer.Services;
+using Xunit;
+
+// Create a rule registry instance
+var registry = new RuleRegistry();
+
+// Verify default initialization registers four built-in rules
+registry.GetAllRules().Should().HaveCount(4);
+registry.GetRule("LYR001").Should().NotBeNull();
+registry.GetRule("NAM001").Should().NotBeNull();
+registry.GetRule("ASY001").Should().NotBeNull();
+registry.GetRule("NUL001").Should().NotBeNull();
+
+// Register a new rule
+registry.Clear();
+var newRule = new AnalysisRule("NEW001", "New Rule", "Description", RuleCategory.NamingConvention);
+registry.RegisterRule(newRule);
+registry.GetRule("NEW001").Should().BeEquivalentTo(newRule);
+
+// Get rules by category
+var namingRules = registry.GetRulesByCategory(RuleCategory.NamingConvention.ToString());
+namingRules.Should().HaveCount(1);
+
+// Get enabled rules
+var enabledRules = registry.GetEnabledRules();
+enabledRules.Should().HaveCount(1);
+
+// Remove a rule
+var removeResult = registry.RemoveRule("NEW001");
+removeResult.Should().BeTrue();
+registry.GetRule("NEW001").Should().BeNull();
+
+// Clear all rules
+registry.Clear();
+registry.GetRuleCount().Should().Be(0);
+```
+
 ## ValidationExtensions
 
 The `ValidationExtensions` class provides a comprehensive set of extension methods for common validation scenarios in C# applications. It offers fluent validation patterns with detailed error messages for strings, collections, file paths, numeric ranges, and type compatibility checks. Each method follows a consistent pattern returning a boolean success indicator along with an optional error message.
