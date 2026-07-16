@@ -210,6 +210,62 @@ public class Program
 
 The `ValidationExtensions` class provides a comprehensive set of extension methods for common validation scenarios in C# applications. It offers fluent validation patterns with detailed error messages for strings, collections, file paths, numeric ranges, and type compatibility checks. Each method follows a consistent pattern returning a boolean success indicator along with an optional error message.
 
+## AnalysisFilterBuilder
+
+The `AnalysisFilterBuilder` class provides a fluent API for creating filters to selectively process Roslyn analysis results. It allows filtering violations by severity, rule identifiers, file paths, line numbers, message content, and custom predicates. Filters can be chained together to create complex filtering logic, and the built filter can be applied to collections of violations or converted to a predicate function.
+
+### Usage Example
+
+```csharp
+using System;
+using System.Linq;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Utilities;
+
+// Sample violations to filter
+var violations = new RuleViolation[]
+{
+    new("CA1822", "Program.cs", 10, SeverityLevel.Warning, "Make method static"),
+    new("CA1051", "Program.cs", 15, SeverityLevel.Error, "Do not declare visible instance fields"),
+    new("CA1822", "Startup.cs", 25, SeverityLevel.Info, "Make method static"),
+    new("CA1711", "Models/User.cs", 42, SeverityLevel.Warning, "Identifiers should not have incorrect suffix"),
+    new("CA1051", "Models/User.cs", 50, SeverityLevel.Critical, "Do not declare visible instance fields")
+};
+
+// Create a filter that:
+// - Includes only errors and critical violations
+// - Filters to violations in Program.cs
+// - Starts from line 10
+var filter = new AnalysisFilterBuilder()
+    .MinimumSeverity("Error")
+    .ByFile("Program.cs")
+    .FromLine(10)
+    .Build();
+
+// Apply the filter
+var filtered = violations.Where(filter).ToList();
+Console.WriteLine($"Found {filtered.Count} violations:");
+foreach (var violation in filtered)
+{
+    Console.WriteLine($"  {violation.RuleName} at {violation.FilePath}:{violation.LineNumber} - {violation.Severity}");
+}
+
+// Alternative: Use the Apply method directly
+var criticalErrors = new AnalysisFilterBuilder()
+    .BySeverity(SeverityLevel.Critical)
+    .Apply(violations);
+
+Console.WriteLine($"Critical errors: {criticalErrors.Count()}");
+
+// Complex filter with custom predicate
+var complexFilter = new AnalysisFilterBuilder()
+    .BySeverity("Warning")
+    .ContainsMessage("static")
+    .Where(v => v.LineNumber < 50)
+    .Build();
+```
+
 
 
 ### Usage Example
