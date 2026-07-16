@@ -616,6 +616,65 @@ var json = @"{
 await File.WriteAllTextAsync(".roslyn-guard.json", json);
 ```
 
+## CacheKeyGenerator
+
+The `CacheKeyGenerator` class provides methods for generating consistent and unique cache keys used throughout the Roslyn Guard Analyzer's caching system. It supports various types of cache keys including project analysis, file analysis, rule execution, and code element analysis. The generator uses content-based hashing to detect changes and ensure cache invalidation when source files or configurations change.
+
+### Usage Example
+
+```csharp
+// Generate a cache key for a project analysis
+var projectKey = CacheKeyGenerator.GenerateProjectAnalysisKey(
+    "./src/MySolution.sln",
+    "a1b2c3d4e5f6"
+);
+Console.WriteLine($"Project analysis key: {projectKey}");
+
+// Generate a cache key for a file analysis with content hash
+var filePath = "./src/MyClass.cs";
+var fileContentHash = CacheKeyGenerator.ComputeFileHash(filePath);
+var fileKey = CacheKeyGenerator.GenerateFileAnalysisKey(filePath, fileContentHash);
+Console.WriteLine($"File analysis key: {fileKey}");
+
+// Generate a cache key for an analysis result
+var resultKey = CacheKeyGenerator.GenerateResultKey(projectKey);
+Console.WriteLine($"Result key: {resultKey}");
+
+// Generate a cache key for rule execution
+var ruleExecutionKey = CacheKeyGenerator.GenerateRuleExecutionKey(
+    "LayerDependency",
+    "MyNamespace.MyClass"
+);
+Console.WriteLine($"Rule execution key: {ruleExecutionKey}");
+
+// Generate a cache key for a code element
+var elementKey = CacheKeyGenerator.GenerateCodeElementKey(
+    "MyNamespace.MyClass",
+    "MyMethod"
+);
+Console.WriteLine($"Code element key: {elementKey}");
+
+// Generate a composite key from multiple components
+var compositeKey = CacheKeyGenerator.CreateCompositeKey(
+    "component1",
+    "component2",
+    "component3"
+);
+Console.WriteLine($"Composite key: {compositeKey}");
+
+// Generate a pattern key for cache invalidation
+var patternKey = CacheKeyGenerator.GeneratePatternKey("analysis_project");
+Console.WriteLine($"Pattern key: {patternKey}");
+
+// Compute a simple hash
+var simpleHash = CacheKeyGenerator.ComputeHash("some-input-string");
+Console.WriteLine($"Simple hash: {simpleHash}");
+
+// Compute file hash
+var fileHash = CacheKeyGenerator.ComputeFileHash(filePath);
+Console.WriteLine($"File hash: {fileHash}");
+```
+
 ## RuleConfigurationBuilder
 
 The `RuleConfigurationBuilder` class provides a fluent interface for creating and configuring rule configurations with type safety. It simplifies the creation of rule configurations by providing a chainable API with sensible defaults and validation, making it easier to define rules programmatically.
