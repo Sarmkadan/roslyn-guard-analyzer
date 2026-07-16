@@ -74,4 +74,50 @@ string extension = PathNormalizer.GetExtension("/home/user/absolute/path");
 bool hasExtension = PathNormalizer.HasExtension("/home/user/absolute/path");
 ```
 
-### Usage Example 739
+## FileSystemHelper
+
+The `FileSystemHelper` class provides utility methods for file system operations with built-in error handling and exclusion patterns. It helps discover C# files and project files while automatically excluding common build artifacts like `bin`, `obj`, `.git`, and other directories. The class includes methods for file existence checks, reading/writing files asynchronously, and retrieving file metadata such as size and last modified time.
+
+
+### Usage Example
+
+```csharp
+using RoslynGuardAnalyzer.Utilities;
+
+// Find all C# files in a directory (excluding bin, obj, .git, etc.)
+string[] csharpFiles = FileSystemHelper.FindCSharpFiles("/path/to/project");
+Console.WriteLine($"Found {csharpFiles.Length} C# files");
+
+// Find all project files (.csproj and .fsproj)
+string[] projectFiles = FileSystemHelper.FindProjectFiles("/path/to/project");
+Console.WriteLine($"Found {projectFiles.Length} project files");
+
+// Check if a file exists
+bool fileExists = FileSystemHelper.FileExists("/path/to/file.cs");
+Console.WriteLine(fileExists ? "File exists" : "File does not exist");
+
+// Read a file asynchronously
+string? fileContent = await FileSystemHelper.ReadFileAsync("/path/to/file.cs");
+if (fileContent != null)
+{
+    Console.WriteLine($"File content length: {fileContent.Length}");
+}
+
+// Write a file asynchronously
+bool writeSuccess = await FileSystemHelper.WriteFileAsync("/path/to/newfile.cs", "public class NewClass { }");
+Console.WriteLine(writeSuccess ? "File written successfully" : "Failed to write file");
+
+// Get file metadata
+long fileSize = FileSystemHelper.GetFileSize("/path/to/file.cs");
+Console.WriteLine($"File size: {fileSize} bytes");
+
+DateTime? lastModified = FileSystemHelper.GetLastModifiedTime("/path/to/file.cs");
+if (lastModified.HasValue)
+{
+    Console.WriteLine($"Last modified: {lastModified.Value}");
+}
+
+// Check if a directory exists
+bool dirExists = FileSystemHelper.DirectoryExists("/path/to/directory");
+Console.WriteLine(dirExists ? "Directory exists" : "Directory does not exist");
+``` 739
