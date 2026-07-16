@@ -206,3 +206,65 @@ public class Program
     }
 }
 ``` 739
+## ValidationExtensions
+
+The `ValidationExtensions` class provides a comprehensive set of extension methods for common validation scenarios in C# applications. It offers fluent validation patterns with detailed error messages for strings, collections, file paths, numeric ranges, and type compatibility checks. Each method follows a consistent pattern returning a boolean success indicator along with an optional error message.
+
+
+
+### Usage Example
+
+```csharp
+using System;
+using System.Collections.Generic;
+using RoslynGuardAnalyzer.Utilities;
+
+// Validate a string is not null or empty
+bool isValidString = "test value".IsValidString(out string? stringError);
+Console.WriteLine(isValidString ? "String is valid" : $"String error: {stringError}");
+
+// Validate a value is within range
+bool isInRange = 42.IsInRange(1, 100, out string? rangeError);
+Console.WriteLine(isInRange ? "Value is in range" : $"Range error: {rangeError}");
+
+// Validate a collection has items
+var items = new List<string> { "item1", "item2" };
+bool hasItems = items.HasItems(out string? collectionError);
+Console.WriteLine(hasItems ? "Collection has items" : $"Collection error: {collectionError}");
+
+// Validate a file path exists
+bool fileExists = @"./test.txt".FilePathExists(out string? fileError);
+Console.WriteLine(fileExists ? "File exists" : $"File error: {fileError}");
+
+// Validate a directory path exists
+bool dirExists = @"./testdir".DirectoryPathExists(out string? dirError);
+Console.WriteLine(dirExists ? "Directory exists" : $"Directory error: {dirError}");
+
+// Validate a value is one of allowed values
+bool isOneOf = "option1".IsOneOf(new[] { "option1", "option2", "option3" }, out string? oneOfError);
+Console.WriteLine(isOneOf ? "Value is allowed" : $"OneOf error: {oneOfError}");
+
+// Validate a numeric value is positive
+bool isPositive = 5.IsPositive(out string? positiveError);
+Console.WriteLine(isPositive ? "Value is positive" : $"Positive error: {positiveError}");
+
+// Validate a numeric value is non-negative
+bool isNonNegative = 0.IsNonNegative(out string? nonNegativeError);
+Console.WriteLine(isNonNegative ? "Value is non-negative" : $"Non-negative error: {nonNegativeError}");
+
+// Validate a string matches a pattern
+bool matchesPattern = "test123".MatchesPattern("^[a-z]+[0-9]+", out string? patternError);
+Console.WriteLine(matchesPattern ? "Pattern matches" : $"Pattern error: {patternError}");
+
+// Validate type assignability
+bool isAssignable = typeof(string).IsAssignableFrom(typeof(object), out string? assignableError);
+Console.WriteLine(isAssignable ? "Type is assignable" : $"Assignable error: {assignableError}");
+
+// Validate multiple conditions at once
+var validationResult = ValidationExtensions.ValidateAll(
+    ("test".IsValidString(out _), "String validation failed"),
+    (42.IsInRange(1, 100, out _), "Range validation failed"),
+    (new[] { 1, 2, 3 }.HasItems(out _), "Collection validation failed")
+);
+Console.WriteLine(validationResult.IsValid ? "All validations passed" : $"Validations failed: {string.Join(", ", validationResult.Errors)}");
+```
