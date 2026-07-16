@@ -164,4 +164,57 @@ Console.WriteLine($"Is PascalCase: {isPascalCase}");
 Console.WriteLine($"Is CamelCase: {isCamelCase}");
 ```
 
+## OutputWriter
+
+The `OutputWriter` class handles writing formatted analysis results to files or the console. It supports multiple output formats and automatically creates directories as needed when writing to files. The class provides methods for writing analysis results, violations, reports, and plain text content.
+
+
+### Usage Example
+
+```csharp
+// Create an OutputWriter with default formatters
+var outputWriter = new OutputWriter();
+
+// Get supported formats
+var supportedFormats = outputWriter.GetSupportedFormats();
+Console.WriteLine("Supported formats: " + string.Join(", ", supportedFormats));
+
+// Check if a format is supported
+var isJsonSupported = outputWriter.IsFormatSupported("json");
+Console.WriteLine($"Is JSON supported? {isJsonSupported}");
+
+// Write an analysis result to console in JSON format
+var analysisResult = new AnalysisResult
+{
+    ProjectName = "MyProject",
+    Timestamp = DateTime.UtcNow,
+    Violations = new List<RuleViolation>
+    {
+        new RuleViolation("rule-1", "LayerDependency", "Namespace1.Class1", "Namespace2.Class2", 42)
+    }
+};
+await outputWriter.WriteResultAsync(analysisResult, "json");
+
+// Write violations to a file in SARIF format
+var violations = new List<RuleViolation>
+{
+    new RuleViolation("rule-1", "LayerDependency", "Namespace1.Class1", "Namespace2.Class2", 42),
+    new RuleViolation("rule-2", "Naming", "MyClass", "myClass", 15)
+};
+await outputWriter.WriteViolationsAsync(violations, "sarif", "violations.sarif");
+
+// Write a report to console in text format
+var report = new ViolationReport
+{
+    ProjectName = "MyProject",
+    TotalViolations = 2,
+    CriticalViolations = 1,
+    WarningViolations = 1
+};
+await outputWriter.WriteReportAsync(report, "text");
+
+// Write plain text output to a file
+await outputWriter.WriteAsync("Analysis completed successfully!", "output/analysis-results.txt");
+```
+
 ...
