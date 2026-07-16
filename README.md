@@ -684,6 +684,130 @@ The `CacheService` class provides an in-memory caching service for storing analy
 ```csharp
 // Create a cache service with a default expiration of 2 hours
 var cacheService = new CacheService(TimeSpan.FromHours(2));
+```
+
+## CollectionExtensions
+
+The `CollectionExtensions` class provides a set of utility extension methods for working with collections and enumerables in a more convenient and expressive way. It includes methods for batching, filtering, partitioning, finding elements, and handling null values, reducing boilerplate code when working with collections.
+
+### Usage Example
+
+```csharp
+// Create a list of sample data
+var numbers = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+var names = new List<string?> { "Alice", "Bob", null, "Charlie", "David", null, "Eve" };
+var items = new List<(string Name, int Value)>
+{
+    ("Item1", 10), ("Item2", 20), ("Item3", 30), ("Item4", 40)
+};
+
+// Batch items into groups of 3
+var batches = numbers.Batch(3);
+foreach (var batch in batches)
+{
+    Console.WriteLine(string.Join(", ", batch));
+}
+// Output: 1, 2, 3
+//         4, 5, 6
+//         7, 8, 9
+//         10
+
+// Get distinct items by a key selector
+var distinctNumbers = numbers.DistinctBy(x => x % 3);
+Console.WriteLine(string.Join(", ", distinctNumbers));
+// Output: 1, 2, 0
+
+// Add items only if they are not null
+var result = new List<string>();
+result.AddIfNotNull("Valid");
+result.AddIfNotNull(null);
+result.AddIfNotNull("Another");
+Console.WriteLine(string.Join(", ", result));
+// Output: Valid, Another
+
+// Add a range of items only if they are not null
+var collection = new List<string?>();
+collection.AddRangeIfNotNull(new[] { "First", null, "Second", null, "Third" });
+Console.WriteLine(string.Join(", ", collection));
+// Output: First, Second, Third
+
+// Check if a collection is null or empty
+List<int>? nullList = null;
+var emptyList = new List<int>();
+var populatedList = new List<int> { 1, 2, 3 };
+
+Console.WriteLine(CollectionExtensions.IsNullOrEmpty(nullList));
+// Output: True
+Console.WriteLine(CollectionExtensions.IsNullOrEmpty(emptyList));
+// Output: True
+Console.WriteLine(CollectionExtensions.IsNullOrEmpty(populatedList));
+// Output: False
+
+// Get a collection or return empty if null
+IEnumerable<string>? nullableCollection = null;
+var safeCollection = nullableCollection.OrEmpty();
+Console.WriteLine(safeCollection.Count());
+// Output: 0
+
+// Iterate with index
+foreach (var (index, item) in names.WithIndex())
+{
+    Console.WriteLine($"{index}: {item}");
+}
+// Output: 0: Alice
+//         1: Bob
+//         2: 
+//         3: Charlie
+//         4: David
+//         5: 
+//         6: Eve
+
+// Get first element or null if collection is empty
+var firstOrNull = numbers.FirstOrNull();
+Console.WriteLine(firstOrNull);
+// Output: 1
+
+// Iterate over collection with ForEach
+numbers.ForEach(x => Console.WriteLine(x * 2));
+// Output: 2
+//         4
+//         6
+//         8
+//         10
+//         12
+//         14
+//         16
+//         18
+//         20
+
+// Partition a collection into two based on a predicate
+var (evens, odds) = numbers.Partition(x => x % 2 == 0);
+Console.WriteLine($"Evens: {string.Join(", ", evens)}");
+Console.WriteLine($"Odds: {string.Join(", ", odds)}");
+// Output: Evens: 2, 4, 6, 8, 10
+//         Odds: 1, 3, 5, 7, 9
+
+// Flatten a collection of collections
+var nestedLists = new List<List<int>>
+{
+    new List<int> { 1, 2 },
+    new List<int> { 3, 4 },
+    new List<int> { 5 }
+};
+var flattened = nestedLists.Flatten();
+Console.WriteLine(string.Join(", ", flattened));
+// Output: 1, 2, 3, 4, 5
+
+// Take elements while a condition is true
+var taken = numbers.TakeWhile(x => x < 5);
+Console.WriteLine(string.Join(", ", taken));
+// Output: 1, 2, 3, 4
+
+// Get the mode (most frequent element) of a collection
+var mode = new List<int> { 1, 2, 2, 3, 3, 3, 4 }.GetMode();
+Console.WriteLine(mode);
+// Output: 3
+```
 
 // Set a value in the cache with default expiration
 cacheService.Set("my-analysis-result", analysisResult);
