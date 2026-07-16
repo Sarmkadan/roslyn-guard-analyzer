@@ -268,6 +268,88 @@ var complexFilter = new AnalysisFilterBuilder()
 
 
 
+
+## PerformanceAnalyzer
+
+
+
+The `PerformanceAnalyzer` class provides comprehensive performance monitoring and analysis capabilities for tracking execution time metrics across different components of an application. It records timing data for operations, calculates statistics (minimum, maximum, average execution times), identifies performance bottlenecks, and generates detailed reports. The analyzer helps developers identify slow operations and optimize application performance by providing insights into execution patterns and timing distributions.
+
+
+
+
+### Usage Example
+
+
+
+```csharp
+using System;
+using RoslynGuardAnalyzer.Utilities;
+
+// Create a performance analyzer for a specific component
+var analyzer = new PerformanceAnalyzer(
+    componentName: "CodeAnalysisEngine",
+    totalTimeMs: 0,
+    minTimeMs: 0,
+    maxTimeMs: 0,
+    averageTimeMs: 0,
+    executionCount: 0,
+    percentageOfTotal: 0
+);
+
+// Record timing for an operation
+analyzer.RecordTiming(150);  // Record 150ms execution time
+analyzer.RecordTiming(210);  // Record 210ms execution time
+analyzer.RecordTiming(95);   // Record 95ms execution time
+
+// Get metrics for the component
+var metrics = analyzer.GetMetricsForComponent();
+if (metrics != null)
+{
+    Console.WriteLine($"Component: {metrics.ComponentName}");
+    Console.WriteLine($"Total time: {metrics.TotalTimeMs}ms");
+    Console.WriteLine($"Average time: {metrics.AverageTimeMs}ms");
+    Console.WriteLine($"Execution count: {metrics.ExecutionCount}");
+    Console.WriteLine($"Min time: {metrics.MinTimeMs}ms");
+    Console.WriteLine($"Max time: {metrics.MaxTimeMs}ms");
+    Console.WriteLine($"Percentage of total: {metrics.PercentageOfTotal}%");
+}
+
+// Get all performance metrics
+var allMetrics = analyzer.GetAllMetrics();
+Console.WriteLine($"Total components tracked: {allMetrics.Count}");
+
+// Identify performance bottlenecks (top 5 slowest operations)
+var bottlenecks = analyzer.GetBottlenecks(5);
+Console.WriteLine($"Top {bottlenecks.Count} bottlenecks:");
+foreach (var bottleneck in bottlenecks)
+{
+    Console.WriteLine($"  {bottleneck.ComponentName}: {bottleneck.AverageTimeMs}ms avg");
+}
+
+// Generate a comprehensive performance report
+string report = analyzer.GenerateReport();
+Console.WriteLine(report);
+
+// Clear recorded metrics when needed
+analyzer.Clear();
+
+// Check if component has data
+if (analyzer.HasComponent)
+{
+    Console.WriteLine("Performance data available");
+}
+
+// Get total time across all components
+long totalTime = analyzer.GetTotalTimeMs();
+Console.WriteLine($"Total execution time: {totalTime}ms");
+```
+
+
+
+
+
+
 ### Usage Example
 
 ```csharp
