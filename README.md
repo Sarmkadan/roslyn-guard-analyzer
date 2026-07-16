@@ -286,4 +286,60 @@ Console.WriteLine($"Active: {suppression.IsActive}");
 Console.WriteLine($"Expires: {suppression.ExpiresAt?.ToString("yyyy-MM-dd") ?? "Never"}");
 ```
 
+## SuppressionManager
+
+The `SuppressionManager` class manages rule suppression records throughout the analysis lifecycle. It provides functionality to add, remove, and query suppression records, check if specific violations are suppressed, filter out suppressed violations from analysis results, and persist suppression state to storage. The manager maintains an in-memory collection of active suppressions and can load/save them asynchronously to ensure persistence across analysis sessions.
+
+### Usage Example
+
+```csharp
+// Create a suppression manager instance
+var suppressionManager = new SuppressionManager();
+
+// Add a new suppression record
+var suppression = new SuppressionRecord
+{
+    RuleId = "RG001",
+    TargetFile = "Program.cs",
+    TargetElement = "Main",
+    Justification = "Temporary suppression for legacy code migration",
+    Author = "SecurityTeam",
+    ExpiresAt = DateTime.UtcNow.AddMonths(3),
+    IsActive = true
+};
+
+suppressionManager.AddSuppression(suppression);
+
+// Check if a violation is suppressed
+var violation = new RuleViolation("RG001", "SecurityRisk", "Hardcoded connection string", "Program.cs")
+{
+    LineNumber = 42,
+    ColumnNumber = 15,
+    Severity = SeverityLevel.Warning,
+    Category = RuleCategory.Security
+};
+
+bool isSuppressed = suppressionManager.IsSuppressed(violation);
+Console.WriteLine($"Violation is suppressed: {isSuppressed}");
+
+// Get all active suppressions
+IReadOnlyList<SuppressionRecord> activeSuppressions = suppressionManager.GetSuppressions();
+Console.WriteLine($"Active suppressions: {activeSuppressions.Count}");
+
+// Remove a suppression by rule ID and target
+bool removed = suppressionManager.RemoveSuppression("RG001", "Program.cs", "Main");
+Console.WriteLine($"Suppression removed: {removed}");
+
+// Filter out suppressed violations from analysis results
+var violations = new List<RuleViolation> { violation };
+IReadOnlyList<RuleViolation> filteredViolations = suppressionManager.FilterSuppressed(violations);
+Console.WriteLine($"Violations after filtering: {filteredViolations.Count}");
+
+// Persist suppressions to storage
+await suppressionManager.SaveAsync();
+
+// Load suppressions from storage
+await suppressionManager.LoadAsync();
+```
+
 ...
