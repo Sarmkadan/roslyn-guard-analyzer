@@ -359,4 +359,38 @@ await suppressionManager.SaveAsync();
 await suppressionManager.LoadAsync();
 ```
 
-...
+## PerformanceMetricsMiddleware
+
+The `PerformanceMetricsMiddleware` class captures performance metrics during analysis execution and stores them in the pipeline context. It measures total execution time, peak memory usage, and component-level timings, making it useful for identifying performance bottlenecks and regressions in the analysis pipeline.
+
+
+### Usage Example
+
+```csharp
+// Create a pipeline with performance metrics middleware
+var pipeline = new AnalysisPipeline();
+pipeline.UsePerformanceMetrics();
+
+// Add other middleware components
+pipeline.UseRuleValidation();
+pipeline.UseViolationReporting();
+
+// Execute the pipeline
+var context = new PipelineContext();
+await pipeline.ExecuteAsync(context);
+
+// Retrieve and display performance metrics
+var metrics = PerformanceMetricsMiddleware.GetMetrics(context);
+if (metrics is not null)
+{
+    Console.WriteLine(PerformanceMetricsMiddleware.GenerateReport(metrics));
+    Console.WriteLine($"Total time: {metrics.TotalMilliseconds}ms");
+    Console.WriteLine($"Peak memory: {metrics.PeakMemoryBytes / 1024 / 1024}MB");
+    Console.WriteLine($"Processor count: {metrics.ProcessorCount}");
+    Console.WriteLine($"Elapsed time: {metrics.GetElapsed():hh\:mm\:ss\.fff}");
+    
+    // Record component-specific timings
+    PerformanceMetricsMiddleware.RecordComponentTiming(context, "RuleValidation", 150);
+    PerformanceMetricsMiddleware.RecordComponentTiming(context, "ViolationReporting", 75);
+}
+```
