@@ -222,4 +222,19 @@ Console.WriteLine($"Violations by category: {string.Join(", ", result.Violations
 Console.WriteLine($"Violations by severity: {string.Join(", ", result.ViolationsBySeverity.Select(kvp => $"{kvp.Key}: {kvp.Value}"))}");
 ```
 
+## AnalysisProject
+
+The `AnalysisProject` class represents a project being analyzed, including its metadata and file information. It provides methods for adding source files, referenced projects, and properties, as well as retrieving C# files, project statistics, and checking if the project is a modern .NET project.
+
+### Usage Example
+
+```csharp
+var project = new AnalysisProject("MyProject", "/path/to/project");
+project.AddSourceFile("Program.cs");
+project.AddReferencedProject("/path/to/referenced/project");
+var csharpFiles = project.GetCSharpFiles();
+var statistics = project.GetStatistics();
+Console.WriteLine($"Total files: {statistics.TotalFiles}, C# files: {statistics.CSharpFiles}");
+```
+
 ...
