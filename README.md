@@ -47,6 +47,56 @@ var enabledRules = registry.GetEnabledRules();
 registry.Clear();
 ```
 
+## BackgroundTaskQueue
+
+The `BackgroundTaskQueue` class provides a priority-based queue for managing and processing background tasks asynchronously. It supports task prioritization, cancellation, and graceful shutdown, making it ideal for background processing scenarios in long-running applications.
+
+### Usage Example
+
+```csharp
+// Create and configure the background task queue
+var taskQueue = new BackgroundTaskQueue();
+
+// Create a task processor to handle dequeued tasks
+taskQueue.Start();
+var processor = new BackgroundTaskQueue.BackgroundTaskProcessor(taskQueue);
+
+// Enqueue tasks with different priorities
+var highPriorityTaskId = taskQueue.EnqueueTask(
+    async ct => {
+        Console.WriteLine("Processing high priority task...");
+        await Task.Delay(1000, ct);
+        Console.WriteLine("High priority task completed!");
+    },
+    priority: 10 // Higher priority
+);
+
+var normalPriorityTaskId = taskQueue.EnqueueTask(
+    async ct => {
+        Console.WriteLine("Processing normal priority task...");
+        await Task.Delay(500, ct);
+        Console.WriteLine("Normal priority task completed!");
+    }
+);
+
+var lowPriorityTaskId = taskQueue.EnqueueTask(
+    async ct => {
+        Console.WriteLine("Processing low priority task...");
+        await Task.Delay(200, ct);
+        Console.WriteLine("Low priority task completed!");
+    },
+    priority: -5 // Lower priority
+);
+
+Console.WriteLine($"Queued tasks: {taskQueue.Count}");
+
+// Gracefully stop processing when application shuts down
+await processor.StopAsync();
+
+// Clear any remaining tasks
+taskQueue.Clear();
+```
+
 ## ValidationService
 
 The `ValidationService` class provides comprehensive validation capabilities for rule configurations, projects, code elements, and analysis results. It validates rule configurations, project paths, code elements, and analysis results, ensuring that all inputs meet the required format and structural requirements before processing.
