@@ -286,6 +286,74 @@ projectRepository.ValidateAndCleanup();
 
 The `RepositoryBase<T>` class is an abstract base repository that provides common CRUD operations for managing entities in memory. It serves as a foundation for concrete repository implementations, offering thread-safe methods for adding, retrieving, updating, and removing entities, along with additional utility methods for bulk operations and searching.
 
+## AnalysisResultRepository
+
+The `AnalysisResultRepository` class provides methods to retrieve and manage analysis results, including getting results by project, analyzed after a specific date, failed analyses, successful analyses, results with violations in a specific category, and the latest result for a project. It also includes methods to save analysis results asynchronously, load all results asynchronously, export results to CSV asynchronously, get statistics, and clear old results asynchronously.
+
+### Usage Example
+
+```csharp
+// Create an AnalysisResultRepository with default data directory
+var analysisResultRepository = new AnalysisResultRepository();
+
+// Load all analysis results from disk
+await analysisResultRepository.LoadAllAsync();
+
+// Add a new analysis result
+var newResult = new AnalysisResult
+{
+    ProjectName = "MyWebApp",
+    Timestamp = DateTime.UtcNow,
+    Violations = new List<RuleViolation>
+    {
+        new RuleViolation("rule-1", "LayerDependency", "Namespace1.Class1", "Namespace2.Class2", 42)
+    }
+};
+analysisResultRepository.Add(newResult);
+
+// Get results by project
+var webAppResults = analysisResultRepository.GetByProject("MyWebApp");
+
+// Get results analyzed after a specific date
+var recentResults = analysisResultRepository.GetAnalyzedAfter(DateTime.Now.AddDays(-7));
+
+// Get failed analyses
+var failedAnalyses = analysisResultRepository.GetFailedAnalyses();
+
+// Get successful analyses
+var successfulAnalyses = analysisResultRepository.GetSuccessfulAnalyses();
+
+// Get results with violations in a specific category
+var layerViolations = analysisResultRepository.GetWithViolationsInCategory("LayerDependency");
+
+// Get the latest result for a project
+var latestResult = analysisResultRepository.GetLatestForProject("MyWebApp");
+
+// Get results with violation count greater than a threshold
+var highViolationResults = analysisResultRepository.GetWithViolationCountGreaterThan(5);
+
+// Get repository statistics
+var stats = analysisResultRepository.GetStatistics();
+Console.WriteLine($"Total analyses: {stats.TotalAnalyses}");
+Console.WriteLine($"Successful analyses: {stats.SuccessfulAnalyses}");
+Console.WriteLine($"Failed analyses: {stats.FailedAnalyses}");
+Console.WriteLine($"Average violation count: {stats.AverageViolationCount}");
+Console.WriteLine($"Total violations: {stats.TotalViolations}");
+Console.WriteLine($"Average analysis duration: {stats.AverageAnalysisDurationSeconds} seconds");
+Console.WriteLine($"Projects analyzed: {stats.ProjectsAnalyzed}");
+
+// Save results to disk
+await analysisResultRepository.SaveAsync();
+
+// Export results to CSV
+await analysisResultRepository.ExportToCsvAsync("analysis-results.csv");
+
+// Clear old results
+await analysisResultRepository.ClearOldResultsAsync(TimeSpan.FromDays(30));
+```
+
+## RepositoryBase
+
 ### Usage Example
 
 ```csharp
