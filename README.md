@@ -97,8 +97,25 @@ if (rule.IsValid())
 }
 ```
 
+## CustomAnalysisRule
+
+The `CustomAnalysisRule` class allows developers to define custom rules using a fluent builder interface, specifying evaluation logic and violation messages. It is backed by a predicate-based evaluation that applies custom conditions to `CodeElement` instances during analysis.
+
+### Usage Example
+
+```csharp
+// Define a custom rule using the fluent builder
+var customRule = CustomRuleBuilder.Create("CAR001", "ForbiddenElementName")
+    .For(RuleCategory.CodeStructure)
+    .WithSeverity(SeverityLevel.Warning)
+    .WithDescription("Ensures that code elements do not use forbidden names.")
+    .When(element => element.Name == "ForbiddenName")
+    .WithMessage(element => $"The element '{element.Name}' at {element.FilePath} is forbidden.")
+    .Build();
+```
 
 ## CodeElement
+
 
 The `CodeElement` class represents a structural element of code (such as classes, methods, properties, interfaces, etc.) that has been analyzed by the Roslyn Guard Analyzer. It captures detailed metadata about the code element including its location, type, accessibility, complexity metrics, and relationships with other elements. This class is used internally by the analyzer to track what elements were processed and to associate violations with specific code locations.
 
