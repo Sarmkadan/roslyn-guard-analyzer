@@ -210,6 +210,60 @@ public class Program
 
 The `ValidationExtensions` class provides a comprehensive set of extension methods for common validation scenarios in C# applications. It offers fluent validation patterns with detailed error messages for strings, collections, file paths, numeric ranges, and type compatibility checks. Each method follows a consistent pattern returning a boolean success indicator along with an optional error message.
 
+## FormatterRegistry
+
+The `FormatterRegistry` class serves as a centralized registry for output formatters, enabling dynamic registration and lookup of formatters by format identifier. It provides methods to create a registry with default formatters, register custom formatters, and query supported formats. This registry is particularly useful when you need to support multiple output formats (JSON, CSV, HTML, etc.) in your application and want to provide a flexible way to extend formatting capabilities.
+
+### Usage Example
+
+```csharp
+using System;
+using System.Linq;
+using RoslynGuardAnalyzer.Formatters;
+
+// Create a registry with default formatters (JSON, CSV, HTML)
+var registry = FormatterRegistry.CreateWithDefaults();
+
+Console.WriteLine($"Supported formats: {string.Join(", ", registry.GetSupportedFormats())}");
+Console.WriteLine($"Total formatters: {registry.Count}");
+
+// Register a custom formatter
+registry.Register(new CustomFormatter());
+
+// Check if a format is supported
+bool supportsJson = registry.IsFormatSupported("json");
+Console.WriteLine($"JSON format supported: {supportsJson}");
+
+// Get a formatter (returns null if not found)
+var jsonFormatter = registry.GetFormatter("json");
+if (jsonFormatter != null)
+{
+    Console.WriteLine($"JSON formatter type: {jsonFormatter.GetType().Name}");
+}
+
+// Get a formatter or throw if not found
+try
+{
+    var csvFormatter = registry.GetFormatterOrThrow("csv");
+    Console.WriteLine($"CSV formatter type: {csvFormatter.GetType().Name}");
+}
+catch (InvalidOperationException ex)
+{
+    Console.WriteLine($"Error: {ex.Message}");
+}
+
+// Example custom formatter class
+public class CustomFormatter : IOutputFormatter
+{
+    public string Format => "custom";
+    
+    public string FormatOutput(object data)
+    {
+        return $"Custom formatted output: {data}";
+    }
+}
+```
+
 ## AnalysisFilterBuilder
 
 The `AnalysisFilterBuilder` class provides a fluent API for creating filters to selectively process Roslyn analysis results. It allows filtering violations by severity, rule identifiers, file paths, line numbers, message content, and custom predicates. Filters can be chained together to create complex filtering logic, and the built filter can be applied to collections of violations or converted to a predicate function.
