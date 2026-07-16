@@ -217,4 +217,69 @@ await outputWriter.WriteReportAsync(report, "text");
 await outputWriter.WriteAsync("Analysis completed successfully!", "output/analysis-results.txt");
 ```
 
+## ProjectRepository
+
+The `ProjectRepository` class manages persistence of analyzed projects, providing methods for querying, saving, loading, and managing project data. It serves as a centralized repository for all projects analyzed by the Roslyn Guard Analyzer, enabling efficient filtering by various criteria such as target framework, language, file count, and analysis date.
+
+### Usage Example
+
+```csharp
+// Create a project repository with default data directory
+var projectRepository = new ProjectRepository();
+
+// Load projects from disk
+await projectRepository.LoadAsync();
+
+// Add a new project
+var newProject = new AnalysisProject(
+    "MyWebApp",
+    "/path/to/MyWebApp.csproj",
+    "CSharp",
+    "net8.0",
+    42);
+projectRepository.Add(newProject.Id, newProject);
+
+// Get projects by target framework
+var net8Projects = projectRepository.GetByTargetFramework("net8.0");
+
+// Get modern .NET projects
+var modernProjects = projectRepository.GetModernDotNetProjects();
+
+// Get projects with more than 10 files
+var largeProjects = projectRepository.GetWithMoreFilesThan(10);
+
+// Get projects analyzed after a specific date
+var recentProjects = projectRepository.GetAnalyzedAfter(DateTime.Now.AddDays(-7));
+
+// Search projects by name pattern
+var matchingProjects = projectRepository.SearchByName("Web");
+
+// Find a project by path
+var foundProject = projectRepository.FindByPath("/path/to/MyWebApp.csproj");
+
+// Get projects with referenced dependencies
+var projectsWithReferences = projectRepository.GetWithReferences();
+
+// Get repository statistics
+var stats = projectRepository.GetStatistics();
+Console.WriteLine($"Total projects: {stats.TotalProjects}");
+Console.WriteLine($"Modern .NET projects: {stats.ModernDotNetProjects}");
+Console.WriteLine($"Total files: {stats.TotalFiles}");
+
+// Save projects to disk
+await projectRepository.SaveAsync();
+
+// Export projects to a file
+await projectRepository.ExportAsync("projects-backup.json");
+
+// Import projects from a file
+await projectRepository.ImportAsync("projects-backup.json");
+
+// Remove a project
+await projectRepository.RemoveProjectAsync("MyWebApp");
+
+// Validate and cleanup invalid projects
+projectRepository.ValidateAndCleanup();
+```
+
 ...
