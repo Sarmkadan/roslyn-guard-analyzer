@@ -870,6 +870,55 @@ Console.WriteLine("Cache cleared");
 Console.WriteLine($"Cache contains {cacheService.Count} items");
 ```
 
+## TypeNameMatcher
+
+The `TypeNameMatcher` class provides utilities for matching type names against patterns and namespaces. It supports both simple name matching and fully qualified name matching, along with filtering collections of type names based on patterns. The class includes methods for checking if type names match specific patterns, filtering collections, and determining whether matches are fully qualified.
+
+### Usage Example
+
+```csharp
+// Create a TypeNameMatcher for matching type names
+var matcher = new TypeNameMatcher("System.*");
+
+// Check if a type name matches the pattern
+var matches = matcher.Matches("System.Collections.Generic.List<T>");
+Console.WriteLine($"Matches: {matches}"); // Output: Matches: True
+
+// Check if a fully qualified name matches
+var fullyQualifiedMatches = matcher.MatchesFullyQualified("System.Collections.Generic.List<T>");
+Console.WriteLine($"Fully qualified matches: {fullyQualifiedMatches}"); // Output: Fully qualified matches: True
+
+// Filter a collection of type names
+var typeNames = new List<string> {
+    "System.Collections.Generic.List<T>",
+    "MyApp.Models.User",
+    "System.String",
+    "MyApp.Services.UserService"
+};
+
+var filtered = matcher.Filter(typeNames);
+Console.WriteLine("Filtered types:");
+foreach (var typeName in filtered)
+{
+    Console.WriteLine($"- {typeName}");
+}
+// Output: Filtered types:
+// - System.Collections.Generic.List<T>
+// - System.String
+
+// Check if any type name in a collection matches the pattern
+var hasMatch = TypeNameMatcher.MatchesAny(typeNames, "System.*");
+Console.WriteLine($"Any match: {hasMatch}"); // Output: Any match: True
+
+// Create a NamespaceMatcher for more specific namespace matching
+var nsMatcher = new NamespaceMatcher("System.Collections");
+var nsMatches = nsMatcher.Matches("System.Collections.Generic.List<T>");
+Console.WriteLine($"Namespace matches: {nsMatches}"); // Output: Namespace matches: True
+
+// Get string representation of the matcher
+Console.WriteLine($"Matcher: {matcher}"); // Output: Matcher: TypeNameMatcher(System.*)
+```
+
 ## RuleConfigurationBuilder
 
 The `RuleConfigurationBuilder` class provides a fluent interface for creating and configuring rule configurations with type safety. It simplifies the creation of rule configurations by providing a chainable API with sensible defaults and validation, making it easier to define rules programmatically.
