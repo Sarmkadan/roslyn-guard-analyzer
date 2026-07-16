@@ -39,16 +39,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<AnalysisResultRepository>();
         services.AddSingleton<ProjectRepository>();
 
-        services.AddSingleton<IRuleRegistry, RuleRegistry>();
-        services.AddSingleton<ICustomRuleRegistry, CustomRuleRegistry>();
-        services.AddSingleton<IRuleEngine, RuleEngine>();
-        services.AddSingleton<CustomRuleEngine>();
-        services.AddSingleton<ISuppressionManager, SuppressionManager>();
-        services.AddSingleton<ICodeFixService, CodeFixService>();
-        services.AddSingleton<IFixAllProvider, FixAllProvider>();
-        services.AddSingleton<IReportingService, ReportingService>();
-        services.AddSingleton<IValidationService, ValidationService>();
-        services.AddSingleton<IAnalysisService, AnalysisService>();
+        AddCoreAnalyzerServices(services);
 
         services.AddSingleton<AnalyzerConfiguration>();
     }
@@ -71,6 +62,17 @@ public static class ServiceCollectionExtensions
         services.AddSingleton(new AnalysisResultRepository(dataDirectory));
         services.AddSingleton(new ProjectRepository(dataDirectory));
 
+        AddCoreAnalyzerServices(services);
+
+        services.AddSingleton(new AnalyzerConfiguration { DataDirectory = dataDirectory });
+    }
+
+    /// <summary>
+    /// Registers the core analyzer services shared by all registration overloads.
+    /// Kept in one place so the overloads cannot drift apart.
+    /// </summary>
+    private static void AddCoreAnalyzerServices(IServiceCollection services)
+    {
         services.AddSingleton<IRuleRegistry, RuleRegistry>();
         services.AddSingleton<ICustomRuleRegistry, CustomRuleRegistry>();
         services.AddSingleton<IRuleEngine, RuleEngine>();
@@ -81,8 +83,6 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IReportingService, ReportingService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<IAnalysisService, AnalysisService>();
-
-        services.AddSingleton(new AnalyzerConfiguration { DataDirectory = dataDirectory });
     }
 
     /// <summary>
