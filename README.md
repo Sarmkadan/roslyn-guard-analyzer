@@ -2,6 +2,14 @@
 
 ...
 
+## Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the current, code-accurate
+architecture: overall data flow (CLI -> AnalysisService -> RuleEngine -> report),
+module-by-module breakdown, the design decisions behind the rule engine and DI
+setup, extension points (custom rules, formatters, middleware), and known
+limitations of the line-based parser.
+
 ## RuleViolation
 
 The `RuleViolation` class represents a specific violation of an architectural or coding rule detected during analysis. It captures detailed information about the violation, including its location, severity, and metadata. This class is used to report issues like incorrect code patterns, security risks, or style violations.
