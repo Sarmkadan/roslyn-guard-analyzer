@@ -120,4 +120,89 @@ if (lastModified.HasValue)
 // Check if a directory exists
 bool dirExists = FileSystemHelper.DirectoryExists("/path/to/directory");
 Console.WriteLine(dirExists ? "Directory exists" : "Directory does not exist");
+```
+
+## ReflectionHelper
+
+The `ReflectionHelper` class provides utility methods for reflection operations on types and members. It simplifies extracting metadata from code elements for analysis, including checking type hierarchies, method properties, attribute discovery, and interface implementation verification.
+
+
+
+### Usage Example
+
+```csharp
+using System;
+using System.Linq;
+using System.Reflection;
+using RoslynGuardAnalyzer.Utilities;
+
+// Analyze a sample type
+public class SampleClass : IDisposable
+{
+    public string Name { get; set; }
+    public int Value { get; set; }
+    public void Dispose() { }
+    public void Method1(int param) { }
+    public static void StaticMethod() { }
+}
+
+public class Program
+{
+    public static void Main()
+    {
+        Type type = typeof(SampleClass);
+        
+        // Get all public methods
+        var methods = ReflectionHelper.GetPublicMethods(type);
+        Console.WriteLine($"Public methods: {methods.Count()}");
+        
+        // Get all public properties
+        var properties = ReflectionHelper.GetPublicProperties(type);
+        Console.WriteLine($"Public properties: {properties.Count()}");
+        
+        // Get all public fields
+        var fields = ReflectionHelper.GetPublicFields(type);
+        Console.WriteLine($"Public fields: {fields.Count()}");
+        
+        // Check if type implements interface
+        bool implementsIDisposable = ReflectionHelper.ImplementsInterface(type, typeof(IDisposable));
+        Console.WriteLine($"Implements IDisposable: {implementsIDisposable}");
+        
+        // Check if type is a subclass
+        bool isSubclass = ReflectionHelper.IsSubclassOf(type, typeof(object));
+        Console.WriteLine($"Is subclass of object: {isSubclass}");
+        
+        // Get attributes
+        var obsoleteAttrs = ReflectionHelper.GetAttributes<ObsoleteAttribute>(type.GetMethod("Dispose"));
+        Console.WriteLine($"Has Obsolete attribute: {obsoleteAttrs.Any()}");
+        
+        // Check if method is async
+        var method = type.GetMethod("Method1");
+        bool isAsync = ReflectionHelper.IsAsync(method);
+        Console.WriteLine($"Method1 is async: {isAsync}");
+        
+        // Check if method is virtual
+        bool isVirtual = ReflectionHelper.IsVirtual(method);
+        Console.WriteLine($"Method1 is virtual: {isVirtual}");
+        
+        // Get parameter count and names
+        int paramCount = ReflectionHelper.GetParameterCount(method);
+        var paramNames = ReflectionHelper.GetParameterNames(method);
+        Console.WriteLine($"Method1 has {paramCount} parameters: {string.Join(", ", paramNames)}");
+        
+        // Get type information
+        bool isValueType = ReflectionHelper.IsValueType(type);
+        bool isAbstract = ReflectionHelper.IsAbstract(type);
+        bool isSealed = ReflectionHelper.IsSealed(type);
+        Console.WriteLine($"Is value type: {isValueType}, Is abstract: {isAbstract}, Is sealed: {isSealed}");
+        
+        // Get base type
+        Type? baseType = ReflectionHelper.GetBaseType(type);
+        Console.WriteLine($"Base type: {baseType?.Name ?? "null"}");
+        
+        // Get inheritance hierarchy
+        var hierarchy = ReflectionHelper.GetInheritanceHierarchy(type);
+        Console.WriteLine($"Inheritance hierarchy: {string.Join(" → ", hierarchy.Select(t => t.Name))}");
+    }
+}
 ``` 739
