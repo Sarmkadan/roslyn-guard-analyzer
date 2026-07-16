@@ -282,4 +282,64 @@ await projectRepository.RemoveProjectAsync("MyWebApp");
 projectRepository.ValidateAndCleanup();
 ```
 
+## RepositoryBase
+
+The `RepositoryBase<T>` class is an abstract base repository that provides common CRUD operations for managing entities in memory. It serves as a foundation for concrete repository implementations, offering thread-safe methods for adding, retrieving, updating, and removing entities, along with additional utility methods for bulk operations and searching.
+
+### Usage Example
+
+```csharp
+// Create a concrete repository by inheriting from RepositoryBase<T>
+public class UserRepository : RepositoryBase<User>
+{
+    // Add custom methods specific to User entities
+    public User? GetByEmail(string email)
+    {
+        return Find(u => u.Email == email).FirstOrDefault();
+    }
+}
+
+// Usage
+var userRepository = new UserRepository();
+
+// Add entities
+userRepository.Add("user1", new User { Id = "user1", Name = "Alice", Email = "alice@example.com" });
+userRepository.Add("user2", new User { Id = "user2", Name = "Bob", Email = "bob@example.com" });
+
+// Get an entity by ID
+var user = userRepository.GetById("user1");
+Console.WriteLine($"Retrieved user: {user?.Name}");
+
+// Get all entities
+var allUsers = userRepository.GetAll();
+Console.WriteLine($"Total users: {userRepository.Count()}");
+
+// Update an entity
+userRepository.Update("user1", new User { Id = "user1", Name = "Alice Updated", Email = "alice.new@example.com" });
+
+// Check if entity exists
+var exists = userRepository.Exists("user2");
+Console.WriteLine($"User2 exists: {exists}");
+
+// Find entities using a predicate
+var usersWithNameA = userRepository.Find(u => u.Name.StartsWith("A"));
+Console.WriteLine($"Users with name starting with 'A': {usersWithNameA.Count}");
+
+// Add multiple entities at once
+var newUsers = new Dictionary<string, User>
+{
+    { "user3", new User { Id = "user3", Name = "Charlie", Email = "charlie@example.com" } },
+    { "user4", new User { Id = "user4", Name = "Diana", Email = "diana@example.com" } }
+};
+userRepository.AddRange(newUsers);
+
+// Remove an entity
+var removed = userRepository.Remove("user4");
+Console.WriteLine($"User removed: {removed}");
+
+// Clear all entities
+userRepository.Clear();
+Console.WriteLine($"Repository cleared. Count: {userRepository.Count()}");
+```
+
 ...
