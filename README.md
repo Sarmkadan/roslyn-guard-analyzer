@@ -794,7 +794,51 @@ var hash = Argon2.Hash(password);
 */
 ```
 
+## CustomAnalysisRuleExtensions
+
+The `CustomAnalysisRuleExtensions` class provides extension methods for configuring custom analysis rules with fluent APIs. It allows you to add predicates for filtering violations, customize violation messages with location-aware templates, and extract the configured predicate and message factory functions from built rules. These extensions simplify the creation of custom rules that target specific code patterns like attributes, namespaces, container elements, public non-static members, and complexity thresholds.
+
+### Usage Example
+
+```csharp
+using System;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
+
+// Create a custom rule builder
+var ruleBuilder = new CustomRuleBuilder("MY001", "Avoid public mutable fields", RuleCategory.Design);
+
+// Configure the rule to target public non-static fields
+var configuredRule = ruleBuilder
+    .ForPublicNonStaticMembers()
+    .WithMaxComplexity(5)
+    .WithLocationAwareMessage("Public mutable field '{0}' found at {1}. Consider making it private or readonly.")
+    .Build();
+
+// Extract the violation predicate and message factory
+var violationPredicate = configuredRule.GetViolationPredicate();
+var messageFactory = configuredRule.GetMessageFactory();
+
+// Use the configured rule to check code elements
+var testElement = new CodeElement(
+    name: "UserService",
+    fullName: "MyApp.Services.UserService",
+    namespaceName: "MyApp.Services",
+    elementType: CodeElementType.Class,
+    isPublic: true,
+    isStatic: false,
+    complexity: 3
+);
+
+bool violatesRule = violationPredicate(testElement);
+string violationMessage = messageFactory(testElement);
+
+Console.WriteLine($"Violates rule: {violatesRule}");
+Console.WriteLine($"Message: {violationMessage}");
+```
+
 ## ServiceCollectionExtensionsValidation
+
 
 
 The `ServiceCollectionExtensionsValidation` class provides extension methods for validating service configuration in .NET applications. It helps validate service collection registrations for common types like data directories, positive integers, log levels, and report formats. The validation methods return detailed error information when validation fails, allowing for precise error handling and configuration debugging.
