@@ -24,6 +24,7 @@ public static class CustomAnalysisRuleExtensions
     /// <param name="attributeName">The attribute name to check for (case-insensitive).</param>
     /// <returns>The rule builder for fluent chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="rule"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="attributeName"/> is null or empty.</exception>
     public static CustomRuleBuilder WithAttribute(this CustomRuleBuilder rule, string attributeName)
     {
         ArgumentNullException.ThrowIfNull(rule);
@@ -39,6 +40,7 @@ public static class CustomAnalysisRuleExtensions
     /// <param name="namespacePrefix">The namespace prefix to check against.</param>
     /// <returns>The rule builder for fluent chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="rule"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="namespacePrefix"/> is null or empty.</exception>
     public static CustomRuleBuilder WithNamespace(this CustomRuleBuilder rule, string namespacePrefix)
     {
         ArgumentNullException.ThrowIfNull(rule);
@@ -54,6 +56,7 @@ public static class CustomAnalysisRuleExtensions
     /// <param name="messageTemplate">The message template with placeholders {0} for element name and {1} for location.</param>
     /// <returns>The rule builder for fluent chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="rule"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="messageTemplate"/> is null or empty.</exception>
     public static CustomRuleBuilder WithLocationAwareMessage(this CustomRuleBuilder rule, string messageTemplate)
     {
         ArgumentNullException.ThrowIfNull(rule);
@@ -110,13 +113,14 @@ public static class CustomAnalysisRuleExtensions
     /// <param name="maxComplexity">The maximum allowed complexity (inclusive).</param>
     /// <returns>The rule builder for fluent chaining.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="rule"/> is null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="maxComplexity"/> is negative.</exception>
     public static CustomRuleBuilder WithMaxComplexity(this CustomRuleBuilder rule, int maxComplexity)
     {
         ArgumentNullException.ThrowIfNull(rule);
 
         if (maxComplexity < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(maxComplexity), "Max complexity cannot be negative.");
+            throw new ArgumentOutOfRangeException(nameof(maxComplexity), maxComplexity, "Max complexity cannot be negative.");
         }
 
         return rule.When(element => element.Complexity > maxComplexity);
