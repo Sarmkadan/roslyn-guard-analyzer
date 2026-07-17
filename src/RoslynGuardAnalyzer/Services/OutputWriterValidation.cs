@@ -38,19 +38,17 @@ public static class OutputWriterValidation
     /// </summary>
     /// <param name="value">The <see cref="OutputWriter"/> to check.</param>
     /// <returns><see langword="true"/> if valid; otherwise, <see langword="false"/>.</returns>
-    public static bool IsValid(this OutputWriter? value) => value?.Validate().Count == 0;
+    public static bool IsValid(this OutputWriter? value) => value is not null && value.Validate().Count == 0;
 
     /// <summary>
     /// Ensures that an <see cref="OutputWriter"/> instance is valid, throwing an exception if not.
     /// </summary>
     /// <param name="value">The <see cref="OutputWriter"/> to validate.</param>
-    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is null or invalid.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="value"/> is invalid.</exception>
     public static void EnsureValid(this OutputWriter? value)
     {
-        if (value is null)
-        {
-            throw new ArgumentNullException(nameof(value));
-        }
+        ArgumentNullException.ThrowIfNull(value);
 
         var problems = value.Validate();
         if (problems.Count > 0)
