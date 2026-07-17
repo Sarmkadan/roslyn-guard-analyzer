@@ -23,7 +23,8 @@ public static class CommandLineProcessorExtensions
     /// <param name="processor">The command line processor instance.</param>
     /// <param name="throwOnError">Whether to throw an exception on processing errors.</param>
     /// <returns>A tuple with success status, parsed options, and any errors encountered.</returns>
-    /// <exception cref="InvalidOperationException">Thrown when throwOnError is true and processing fails.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="processor"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when <paramref name="throwOnError"/> is <see langword="true"/> and processing fails.</exception>
     public static (bool Success, CliOptions Options, IReadOnlyList<string> Errors) TryProcess(
         this CommandLineProcessor processor,
         bool throwOnError = false)
@@ -32,7 +33,7 @@ public static class CommandLineProcessorExtensions
 
         var result = processor.Process();
 
-        if (throwOnError && !result.Success && result.Errors.Count > 0)
+        if (throwOnError && result is { Success: false, Errors.Count: > 0 })
         {
             throw new InvalidOperationException(
                 $"Command line processing failed: {string.Join(", ", result.Errors)}");
@@ -47,6 +48,7 @@ public static class CommandLineProcessorExtensions
     /// </summary>
     /// <param name="processor">The command line processor instance.</param>
     /// <returns>A tuple with validation status and detailed error information.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="processor"/> is <see langword="null"/>.</exception>
     public static (bool Valid, IReadOnlyList<string> Errors, IReadOnlyList<string> FailedPaths) ValidatePathsDetailed(
         this CommandLineProcessor processor)
     {
@@ -59,14 +61,14 @@ public static class CommandLineProcessorExtensions
         {
             foreach (var error in errors)
             {
-                if (error.Contains("Path not found:", StringComparison.Ordinal))
+                if (error.StartsWith("Path not found:", StringComparison.Ordinal))
                 {
-                    var path = error.Split(new[] { ": " }, StringSplitOptions.None)[1];
+                    var path = error["Path not found:".Length..].Trim();
                     failedPaths.Add(path);
                 }
-                else if (error.Contains("Config file not found:", StringComparison.Ordinal))
+                else if (error.StartsWith("Config file not found:", StringComparison.Ordinal))
                 {
-                    var path = error.Split(new[] { ": " }, StringSplitOptions.None)[1];
+                    var path = error["Config file not found:".Length..].Trim();
                     failedPaths.Add(path);
                 }
             }
@@ -80,6 +82,7 @@ public static class CommandLineProcessorExtensions
     /// </summary>
     /// <param name="processor">The command line processor instance.</param>
     /// <returns>A formatted string containing the options summary.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="processor"/> is <see langword="null"/>.</exception>
     public static string GetOptionsSummaryFormatted(this CommandLineProcessor processor)
     {
         ArgumentNullException.ThrowIfNull(processor);
@@ -107,7 +110,7 @@ public static class CommandLineProcessorExtensions
             summary.AppendLine($"Config File: {options.ConfigFile}");
         }
 
-        summary.AppendLine("============================");
+        summary.AppendLine("===========================");
         return summary.ToString();
     }
 
@@ -116,6 +119,7 @@ public static class CommandLineProcessorExtensions
     /// </summary>
     /// <param name="processor">The command line processor instance.</param>
     /// <returns>True if analysis mode is active; otherwise false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="processor"/> is <see langword="null"/>.</exception>
     public static bool IsAnalysisMode(this CommandLineProcessor processor)
     {
         ArgumentNullException.ThrowIfNull(processor);
