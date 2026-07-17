@@ -21,7 +21,8 @@ public static class AnalysisRuleExtensions
                rule.DefaultSeverity == other.DefaultSeverity &&
                rule.IsEnabled == other.IsEnabled &&
                rule.RulePattern == other.RulePattern &&
-               rule.Configuration.Keys.All(k => other.Configuration.ContainsKey(k) && other.Configuration[k].Equals(rule.Configuration[k]));
+               rule.Configuration.Count == other.Configuration.Count &&
+    rule.Configuration.All(kvp => other.Configuration.TryGetValue(kvp.Key, out var otherValue) && Equals(kvp.Value, otherValue));
     }
 
     /// <summary>
@@ -54,7 +55,7 @@ public static class AnalysisRuleExtensions
             return false;
         }
 
-        // Simple substring check; consider improving with more sophisticated pattern matching logic
-        return other.RulePattern.Contains(rule.RulePattern, StringComparison.OrdinalIgnoreCase);
+        return rule.RulePattern.Equals(other.RulePattern, StringComparison.OrdinalIgnoreCase) ||
+               other.RulePattern.Contains(rule.RulePattern, StringComparison.OrdinalIgnoreCase);
     }
 }
