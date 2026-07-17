@@ -3,11 +3,10 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace RoslynGuardAnalyzer.Domain.Models;
 
@@ -34,7 +33,7 @@ public static class CodeElementValidation
         ValidateRequiredString(value.FilePath, nameof(value.FilePath), problems);
         ValidateRequiredString(value.Namespace, nameof(value.Namespace), problems);
 
-        // Validate line numbers
+        // Validate line numbers using pattern matching for consistency
         if (value.StartLineNumber <= 0)
         {
             problems.Add($"StartLineNumber must be greater than 0, but was {value.StartLineNumber}.");
@@ -51,33 +50,33 @@ public static class CodeElementValidation
             problems.Add($"Complexity must be at least 1, but was {value.Complexity}.");
         }
 
-        // Validate analyzed timestamp
+        // Validate analyzed timestamp with tighter future check
         if (value.AnalyzedAt == default)
         {
             problems.Add("AnalyzedAt must be set to a valid DateTime.");
         }
-        else if (value.AnalyzedAt > DateTime.UtcNow.AddMinutes(5))
+        else if (value.AnalyzedAt > DateTime.UtcNow.AddMinutes(1))
         {
             problems.Add($"AnalyzedAt cannot be in the future. Found: {value.AnalyzedAt:O}.");
         }
 
-        // Validate optional string properties
-        if (!string.IsNullOrWhiteSpace(value.ParentName) && string.IsNullOrWhiteSpace(value.ParentName.Trim()))
+        // Validate optional string properties using pattern matching
+        if (value.ParentName is not null && string.IsNullOrWhiteSpace(value.ParentName.Trim()))
         {
             problems.Add("ParentName contains only whitespace.");
         }
 
-        if (!string.IsNullOrWhiteSpace(value.FullyQualifiedName) && string.IsNullOrWhiteSpace(value.FullyQualifiedName.Trim()))
+        if (value.FullyQualifiedName is not null && string.IsNullOrWhiteSpace(value.FullyQualifiedName.Trim()))
         {
             problems.Add("FullyQualifiedName contains only whitespace.");
         }
 
-        if (!string.IsNullOrWhiteSpace(value.ReturnType) && string.IsNullOrWhiteSpace(value.ReturnType.Trim()))
+        if (value.ReturnType is not null && string.IsNullOrWhiteSpace(value.ReturnType.Trim()))
         {
             problems.Add("ReturnType contains only whitespace.");
         }
 
-        // Validate collections
+        // Validate collections using pattern matching
         if (value.Attributes is null)
         {
             problems.Add("Attributes collection must not be null.");
@@ -98,48 +97,56 @@ public static class CodeElementValidation
             problems.Add("Parameters collection must not be null.");
         }
 
-        // Validate collection contents
+        // Validate collection contents using foreach for better readability
         if (value.Attributes is not null)
         {
-            for (var i = 0; i < value.Attributes.Count; i++)
+            var index = 0;
+            foreach (var attribute in value.Attributes)
             {
-                if (string.IsNullOrWhiteSpace(value.Attributes[i]))
+                if (string.IsNullOrWhiteSpace(attribute))
                 {
-                    problems.Add($"Attributes[{i}] is null or whitespace.");
+                    problems.Add($"Attributes[{index}] is null or whitespace.");
                 }
+                index++;
             }
         }
 
         if (value.Dependencies is not null)
         {
-            for (var i = 0; i < value.Dependencies.Count; i++)
+            var index = 0;
+            foreach (var dependency in value.Dependencies)
             {
-                if (string.IsNullOrWhiteSpace(value.Dependencies[i]))
+                if (string.IsNullOrWhiteSpace(dependency))
                 {
-                    problems.Add($"Dependencies[{i}] is null or whitespace.");
+                    problems.Add($"Dependencies[{index}] is null or whitespace.");
                 }
+                index++;
             }
         }
 
         if (value.SuppressDirectives is not null)
         {
-            for (var i = 0; i < value.SuppressDirectives.Count; i++)
+            var index = 0;
+            foreach (var directive in value.SuppressDirectives)
             {
-                if (string.IsNullOrWhiteSpace(value.SuppressDirectives[i]))
+                if (string.IsNullOrWhiteSpace(directive))
                 {
-                    problems.Add($"SuppressDirectives[{i}] is null or whitespace.");
+                    problems.Add($"SuppressDirectives[{index}] is null or whitespace.");
                 }
+                index++;
             }
         }
 
         if (value.Parameters is not null)
         {
-            for (var i = 0; i < value.Parameters.Count; i++)
+            var index = 0;
+            foreach (var parameter in value.Parameters)
             {
-                if (string.IsNullOrWhiteSpace(value.Parameters[i]))
+                if (string.IsNullOrWhiteSpace(parameter))
                 {
-                    problems.Add($"Parameters[{i}] is null or whitespace.");
+                    problems.Add($"Parameters[{index}] is null or whitespace.");
                 }
+                index++;
             }
         }
 
