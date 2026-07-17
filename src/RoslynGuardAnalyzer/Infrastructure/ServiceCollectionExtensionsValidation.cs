@@ -164,6 +164,7 @@ public static class ServiceCollectionExtensionsValidation
     /// <param name="paramName">The name of the parameter for error messages.</param>
     /// <param name="maxValue">Optional maximum allowed value.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentException"><paramref name="paramName"/> is null or empty.</exception>
     public static IReadOnlyList<string> ValidatePositiveInt(
         int value,
         string paramName,
@@ -222,7 +223,7 @@ public static class ServiceCollectionExtensionsValidation
         }
 
         // Basic format validation - alphanumeric, underscores, hyphens, dots
-        if (!System.Text.RegularExpressions.Regex.IsMatch(
+        if (!Regex.IsMatch(
             reportFormat,
             "^[a-zA-Z0-9_.-]+$",
             RegexOptions.CultureInvariant))
