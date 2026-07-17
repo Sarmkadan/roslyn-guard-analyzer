@@ -13,13 +13,15 @@ namespace RoslynGuardAnalyzer.Caching;
 /// <summary>
 /// Provides validation helpers for <see cref="CacheKeyGenerator"/> to ensure generated cache keys are valid.
 /// </summary>
-public static class CacheKeyGeneratorValidation
+public sealed class CacheKeyGeneratorValidation
 {
     /// <summary>
     /// Validates the provided parameters for <see cref="CacheKeyGenerator.GenerateProjectAnalysisKey"/>.
     /// </summary>
     /// <param name="projectPath">The project path to validate.</param>
     /// <param name="configHash">The configuration hash to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="projectPath"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="projectPath"/> is empty or whitespace.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateGenerateProjectAnalysisKey(
         string projectPath,
@@ -42,6 +44,8 @@ public static class CacheKeyGeneratorValidation
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
     /// <param name="fileContentHash">The file content hash to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="filePath"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="filePath"/> is empty or whitespace.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateGenerateFileAnalysisKey(
         string filePath,
@@ -63,6 +67,8 @@ public static class CacheKeyGeneratorValidation
     /// Validates the provided parameters for <see cref="CacheKeyGenerator.GenerateResultKey"/>.
     /// </summary>
     /// <param name="analysisId">The analysis ID to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="analysisId"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="analysisId"/> is empty or whitespace.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateGenerateResultKey(string analysisId)
     {
@@ -76,6 +82,10 @@ public static class CacheKeyGeneratorValidation
     /// </summary>
     /// <param name="ruleName">The rule name to validate.</param>
     /// <param name="targetName">The target name to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ruleName"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="ruleName"/> is empty or whitespace.</exception>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="targetName"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="targetName"/> is empty or whitespace.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateGenerateRuleExecutionKey(
         string ruleName,
@@ -92,6 +102,8 @@ public static class CacheKeyGeneratorValidation
     /// </summary>
     /// <param name="fullTypeName">The full type name to validate.</param>
     /// <param name="memberName">The member name to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="fullTypeName"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="fullTypeName"/> is empty or whitespace.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateGenerateCodeElementKey(
         string fullTypeName,
@@ -131,6 +143,8 @@ public static class CacheKeyGeneratorValidation
     /// Validates the provided parameters for <see cref="CacheKeyGenerator.ComputeFileHash"/>.
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="filePath"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="filePath"/> is empty or whitespace.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateComputeFileHash(string filePath)
     {
@@ -143,6 +157,7 @@ public static class CacheKeyGeneratorValidation
     /// Validates the provided parameters for <see cref="CacheKeyGenerator.CreateCompositeKey"/>.
     /// </summary>
     /// <param name="components">The components array to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="components"/> is <see langword="null"/>.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateCreateCompositeKey(params string[]? components)
     {
@@ -170,6 +185,8 @@ public static class CacheKeyGeneratorValidation
     /// Validates the provided parameters for <see cref="CacheKeyGenerator.GeneratePatternKey"/>.
     /// </summary>
     /// <param name="prefix">The prefix to validate.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="prefix"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="prefix"/> is empty or whitespace.</exception>
     /// <returns>An enumerable of validation problems; empty if valid.</returns>
     public static IReadOnlyList<string> ValidateGeneratePatternKey(string prefix)
     {
