@@ -1019,3 +1019,93 @@ else
 // Ensure all validations pass (throws on failure)
 services.EnsureValid();
 ```
+
+
+
+## RepositoryBaseValidation
+
+
+
+The `RepositoryBaseValidation` class provides a comprehensive set of validation extension methods for `RepositoryBase<T>` instances and their operation parameters. It offers both validation methods that return error lists and guard methods that throw exceptions when validation fails. This ensures repository operations receive valid inputs and helps prevent null reference exceptions and other common errors.
+
+
+### Usage Example
+
+```csharp
+using System;
+using System.Collections.Generic;
+using RoslynGuardAnalyzer.Data;
+
+// Create a sample repository for demonstration
+public class User
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+}
+
+public class UserRepository : RepositoryBase<User>
+{
+    // Repository implementation
+}
+
+// Example usage of validation methods
+var userRepository = new UserRepository();
+
+// Validate repository instance
+var repositoryErrors = userRepository.Validate();
+Console.WriteLine(repositoryErrors.Count == 0 ? "Repository is valid" : "Repository has errors");
+
+// Validate repository instance (nullable)
+UserRepository? nullableRepo = null;
+bool isValid = nullableRepo.IsValid();
+Console.WriteLine(isValid ? "Nullable repository is valid" : "Nullable repository is null");
+
+// Validate ID
+var idErrors = RepositoryBaseValidation.ValidateId(null);
+Console.WriteLine(idErrors.Count > 0 ? "ID validation failed" : "ID is valid");
+
+var idErrors2 = RepositoryBaseValidation.ValidateId("   ");
+Console.WriteLine(idErrors2.Count > 0 ? "ID validation failed" : "ID is valid");
+
+// Validate entity
+var entityErrors = RepositoryBaseValidation.ValidateEntity(null, new User());
+Console.WriteLine(entityErrors.Count > 0 ? "Entity validation failed" : "Entity is valid");
+
+// Validate entities dictionary
+var entitiesDict = new Dictionary<string, User>();
+var entitiesErrors = RepositoryBaseValidation.ValidateEntities(entitiesDict);
+Console.WriteLine(entitiesErrors.Count > 0 ? "Entities validation failed" : "Entities are valid");
+
+// Validate predicate
+Func<User, bool>? nullPredicate = null;
+var predicateErrors = RepositoryBaseValidation.ValidatePredicate<User>(nullPredicate);
+Console.WriteLine(predicateErrors.Count > 0 ? "Predicate validation failed" : "Predicate is valid");
+
+// Example usage of guard methods (throw on failure)
+try
+{
+    RepositoryBaseValidation.EnsureValidId(null);
+}
+catch (ArgumentNullException)
+{
+    Console.WriteLine("EnsureValidId correctly threw ArgumentNullException for null ID");
+}
+
+try
+{
+    RepositoryBaseValidation.EnsureValidEntity(null, new User());
+}
+catch (ArgumentNullException)
+{
+    Console.WriteLine("EnsureValidEntity correctly threw ArgumentNullException for null ID");
+}
+
+var validEntities = new Dictionary<string, User> { { "1", new User() } };
+RepositoryBaseValidation.EnsureValidEntities(validEntities);
+Console.WriteLine("EnsureValidEntities passed for valid entities dictionary");
+
+// Validate predicate with guard method
+var validPredicate = (User u) => !string.IsNullOrEmpty(u.Name);
+RepositoryBaseValidation.EnsureValidPredicate<User>(validPredicate);
+Console.WriteLine("EnsureValidPredicate passed for valid predicate");
+```
