@@ -17,75 +17,77 @@ namespace RoslynGuardAnalyzer.Domain.Models;
 /// </summary>
 public static class AnalysisResultJsonExtensions
 {
-    private static readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReferenceHandler = ReferenceHandler.IgnoreCycles,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-    };
+	private static readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web)
+	{
+		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+		WriteIndented = false,
+		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+		ReferenceHandler = ReferenceHandler.IgnoreCycles,
+		Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+	};
 
-    /// <summary>
-    /// Serializes an AnalysisResult to a JSON string.
-    /// </summary>
-    /// <param name="value">The AnalysisResult to serialize.</param>
-    /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
-    /// <returns>A JSON string representation of the AnalysisResult.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when value is null.</exception>
-    public static string ToJson(this AnalysisResult value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
+	/// <summary>
+	/// Serializes an AnalysisResult to a JSON string.
+	/// </summary>
+	/// <param name="value">The AnalysisResult to serialize.</param>
+	/// <param name="indented">Whether to format the JSON with indentation for readability.</param>
+	/// <returns>A JSON string representation of the AnalysisResult.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+	public static string ToJson(this AnalysisResult value, bool indented = false)
+	{
+		ArgumentNullException.ThrowIfNull(value);
 
-        var options = indented
-            ? new JsonSerializerOptions(_jsonSerializerOptions)
-            {
-                WriteIndented = true
-            }
-            : _jsonSerializerOptions;
+		var options = indented
+			? new JsonSerializerOptions(_jsonSerializerOptions)
+			{
+				WriteIndented = true
+			} : _jsonSerializerOptions;
 
-        return JsonSerializer.Serialize(value, options);
-    }
+		return JsonSerializer.Serialize(value, options);
+	}
 
-    /// <summary>
-    /// Deserializes an AnalysisResult from a JSON string.
-    /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized AnalysisResult, or null if JSON is empty or whitespace.</returns>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
-    public static AnalysisResult? FromJson(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
+	/// <summary>
+	/// Deserializes an AnalysisResult from a JSON string.
+	/// </summary>
+	/// <param name="json">The JSON string to deserialize.</param>
+	/// <returns>The deserialized AnalysisResult, or null if JSON is empty or whitespace.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+	/// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+	public static AnalysisResult? FromJson(string json)
+	{
+		ArgumentNullException.ThrowIfNull(json);
 
-        return JsonSerializer.Deserialize<AnalysisResult>(json, _jsonSerializerOptions);
-    }
+		return string.IsNullOrWhiteSpace(json)
+			? null
+			: JsonSerializer.Deserialize<AnalysisResult>(json, _jsonSerializerOptions);
+	}
 
-    /// <summary>
-    /// Attempts to deserialize an AnalysisResult from a JSON string.
-    /// </summary>
-    /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized AnalysisResult if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out AnalysisResult? value)
-    {
-        value = null;
+	/// <summary>
+	/// Attempts to deserialize an AnalysisResult from a JSON string.
+	/// </summary>
+	/// <param name="json">The JSON string to deserialize.</param>
+	/// <param name="value">Receives the deserialized AnalysisResult if successful.</param>
+	/// <returns>True if deserialization succeeded; otherwise, false.</returns>
+	/// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+	public static bool TryFromJson(string json, out AnalysisResult? value)
+	{
+		ArgumentNullException.ThrowIfNull(json);
 
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return false;
-        }
+		value = null;
 
-        try
-        {
-            value = JsonSerializer.Deserialize<AnalysisResult>(json, _jsonSerializerOptions);
-            return true;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
-    }
+		if (string.IsNullOrWhiteSpace(json))
+		{
+			return false;
+		}
+
+		try
+		{
+			value = JsonSerializer.Deserialize<AnalysisResult>(json, _jsonSerializerOptions);
+			return true;
+		}
+		catch (JsonException)
+		{
+			return false;
+		}
+	}
 }
