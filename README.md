@@ -837,6 +837,108 @@ Console.WriteLine($"Violates rule: {violatesRule}");
 Console.WriteLine($"Message: {violationMessage}");
 ```
 
+## PerformanceMetricsMiddlewareExtensions
+
+The `PerformanceMetricsMiddlewareExtensions` class provides extension methods for working with performance metrics collected by the `PerformanceMetricsMiddleware`. These extensions offer convenient ways to access and analyze performance data, including formatted time and memory representations, component-level timing analysis, and comprehensive metric summaries.
+
+### Usage Example
+
+```csharp
+using System;
+using RoslynGuardAnalyzer.Middleware;
+
+// Simulate performance metrics from middleware
+var metrics = new PerformanceMetricsMiddleware.PerformanceMetrics
+{
+    TotalMilliseconds = 15423,
+    PeakMemoryBytes = 125829120, // 120 MB
+    ProcessorCount = 8,
+    StartTime = DateTime.UtcNow.AddMinutes(-5),
+    EndTime = DateTime.UtcNow,
+    ComponentTimingsMs = new Dictionary<string, long>
+    {
+        ["CodeAnalysis"] = 8500,
+        ["SyntaxTreeBuilding"] = 3200,
+        ["SemanticAnalysis"] = 2100,
+        ["DiagnosticAnalysis"] = 1200,
+        ["ReportGeneration"] = 323
+    }
+};
+
+// Get formatted elapsed time
+string elapsedFormatted = metrics.GetElapsedFormatted();
+Console.WriteLine($"Elapsed: {elapsedFormatted}"); // Output: 00:15:42.345
+
+// Get formatted peak memory usage
+string peakMemoryFormatted = metrics.GetPeakMemoryFormatted();
+Console.WriteLine($"Peak Memory: {peakMemoryFormatted}"); // Output: 120 MB
+
+// Get component timings
+var componentTimings = metrics.GetComponentTimings();
+Console.WriteLine($"Components tracked: {componentTimings.Count}");
+
+// Get peak memory in bytes
+long peakMemoryBytes = metrics.GetPeakMemoryBytes();
+Console.WriteLine($"Peak memory: {peakMemoryBytes:N0} bytes");
+
+// Get total execution time in milliseconds
+long totalMs = metrics.GetTotalMilliseconds();
+Console.WriteLine($"Total time: {totalMs:N0} ms");
+
+// Get processor count
+int processors = metrics.GetProcessorCount();
+Console.WriteLine($"Processors: {processors}");
+
+// Get start and end times
+DateTime startTime = metrics.GetStartTime();
+DateTime endTime = metrics.GetEndTime();
+Console.WriteLine($"Execution window: {startTime:HH:mm:ss} to {endTime:HH:mm:ss}");
+
+// Get the slowest component
+string? slowestComponent = metrics.GetSlowestComponent();
+Console.WriteLine($"Slowest component: {slowestComponent}"); // Output: CodeAnalysis
+
+// Get execution time for a specific component
+long codeAnalysisTime = metrics.GetComponentTime("CodeAnalysis");
+Console.WriteLine($"CodeAnalysis took: {codeAnalysisTime} ms");
+
+// Get all timed components
+var timedComponents = metrics.GetTimedComponents();
+Console.WriteLine($"Timed components: {string.Join(", ", timedComponents)}");
+
+// Check if any components were timed
+bool hasTimings = metrics.HasComponentTimings();
+Console.WriteLine($"Has component timings: {hasTimings}");
+
+// Get percentage of time spent in a component
+double codeAnalysisPercentage = metrics.GetComponentPercentage("CodeAnalysis");
+Console.WriteLine($"CodeAnalysis percentage: {codeAnalysisPercentage:F1}%");
+
+// Get top 3 slowest components
+var topSlowest = metrics.GetTopSlowestComponents(3);
+Console.WriteLine("Top 3 slowest components:");
+foreach (var kvp in topSlowest)
+{
+    Console.WriteLine($"  {kvp.Key}: {kvp.Value} ms");
+}
+
+// Get metrics summary
+var summary = metrics.GetMetricsSummary();
+Console.WriteLine("Metrics summary:");
+foreach (var kvp in summary)
+{
+    Console.WriteLine($"  {kvp.Key}: {kvp.Value}");
+}
+
+// Get average component time
+double averageTime = metrics.GetAverageComponentTime();
+Console.WriteLine($"Average component time: {averageTime:F1} ms");
+
+// Get total component time
+long totalComponentTime = metrics.GetTotalComponentTime();
+Console.WriteLine($"Total component time: {totalComponentTime} ms");
+```
+
 ## ServiceCollectionExtensionsValidation
 
 
