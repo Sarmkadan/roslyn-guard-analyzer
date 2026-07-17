@@ -1,4 +1,5 @@
 #nullable enable
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -6,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 
 namespace RoslynGuardAnalyzer.Utilities;
@@ -24,17 +24,13 @@ public static class FileSystemHelperValidation
     /// <param name="directory">The directory path to validate.</param>
     /// <param name="additionalExclusions">Additional exclusion patterns.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="directory"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="directory"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateDirectory(string directory, string[]? additionalExclusions = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(directory);
 
         var problems = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(directory))
-        {
-            problems.Add("Directory path cannot be whitespace or empty.");
-            return problems.AsReadOnly();
-        }
 
         if (!FileSystemHelper.DirectoryExists(directory))
         {
@@ -67,17 +63,13 @@ public static class FileSystemHelperValidation
     /// </summary>
     /// <param name="path">The file path to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="path"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="path"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateFileExists(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
         var problems = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            problems.Add("File path cannot be null or whitespace.");
-            return problems.AsReadOnly();
-        }
 
         if (Path.GetPathRoot(path) == path)
         {
@@ -93,17 +85,13 @@ public static class FileSystemHelperValidation
     /// </summary>
     /// <param name="path">The directory path to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="path"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="path"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateDirectoryExists(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
 
         var problems = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(path))
-        {
-            problems.Add("Directory path cannot be null or whitespace.");
-            return problems.AsReadOnly();
-        }
 
         if (Path.GetPathRoot(path) == path)
         {
@@ -119,17 +107,13 @@ public static class FileSystemHelperValidation
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="filePath"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="filePath"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateGetFileSize(string filePath)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
 
         var problems = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            problems.Add("File path cannot be null or whitespace.");
-            return problems.AsReadOnly();
-        }
 
         if (Path.GetPathRoot(filePath) == filePath)
         {
@@ -145,17 +129,13 @@ public static class FileSystemHelperValidation
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="filePath"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="filePath"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateGetLastModifiedTime(string filePath)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
 
         var problems = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            problems.Add("File path cannot be null or whitespace.");
-            return problems.AsReadOnly();
-        }
 
         if (Path.GetPathRoot(filePath) == filePath)
         {
@@ -171,17 +151,13 @@ public static class FileSystemHelperValidation
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="filePath"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="filePath"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateReadFile(string filePath)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
 
         var problems = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            problems.Add("File path cannot be null or whitespace.");
-            return problems.AsReadOnly();
-        }
 
         if (Path.GetPathRoot(filePath) == filePath)
         {
@@ -198,6 +174,8 @@ public static class FileSystemHelperValidation
     /// <param name="filePath">The file path to write to.</param>
     /// <param name="content">The content to write.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="filePath"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="filePath"/> is empty or whitespace.</exception>
     public static IReadOnlyList<string> ValidateWriteFile(string filePath, string content)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
@@ -205,21 +183,9 @@ public static class FileSystemHelperValidation
 
         var problems = new List<string>();
 
-        if (string.IsNullOrWhiteSpace(filePath))
+        if (Path.GetPathRoot(filePath) == filePath)
         {
-            problems.Add("File path cannot be null or whitespace.");
-        }
-        else
-        {
-            if (Path.GetPathRoot(filePath) == filePath)
-            {
-                problems.Add("Root directory paths are not valid file paths.");
-            }
-        }
-
-        if (content == null)
-        {
-            problems.Add("Content cannot be null.");
+            problems.Add("Root directory paths are not valid file paths.");
         }
 
         return problems.AsReadOnly();
