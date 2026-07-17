@@ -30,29 +30,24 @@ public static class TypeNameMatcherJsonExtensions
     /// <param name="indented">Whether to format the JSON with indentation.</param>
     /// <returns>A JSON string representation of the matcher.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
-    public static string ToJson(this TypeNameMatcher value, bool indented = false)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        var options = indented
-            ? new JsonSerializerOptions(_jsonOptions)
-            {
-                WriteIndented = true
-            }
-            : _jsonOptions;
-
-        return JsonSerializer.Serialize(new { Pattern = value.ToString()?.Replace("TypeNameMatcher(", "").Replace(")", "") }, options);
-    }
+    public static string ToJson(this TypeNameMatcher value, bool indented = false) =>
+        JsonSerializer.Serialize(
+            new { pattern = value.Pattern },
+            indented ? new JsonSerializerOptions(_jsonOptions) { WriteIndented = true } : _jsonOptions);
 
     /// <summary>
     /// Deserializes a <see cref="TypeNameMatcher"/> from a JSON string.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A new <see cref="TypeNameMatcher"/> instance, or null if the JSON is null or empty.</returns>
-    /// <exception cref="JsonException">Thrown when the JSON is invalid.</exception>
-    public static TypeNameMatcher? FromJson(string json)
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
+    public static TypeNameMatcher? FromJson(string? json)
     {
-        if (string.IsNullOrEmpty(json))
+        ArgumentNullException.ThrowIfNull(json);
+
+        if (string.IsNullOrWhiteSpace(json))
             return null;
 
         try
@@ -60,23 +55,17 @@ public static class TypeNameMatcherJsonExtensions
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("pattern", out var patternElement))
+            return root.ValueKind switch
             {
-                var pattern = patternElement.GetString();
-                return pattern is null
-                    ? throw new JsonException("Pattern property cannot be null.")
-                    : new TypeNameMatcher(pattern);
-            }
+                JsonValueKind.Object when root.TryGetProperty("pattern", out var patternElement) =>
+                    patternElement.ValueKind == JsonValueKind.String
+                        ? new TypeNameMatcher(patternElement.GetString()!)
+                        : throw new JsonException("Pattern property must be a string."),
 
-            if (root.ValueKind == JsonValueKind.String)
-            {
-                var pattern = root.GetString();
-                return pattern is null
-                    ? throw new JsonException("JSON string value cannot be null.")
-                    : new TypeNameMatcher(pattern);
-            }
+                JsonValueKind.String => new TypeNameMatcher(root.GetString()!),
 
-            throw new JsonException("Expected a JSON object with 'pattern' property or a JSON string.");
+                _ => throw new JsonException("Expected a JSON object with 'pattern' property or a JSON string.")
+            };
         }
         catch (JsonException)
         {
@@ -94,11 +83,11 @@ public static class TypeNameMatcherJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized matcher, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
-    public static bool TryFromJson(string json, out TypeNameMatcher? value)
+    public static bool TryFromJson(string? json, out TypeNameMatcher? value)
     {
         value = null;
 
-        if (string.IsNullOrEmpty(json))
+        if (string.IsNullOrWhiteSpace(json))
             return false;
 
         try
