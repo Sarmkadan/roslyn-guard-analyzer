@@ -48,8 +48,8 @@ public static class AnalysisProjectJsonExtensions
     /// Deserializes a JSON string to an <see cref="AnalysisProject"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>An <see cref="AnalysisProject"/> instance, or null if the JSON is empty or whitespace.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <returns>The deserialized <see cref="AnalysisProject"/> instance, or <see langword="null"/> if the JSON is empty or whitespace.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static AnalysisProject? FromJson(string json)
     {
@@ -57,10 +57,19 @@ public static class AnalysisProjectJsonExtensions
 
         if (string.IsNullOrWhiteSpace(json))
         {
-            return null;
+            throw new ArgumentException(
+                "JSON string cannot consist only of whitespace characters.",
+                nameof(json));
         }
 
-        return JsonSerializer.Deserialize<AnalysisProject>(json, _jsonSerializerOptions);
+        try
+        {
+            return JsonSerializer.Deserialize<AnalysisProject>(json, _jsonSerializerOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -69,10 +78,17 @@ public static class AnalysisProjectJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized project, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeds; otherwise, false.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
     public static bool TryFromJson(string json, out AnalysisProject? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
+
+        value = null;
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
 
         try
         {
@@ -81,7 +97,6 @@ public static class AnalysisProjectJsonExtensions
         }
         catch (JsonException)
         {
-            value = null;
             return false;
         }
     }
