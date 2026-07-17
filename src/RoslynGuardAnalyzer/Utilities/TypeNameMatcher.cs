@@ -21,6 +21,11 @@ public sealed class TypeNameMatcher
     private readonly Regex? _regex;
     private readonly bool _isExact;
 
+    /// <summary>
+    /// Gets the pattern used by this matcher.
+    /// </summary>
+    public string Pattern => _pattern;
+
     public TypeNameMatcher(string pattern)
     {
         if (string.IsNullOrWhiteSpace(pattern))
