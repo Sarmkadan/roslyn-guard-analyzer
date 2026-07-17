@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace RoslynGuardAnalyzer.Configuration;
 
@@ -28,19 +27,19 @@ public static class RoslynGuardAnalyzerOptionsValidation
 
         var problems = new List<string>();
 
-        // Validate ProjectPath
+        // Validate ProjectPath - DataAnnotations handles this via [Display] and [Required] attributes
         if (string.IsNullOrWhiteSpace(value.ProjectPath))
         {
             problems.Add("ProjectPath cannot be null or whitespace.");
         }
 
-        // Validate AnalysisTimeoutSeconds
+        // Validate AnalysisTimeoutSeconds - DataAnnotations handles this via [Range] attribute
         if (value.AnalysisTimeoutSeconds <= 0)
         {
             problems.Add("AnalysisTimeoutSeconds must be greater than 0.");
         }
 
-        // Validate MaxViolationsToReport
+        // Validate MaxViolationsToReport - DataAnnotations handles this via [Range] attribute
         if (value.MaxViolationsToReport < 1)
         {
             problems.Add("MaxViolationsToReport must be at least 1.");
@@ -50,13 +49,13 @@ public static class RoslynGuardAnalyzerOptionsValidation
             problems.Add("MaxViolationsToReport cannot exceed 100000.");
         }
 
-        // Validate LogLevel
+        // Validate LogLevel - DataAnnotations handles this via [Range] attribute
         if (value.LogLevel < 0 || value.LogLevel > 4)
         {
             problems.Add("LogLevel must be between 0 and 4 (inclusive).");
         }
 
-        // Validate OutputFormat
+        // Validate OutputFormat - DataAnnotations handles this via [RegularExpression] attribute
         if (string.IsNullOrWhiteSpace(value.OutputFormat))
         {
             problems.Add("OutputFormat cannot be null or whitespace.");
@@ -66,7 +65,7 @@ public static class RoslynGuardAnalyzerOptionsValidation
             problems.Add("OutputFormat must be one of: text, json, csv, html, xml.");
         }
 
-        // Validate ReportType
+        // Validate ReportType - DataAnnotations handles this via [RegularExpression] attribute
         if (string.IsNullOrWhiteSpace(value.ReportType))
         {
             problems.Add("ReportType cannot be null or whitespace.");
@@ -76,7 +75,7 @@ public static class RoslynGuardAnalyzerOptionsValidation
             problems.Add("ReportType must be one of: summary, detailed, full.");
         }
 
-        // Validate MinimumSeverity
+        // Validate MinimumSeverity - DataAnnotations handles this via [RegularExpression] attribute
         if (string.IsNullOrWhiteSpace(value.MinimumSeverity))
         {
             problems.Add("MinimumSeverity cannot be null or whitespace.");
@@ -86,7 +85,7 @@ public static class RoslynGuardAnalyzerOptionsValidation
             problems.Add("MinimumSeverity must be one of: Low, Medium, High, Critical.");
         }
 
-        // Validate MaxParallelThreads
+        // Validate MaxParallelThreads - DataAnnotations handles this via [Range] attribute
         if (value.MaxParallelThreads < 1)
         {
             problems.Add("MaxParallelThreads must be at least 1.");
@@ -96,19 +95,19 @@ public static class RoslynGuardAnalyzerOptionsValidation
             problems.Add("MaxParallelThreads cannot exceed 64.");
         }
 
-        // Validate RuleFilter
+        // Validate RuleFilter - DataAnnotations handles null collection via [Required] attribute
         if (value.RuleFilter is null)
         {
             problems.Add("RuleFilter cannot be null.");
         }
 
-        // Validate ExcludePatterns
+        // Validate ExcludePatterns - DataAnnotations handles null collection via [Required] attribute
         if (value.ExcludePatterns is null)
         {
             problems.Add("ExcludePatterns cannot be null.");
         }
 
-        return problems;
+        return problems.AsReadOnly();
     }
 
     /// <summary>
@@ -119,6 +118,7 @@ public static class RoslynGuardAnalyzerOptionsValidation
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null</exception>
     public static bool IsValid(this RoslynGuardAnalyzerOptions value)
     {
+        ArgumentNullException.ThrowIfNull(value);
         return value.Validate().Count == 0;
     }
 
