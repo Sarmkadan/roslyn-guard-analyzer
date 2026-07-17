@@ -13,8 +13,12 @@ using System.Text.Json.Serialization;
 namespace RoslynGuardAnalyzer.Tests;
 
 /// <summary>
-/// Provides JSON serialization and deserialization extensions for <see cref="FixAllProviderTests"/>.
+/// Provides JSON serialization and deserialization extensions for <see cref="FixAllProviderTests"/> test data.
 /// </summary>
+/// <remarks>
+/// This class facilitates round-trip serialization of test data structures used in FixAllProvider unit tests,
+/// enabling test case persistence and data-driven testing scenarios.
+/// </remarks>
 public static class FixAllProviderTestsJsonExtensions
 {
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
@@ -34,6 +38,7 @@ public static class FixAllProviderTestsJsonExtensions
     /// <param name="indented">Whether to indent the JSON for readability.</param>
     /// <returns>A JSON string representation of the instance.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="value"/> is null.</exception>
+    /// <exception cref="JsonException">Thrown when serialization fails due to invalid data in the object graph.</exception>
     public static string ToJson(this FixAllProviderTests value, bool indented = false)
     {
         ArgumentNullException.ThrowIfNull(value);
@@ -49,8 +54,9 @@ public static class FixAllProviderTestsJsonExtensions
     /// Deserializes a JSON string to a <see cref="FixAllProviderTests"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized instance, or null if the JSON is invalid.</returns>
+    /// <returns>The deserialized instance, or null if the JSON is invalid or deserialization fails.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized to the target type.</exception>
     public static FixAllProviderTests? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -65,6 +71,7 @@ public static class FixAllProviderTestsJsonExtensions
     /// <param name="value">The deserialized instance, or null if deserialization failed.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized to the target type.</exception>
     public static bool TryFromJson(string json, out FixAllProviderTests? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
