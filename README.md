@@ -610,6 +610,123 @@ var validationResult = ValidationExtensions.ValidateAll(
 Console.WriteLine(validationResult.IsValid ? "All validations passed" : $"Validations failed: {string.Join(", ", validationResult.Errors)}");
 ```
 
+## CodeFixExtensions
+
+The `CodeFixExtensions` class provides a comprehensive set of utility extension methods for working with `CodeFix` instances. It includes methods for comparing severity levels, extracting file information, checking line ranges, generating display summaries, and calculating priority scores. These extensions help prioritize and organize code fixes during analysis and refactoring operations.
+
+### Usage Example
+
+```csharp
+using System;
+using RoslynGuardAnalyzer.CodeFixes;
+using RoslynGuardAnalyzer.Core;
+
+// Create sample code fixes for demonstration
+var criticalFix = new CodeFix(
+    ruleId: "SEC001",
+    title: "Use secure password hashing",
+    description: "Replace insecure MD5 hashing with Argon2",
+    filePath: "/src/AuthenticationService.cs",
+    startLine: 42,
+    endLine: 45,
+    severity: SeverityLevel.Critical,
+    isBreakingChange: true,
+    originalCode: "var hash = MD5.HashData(password);",
+    replacementCode: "var hash = Argon2.Hash(password);"
+);
+
+var warningFix = new CodeFix(
+    ruleId: "PER001",
+    title: "Add async suffix to async methods",
+    description: "Async methods should have 'Async' suffix",
+    filePath: "/src/DataService.cs",
+    startLine: 15,
+    endLine: 18,
+    severity: SeverityLevel.Warning,
+    isBreakingChange: false,
+    originalCode: "public Task GetData() { }",
+    replacementCode: "public Task GetDataAsync() { }"
+);
+
+var infoFix = new CodeFix(
+    ruleId: "NAM001",
+    title: "Use PascalCase for class names",
+    description: "Class names should be in PascalCase",
+    filePath: "/src/userService.cs",
+    startLine: 8,
+    endLine: 12,
+    severity: SeverityLevel.Info,
+    isBreakingChange: false,
+    originalCode: "public class userService { }",
+    replacementCode: "public class UserService { }"
+);
+
+// Compare severity levels
+bool isMoreSevere = criticalFix.IsMoreSevereThan(warningFix);
+Console.WriteLine($"Critical fix is more severe than warning fix: {isMoreSevere}"); // Output: True
+
+bool isLessSevere = warningFix.IsLessSevereThan(criticalFix);
+Console.WriteLine($"Warning fix is less severe than critical fix: {isLessSevere}"); // Output: True
+
+// Get severity as string
+string severityString = criticalFix.GetSeverityString();
+Console.WriteLine($"Critical fix severity: {severityString}"); // Output: Critical
+
+// Check if breaking change
+bool isBreaking = criticalFix.IsBreaking();
+Console.WriteLine($"Critical fix is breaking: {isBreaking}"); // Output: True
+
+// Get display summary
+string displaySummary = criticalFix.GetDisplaySummary();
+Console.WriteLine(displaySummary);
+/* Output:
+[SEC001] Use secure password hashing — Critical 🔴 BREAKING
+/src/AuthenticationService.cs:42
+Replace insecure MD5 hashing with Argon2
+*/
+
+// Get file information
+string fileName = criticalFix.GetFileName();
+Console.WriteLine($"File name: {fileName}"); // Output: AuthenticationService.cs
+
+string fileExtension = criticalFix.GetFileExtension();
+Console.WriteLine($"File extension: {fileExtension}"); // Output: .cs
+
+string directoryName = criticalFix.GetDirectoryName();
+Console.WriteLine($"Directory: {directoryName}"); // Output: /src
+
+// Check line ranges
+bool inLineRange = criticalFix.IsInLineRange(40, 50);
+Console.WriteLine($"Fix is in line range 40-50: {inLineRange}"); // Output: True
+
+// Get age of fix
+string age = criticalFix.GetAge();
+Console.WriteLine($"Fix age: {age}"); // Output: e.g., "2h ago"
+
+// Check if should prioritize
+bool shouldPrioritize = criticalFix.ShouldPrioritize();
+Console.WriteLine($"Should prioritize critical fix: {shouldPrioritize}"); // Output: True
+
+// Get priority score
+int priorityScore = criticalFix.GetPriorityScore();
+Console.WriteLine($"Priority score: {priorityScore}"); // Output: 900 (Critical=400 + Breaking=500)
+
+// Check if can be applied
+bool canBeApplied = criticalFix.CanBeApplied();
+Console.WriteLine($"Can be applied: {canBeApplied}"); // Output: True
+
+// Get code context
+string codeContext = criticalFix.GetCodeContext();
+Console.WriteLine(codeContext);
+/* Output:
+Original (42):
+var hash = MD5.HashData(password);
+
+Replacement (42):
+var hash = Argon2.Hash(password);
+*/
+```
+
 ## ServiceCollectionExtensionsValidation
 
 
