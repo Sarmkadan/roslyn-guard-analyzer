@@ -257,6 +257,72 @@ registry.Clear();
 registry.GetRuleCount().Should().Be(0);
 ```
 
+## AnalysisProjectTests
+
+The `AnalysisProjectTests` class provides comprehensive unit tests for the `AnalysisProject` class, which represents a project being analyzed in the Roslyn Guard Analyzer. It tests initialization, property management, file operations, and validation logic to ensure projects are correctly configured and tracked during analysis.
+
+### Usage Example
+
+```csharp
+using System;
+using System.IO;
+using FluentAssertions;
+using RoslynGuardAnalyzer.Domain.Models;
+using Xunit;
+
+// Create a new project with default values
+var project = new AnalysisProject();
+
+// Verify default initialization
+project.Id.Should().NotBeEmpty();
+project.Name.Should().BeEmpty();
+project.Path.Should().BeEmpty();
+project.SourceFiles.Should().BeEmpty();
+project.ReferencedProjects.Should().BeEmpty();
+project.Properties.Should().BeEmpty();
+project.IsNetCore.Should().BeFalse();
+project.Language.Should().Be("C#");
+
+// Create a project with name and path
+var myProject = new AnalysisProject("MyProject", "/path/to/project");
+myProject.Name.Should().Be("MyProject");
+myProject.Path.Should().Be("/path/to/project");
+
+// Add source files (duplicate files are ignored)
+myProject.AddSourceFile("/path/to/Program.cs");
+myProject.AddSourceFile("/path/to/Startup.cs");
+myProject.AddSourceFile("/path/to/readme.txt"); // Not a .cs file
+
+// Get C# files only
+var csharpFiles = myProject.GetCSharpFiles().ToList();
+csharpFiles.Should().HaveCount(2);
+
+// Add referenced projects (duplicate projects are ignored)
+myProject.AddReferencedProject("/path/to/CommonLib");
+myProject.AddReferencedProject("/path/to/CommonLib"); // Duplicate
+
+myProject.ReferencedProjects.Should().ContainSingle().Which.Should().Be("/path/to/CommonLib");
+
+// Set and get properties
+myProject.SetProperty("Version", "1.0.0");
+myProject.GetProperty("Version").Should().Be("1.0.0");
+
+// Get property with default value for non-existent key
+var nonExistent = myProject.GetProperty("NonExistent", "default");
+nonExistent.Should().Be("default");
+
+// Validate project
+var validProject = new AnalysisProject("ValidProject", Directory.GetCurrentDirectory());
+validProject.IsValid().Should().BeTrue();
+
+var invalidProject = new AnalysisProject();
+invalidProject.IsValid().Should().BeFalse();
+
+// Get directory path
+var directoryPath = myProject.GetDirectoryPath();
+directoryPath.Should().NotBeEmpty();
+```
+
 ## StringExtensionsTests
 
 The `StringExtensionsTests` class contains comprehensive unit tests for the `StringExtensions` utility methods, verifying correct behavior for string naming convention conversions, distance calculations, and substring counting. It tests methods that convert between different naming formats (PascalCase, camelCase, snake_case), calculate Levenshtein distance for fuzzy string matching, and count substring occurrences for pattern analysis.
