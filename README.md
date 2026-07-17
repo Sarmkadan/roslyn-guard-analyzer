@@ -122,6 +122,71 @@ bool dirExists = FileSystemHelper.DirectoryExists("/path/to/directory");
 Console.WriteLine(dirExists ? "Directory exists" : "Directory does not exist");
 ```
 
+## FileSystemHelperValidation
+
+The `FileSystemHelperValidation` class provides validation methods for file system operations performed by `FileSystemHelper`. It ensures that parameters and paths are valid before operations are executed, preventing runtime errors and invalid file system accesses. The validation methods return `IReadOnlyList<string>` containing any validation problems, while convenience methods provide boolean checks and guard methods throw exceptions when validation fails.
+
+### Usage Example
+
+```csharp
+using RoslynGuardAnalyzer.Utilities;
+
+// Validate directory path before operations
+var directoryValidationErrors = FileSystemHelperValidation.ValidateDirectory("/path/to/project");
+if (directoryValidationErrors.Count > 0)
+{
+    Console.WriteLine("Directory validation failed:");
+    foreach (var error in directoryValidationErrors)
+    {
+        Console.WriteLine($" - {error}");
+    }
+}
+else
+{
+    Console.WriteLine("Directory is valid for file operations.");
+}
+
+// Validate file existence check parameters
+bool isFilePathValid = FileSystemHelperValidation.IsValidFileExists("/path/to/file.cs");
+Console.WriteLine(isFilePathValid ? "File path is valid" : "File path is invalid");
+
+// Validate find C# files parameters
+var csharpFilesValidation = FileSystemHelperValidation.ValidateFindCSharpFiles("/path/to/project", new[] { "temp", "backup" });
+if (csharpFilesValidation.IsValid())
+{
+    Console.WriteLine("Parameters for finding C# files are valid.");
+}
+
+// Use guard method to ensure valid directory (throws if invalid)
+try
+{
+    FileSystemHelperValidation.EnsureValidDirectory("/valid/project/path");
+    Console.WriteLine("Directory is valid and safe for operations.");
+}
+catch (ArgumentException ex)
+{
+    Console.WriteLine($"Validation failed: {ex.Message}");
+}
+
+// Validate write file parameters
+var writeValidationErrors = FileSystemHelperValidation.ValidateWriteFile("/path/to/newfile.cs", "public class NewClass { }");
+if (writeValidationErrors.IsValid())
+{
+    Console.WriteLine("File write parameters are valid.");
+}
+
+// Validate file size retrieval parameters
+bool isSizeValid = FileSystemHelperValidation.IsValidGetFileSize("/path/to/file.cs");
+Console.WriteLine(isSizeValid ? "File size parameters are valid" : "File size parameters are invalid");
+
+// Validate find project files parameters
+var projectFilesValidation = FileSystemHelperValidation.ValidateFindProjectFiles("/path/to/project");
+if (projectFilesValidation.IsValid())
+{
+    Console.WriteLine("Parameters for finding project files are valid.");
+}
+```
+
 ## ReflectionHelper
 
 The `ReflectionHelper` class provides utility methods for reflection operations on types and members. It simplifies extracting metadata from code elements for analysis, including checking type hierarchies, method properties, attribute discovery, and interface implementation verification.
