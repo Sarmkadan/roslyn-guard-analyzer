@@ -355,6 +355,73 @@ var occurrences = "abababab".CountOccurrences("ab");
 occurrences.Should().Be(4);
 ```
 
+## AnalysisProjectExtensions
+
+The `AnalysisProjectExtensions` class provides a comprehensive set of utility extension methods for working with `AnalysisProject` instances. It includes methods for checking project properties, retrieving C# file information, comparing target frameworks, and determining .NET version compatibility. These extensions simplify project analysis and validation tasks.
+
+### Usage Example
+
+```csharp
+using System;
+using System.Collections.Generic;
+using RoslynGuardAnalyzer.Domain.Models;
+
+// Create a sample project for demonstration
+var project = new AnalysisProject("MyWebApp", "/src/MyWebApp");
+
+// Set some properties
+project.SetProperty("Version", "1.0.0");
+project.SetProperty("Description", "My web application");
+
+// Check if project has specific properties
+bool hasVersion = project.HasProperty("Version");
+Console.WriteLine($"Has Version property: {hasVersion}"); // Output: True
+
+bool hasDescription = project.HasProperty("Description");
+Console.WriteLine($"Has Description property: {hasDescription}"); // Output: True
+
+bool hasAuthor = project.HasProperty("Author");
+Console.WriteLine($"Has Author property: {hasAuthor}"); // Output: False
+
+// Get all C# files in the project
+var csharpFiles = project.GetAllCSharpFiles();
+Console.WriteLine($"C# files count: {csharpFiles.Count}");
+
+// Check if project has C# files
+bool hasCSharpFiles = project.HasCSharpFiles();
+Console.WriteLine($"Has C# files: {hasCSharpFiles}");
+
+// Get count of C# files
+int fileCount = project.GetCSharpFileCount();
+Console.WriteLine($"C# file count: {fileCount}");
+
+// Get required property (throws if not found)
+try
+{
+    string version = project.GetRequiredProperty("Version");
+    Console.WriteLine($"Required property 'Version': {version}");
+}
+catch (KeyNotFoundException ex)
+{
+    Console.WriteLine($"Error: {ex.Message}");
+}
+
+// Check if project targets modern .NET
+bool isModern = project.IsModernDotNetProject();
+Console.WriteLine($"Is modern .NET project: {isModern}");
+
+// Get target framework display
+string targetFramework = project.GetTargetFrameworkDisplay();
+Console.WriteLine($"Target framework: {targetFramework}");
+
+// Compare target frameworks with another project
+var otherProject = new AnalysisProject("SharedLib", "/src/SharedLib");
+otherProject.SetProperty("TargetFramework", "net8.0");
+
+bool sameTargetFramework = project.HasSameTargetFramework(otherProject);
+Console.WriteLine($"Same target framework: {sameTargetFramework}");
+```
+
 ## ValidationExtensions
 
 The `ValidationExtensions` class provides a comprehensive set of extension methods for common validation scenarios in C# applications. It offers fluent validation patterns with detailed error messages for strings, collections, file paths, numeric ranges, and type compatibility checks. Each method follows a consistent pattern returning a boolean success indicator along with an optional error message.
