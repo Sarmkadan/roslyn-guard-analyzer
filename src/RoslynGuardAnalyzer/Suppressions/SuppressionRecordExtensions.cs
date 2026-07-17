@@ -26,7 +26,7 @@ public static class SuppressionRecordExtensions
     public static string GetDescription(this SuppressionRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
-        return $"Suppression for rule {record.RuleId} in file {record.TargetFile ?? "(unknown)"} at {record.TargetElement ?? "(unknown)"}. Justification: {record.Justification}. Author: {record.Author}. Active: {record.IsActive}.";
+        return $"Suppression for rule '{record.RuleId}' in file '{record.TargetFile ?? "(unknown)"}' at '{record.TargetElement ?? "(unknown)"}'. Justification: '{record.Justification}'. Author: '{record.Author}'. Active: {record.IsActive}.";
     }
 
     /// <summary>
