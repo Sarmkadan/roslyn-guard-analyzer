@@ -20,7 +20,7 @@ public static class CommandLineProcessorValidation
     /// Validates the command-line processor and returns any problems found.
     /// </summary>
     /// <param name="value">The command-line processor to validate.</param>
-    /// <returns>A read-only list of human-readable problem descriptions.</returns>
+/// <returns>An empty read-only list if the processor is valid; otherwise, a read-only list of human-readable problem descriptions.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static IReadOnlyList<string> Validate(this CommandLineProcessor value)
     {
@@ -59,7 +59,7 @@ public static class CommandLineProcessorValidation
     /// Determines whether the command-line processor is in a valid state.
     /// </summary>
     /// <param name="value">The command-line processor to check.</param>
-    /// <returns>True if the processor is valid; otherwise, false.</returns>
+/// <returns><see langword="true"/> if the processor is valid; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static bool IsValid(this CommandLineProcessor value)
     {
@@ -75,7 +75,7 @@ public static class CommandLineProcessorValidation
     /// </summary>
     /// <param name="value">The command-line processor to validate.</param>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
-    /// <exception cref="ArgumentException">Thrown if the processor is not valid.</exception>
+    /// <exception cref="ArgumentException">Thrown if the processor is not valid. The exception message contains a list of all validation problems.</exception>
     public static void EnsureValid(this CommandLineProcessor value)
     {
         ArgumentNullException.ThrowIfNull(value);
