@@ -47,7 +47,8 @@ public static class RuleEngineJsonExtensions
     /// Deserializes a JSON string to a <see cref="RuleEngine"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized rule engine instance, or null if the JSON is invalid.</returns>
+    /// <returns>The deserialized rule engine instance, or null if the JSON is invalid or deserialization fails.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static RuleEngine? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
@@ -68,6 +69,7 @@ public static class RuleEngineJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">The deserialized rule engine instance, or null if deserialization failed.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static bool TryFromJson(string json, out RuleEngine? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
