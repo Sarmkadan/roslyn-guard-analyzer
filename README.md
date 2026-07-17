@@ -604,6 +604,100 @@ var complexFilter = new AnalysisFilterBuilder()
 
 
 
+## AnalysisFilterBuilderValidation
+
+The `AnalysisFilterBuilderValidation` class provides validation helpers for `AnalysisFilterBuilder` instances and their configuration parameters. It validates severity levels, rule names, file paths, line numbers, message text, and predicate functions to ensure they meet expected criteria before being used in filtering operations. The validation methods return `IReadOnlyList<string>` containing any validation problems, while convenience methods provide boolean checks and guard methods throw exceptions when validation fails.
+
+### Usage Example
+
+```csharp
+using System;
+using System.Linq;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Utilities;
+
+// Validate severity level strings
+var severityErrors = "InvalidSeverity".ValidateSeverity("severity");
+if (severityErrors.Count > 0)
+{
+Console.WriteLine("Severity validation failed:");
+foreach (var error in severityErrors)
+{
+Console.WriteLine($" - {error}");
+}
+}
+else
+{
+Console.WriteLine("Severity level is valid.");
+}
+
+// Validate rule names
+var ruleNames = new[] { "NAM001", "DES002", "PER003" };
+var ruleNameErrors = ruleNames.ValidateRuleNames("ruleNames");
+if (ruleNameErrors.Count == 0)
+{
+Console.WriteLine("Rule names are valid.");
+}
+
+// Validate file paths
+var filePathErrors = @"./src/Program.cs".ValidateFilePath("filePath");
+if (filePathErrors.Count == 0)
+{
+Console.WriteLine("File path is valid.");
+}
+
+// Validate line numbers
+var lineNumberErrors = 42.ValidateLineNumber("lineNumber");
+if (lineNumberErrors.Count == 0)
+{
+Console.WriteLine("Line number is valid.");
+}
+
+// Validate message text
+var messageErrors = "Make method static".ValidateMessageText("message");
+if (messageErrors.Count == 0)
+{
+Console.WriteLine("Message text is valid.");
+}
+
+// Validate predicate function
+Func<RuleViolation, bool> predicate = v => v.Severity == SeverityLevel.Error;
+var predicateErrors = predicate.ValidatePredicate("predicate");
+if (predicateErrors.Count == 0)
+{
+Console.WriteLine("Predicate is valid.");
+}
+
+// Use guard methods to throw exceptions on invalid input
+try
+{
+"InvalidSeverity".EnsureValidSeverity("severity");
+}
+catch (ArgumentException ex)
+{
+Console.WriteLine($"Validation threw: {ex.Message}");
+}
+
+// Validate AnalysisFilterBuilder instance
+var filterBuilder = new AnalysisFilterBuilder()
+.MinimumSeverity("Warning")
+.ByRule("CA1822");
+
+var builderErrors = filterBuilder.Validate();
+if (builderErrors.Count == 0)
+{
+Console.WriteLine("AnalysisFilterBuilder is valid.");
+}
+
+// Use EnsureValid to throw if invalid
+filterBuilder.EnsureValid();
+Console.WriteLine("AnalysisFilterBuilder passed validation.");
+```
+
+
+
+
 ## PerformanceAnalyzer
 
 
