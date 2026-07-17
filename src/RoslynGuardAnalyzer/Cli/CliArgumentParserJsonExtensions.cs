@@ -91,8 +91,13 @@ public static class CliArgumentParserJsonExtensions
     /// Reconstructs an equivalent argument array from a <see cref="CliOptions"/> instance so that
     /// re-parsing it via <see cref="CliArgumentParser"/> yields the same effective options.
     /// </summary>
+    /// <param name="options">The CliOptions instance to convert to command-line arguments.</param>
+    /// <returns>An array of command-line arguments representing the provided options.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="options"/> is null.</exception>
     private static string[] ToArgs(CliOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         var args = new List<string>();
 
         if (options.ShowHelp)
@@ -118,7 +123,7 @@ public static class CliArgumentParserJsonExtensions
         args.Add($"--threads={options.MaxParallelThreads.ToString(CultureInfo.InvariantCulture)}");
         args.Add($"--log-level={options.LogLevel.ToString(CultureInfo.InvariantCulture)}");
 
-        if (options.RuleFilter.Count > 0)
+        if (options.RuleFilter is not null && options.RuleFilter.Count > 0)
             args.Add($"--rule-filter={string.Join(",", options.RuleFilter)}");
         if (!options.FailOnViolations)
             args.Add("--no-fail-on-violations");
@@ -127,6 +132,6 @@ public static class CliArgumentParserJsonExtensions
         if (!string.IsNullOrEmpty(options.ReportType))
             args.Add($"--report-type={options.ReportType}");
 
-        return [.. args];
+        return args.ToArray();
     }
 }
