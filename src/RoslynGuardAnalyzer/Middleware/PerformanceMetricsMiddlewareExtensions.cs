@@ -3,7 +3,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Generic;
@@ -51,7 +51,7 @@ public static class PerformanceMetricsMiddlewareExtensions
         this PerformanceMetricsMiddleware.PerformanceMetrics metrics)
     {
         ArgumentNullException.ThrowIfNull(metrics);
-        return metrics.ComponentTimingsMs;
+        return metrics.ComponentTimingsMs.AsReadOnly();
     }
 
     /// <summary>
@@ -123,9 +123,11 @@ public static class PerformanceMetricsMiddlewareExtensions
     public static string? GetSlowestComponent(this PerformanceMetricsMiddleware.PerformanceMetrics metrics)
     {
         ArgumentNullException.ThrowIfNull(metrics);
-        return metrics.ComponentTimingsMs.Count > 0
-            ? metrics.ComponentTimingsMs.MaxBy(x => x.Value).Key
-            : null;
+        return metrics.ComponentTimingsMs switch
+        {
+            { Count: > 0 } => metrics.ComponentTimingsMs.MaxBy(x => x.Value).Key,
+            _ => null
+        };
     }
 
     /// <summary>
@@ -188,12 +190,9 @@ public static class PerformanceMetricsMiddlewareExtensions
         if (metrics.TotalMilliseconds == 0)
             return 0;
 
-        if (metrics.ComponentTimingsMs.TryGetValue(componentName, out var time))
-        {
-            return (time * 100.0) / metrics.TotalMilliseconds;
-        }
-
-        return 0;
+        return metrics.ComponentTimingsMs.TryGetValue(componentName, out var time)
+            ? (time * 100.0) / metrics.TotalMilliseconds
+            : 0;
     }
 
     /// <summary>
