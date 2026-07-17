@@ -68,12 +68,11 @@ public static class CustomRuleEngineJsonExtensions
     /// <param name="value">Receives the deserialized <see cref="CustomRuleEngine"/> instance if successful; otherwise, <see langword="null"/>.</param>
     /// <returns><see langword="true"/> if deserialization succeeds; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is empty or whitespace.</exception>
     public static bool TryFromJson(string json, out CustomRuleEngine? value)
     {
-        if (json is null)
-        {
-            throw new ArgumentNullException(nameof(json));
-        }
+        ArgumentNullException.ThrowIfNull(json);
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
 
         try
         {
