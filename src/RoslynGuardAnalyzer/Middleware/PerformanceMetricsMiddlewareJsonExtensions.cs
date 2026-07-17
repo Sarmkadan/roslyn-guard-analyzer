@@ -60,15 +60,10 @@ public static class PerformanceMetricsMiddlewareJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>The deserialized performance metrics, or null if the JSON is null or empty.</returns>
     /// <exception cref="JsonException">Thrown when the JSON is malformed or cannot be deserialized.</exception>
-    public static PerformanceMetricsMiddleware.PerformanceMetrics? FromJson(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return null;
-        }
-
-        return JsonSerializer.Deserialize<PerformanceMetricsMiddleware.PerformanceMetrics>(json, _jsonSerializerOptions);
-    }
+    public static PerformanceMetricsMiddleware.PerformanceMetrics? FromJson(string json) =>
+        string.IsNullOrWhiteSpace(json)
+            ? null
+            : JsonSerializer.Deserialize<PerformanceMetricsMiddleware.PerformanceMetrics>(json, _jsonSerializerOptions);
 
     /// <summary>
     /// Attempts to deserialize a JSON string to a <see cref="PerformanceMetricsMiddleware.PerformanceMetrics"/> instance.
@@ -76,6 +71,7 @@ public static class PerformanceMetricsMiddlewareJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <param name="value">Receives the deserialized performance metrics if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
     /// <example>
     /// <code>
     /// if (PerformanceMetricsMiddlewareJsonExtensions.TryFromJson(json, out var metrics))
