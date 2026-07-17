@@ -22,11 +22,7 @@ namespace RoslynGuardAnalyzer.Domain.Models
         {
             ArgumentNullException.ThrowIfNull(report);
 
-            // The report already provides a dictionary keyed by severity.
-            // Flatten the values to a single sequence.
-            return report.GetViolationsBySeverity()
-                         .Values
-                         .SelectMany(v => v);
+            return report.GetViolationsBySeverity().Values.SelectMany(v => v);
         }
 
         /// <summary>
@@ -42,7 +38,6 @@ namespace RoslynGuardAnalyzer.Domain.Models
             ArgumentNullException.ThrowIfNull(report);
             ArgumentException.ThrowIfNullOrEmpty(filePath);
 
-            // The underlying method returns a List<RuleViolation>; expose it as IEnumerable.
             return report.GetViolationsFromFile(filePath);
         }
 
@@ -60,24 +55,33 @@ namespace RoslynGuardAnalyzer.Domain.Models
             var sb = new StringBuilder();
 
             // Header
-            sb.AppendLine($"# {report.Title}");
+            sb.AppendLine($"# {report.Title ?? "Violation Report"}");
             sb.AppendLine();
 
             // Basic metadata
-            sb.AppendLine($"*Project*: {report.ProjectName}");
+            sb.AppendLine($"*Project*: {report.ProjectName ?? "Unknown"}");
             sb.AppendLine($"*Generated*: {report.GeneratedAt.ToString("u", CultureInfo.InvariantCulture)}");
             sb.AppendLine();
 
             // Summary (if any)
             if (!string.IsNullOrWhiteSpace(report.Summary))
             {
-                sb.AppendLine(report.Summary);
+                sb.AppendLine(report.Summary.Trim());
                 sb.AppendLine();
             }
 
             // Statistics
             sb.AppendLine($"**Total Violations**: {report.GetTotalViolationCount()}");
             sb.AppendLine($"**Violation Groups**: {report.ViolationGroups?.Count ?? 0}");
+            
+            if (report.Statistics is not null)
+            {
+                sb.AppendLine($"**Critical**: {report.Statistics.CriticalCount}");
+                sb.AppendLine($"**Errors**: {report.Statistics.ErrorCount}");
+                sb.AppendLine($"**Warnings**: {report.Statistics.WarningCount}");
+                sb.AppendLine($"**Info**: {report.Statistics.InfoCount}");
+            }
+
             sb.AppendLine();
 
             // Optional detailed content
@@ -85,7 +89,7 @@ namespace RoslynGuardAnalyzer.Domain.Models
             {
                 sb.AppendLine("## Details");
                 sb.AppendLine();
-                sb.AppendLine(report.DetailedContent);
+                sb.AppendLine(report.DetailedContent.Trim());
             }
 
             return sb.ToString();
