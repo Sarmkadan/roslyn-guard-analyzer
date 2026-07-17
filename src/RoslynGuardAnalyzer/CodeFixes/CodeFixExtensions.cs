@@ -69,7 +69,7 @@ public static class CodeFixExtensions
             SeverityLevel.Warning => "Warning",
             SeverityLevel.Error => "Error",
             SeverityLevel.Critical => "Critical",
-            _ => fix.Severity.ToString()
+            _ => throw new InvalidOperationException($"Unknown severity level: {fix.Severity}")
         };
     }
 
@@ -101,7 +101,20 @@ public static class CodeFixExtensions
         var breakingIndicator = fix.IsBreakingChange ? "🔴 BREAKING" : string.Empty;
         var severity = fix.GetSeverityString();
 
-        return $"[{fix.RuleId}] {fix.Title} — {severity} {breakingIndicator}{Environment.NewLine}{fix.FilePath}:{fix.StartLine}{Environment.NewLine}{fix.Description}".Trim();
+        var builder = new System.Text.StringBuilder();
+        builder.Append($"[{fix.RuleId}] {fix.Title} — {severity} {breakingIndicator}");
+
+        if (!string.IsNullOrWhiteSpace(fix.FilePath) || fix.StartLine > 0)
+        {
+            builder.Append($"{Environment.NewLine}{fix.FilePath}:{fix.StartLine}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(fix.Description))
+        {
+            builder.Append($"{Environment.NewLine}{fix.Description}");
+        }
+
+        return builder.ToString();
     }
 
     /// <summary>
@@ -136,6 +149,7 @@ public static class CodeFixExtensions
     /// <see langword="true"/> if this fix targets the specified file; otherwise <see langword="false"/>.
     /// </returns>
     /// <exception cref="ArgumentNullException"><paramref name="fix"/> or <paramref name="filePath"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="filePath"/> is empty or whitespace.</exception>
     public static bool TargetsFile(this CodeFix fix, string filePath)
     {
         ArgumentNullException.ThrowIfNull(fix);
@@ -217,7 +231,7 @@ public static class CodeFixExtensions
         if (!string.IsNullOrWhiteSpace(fix.OriginalCode))
         {
             lines.Add($"Original ({fix.StartLine}):");
-            lines.Add(fix.OriginalCode);
+            lines.Add(fix.OriginalCode.Trim());
         }
 
         if (!string.IsNullOrWhiteSpace(fix.ReplacementCode))
@@ -227,7 +241,7 @@ public static class CodeFixExtensions
                 lines.Add(string.Empty);
             }
             lines.Add($"Replacement ({fix.StartLine}):");
-            lines.Add(fix.ReplacementCode);
+            lines.Add(fix.ReplacementCode.Trim());
         }
 
         return string.Join(Environment.NewLine, lines);
