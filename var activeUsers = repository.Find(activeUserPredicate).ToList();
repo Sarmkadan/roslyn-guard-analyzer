@@ -1,0 +1,8 @@
+
+## Notes
+
+* **Null handling** – Passing `null` for any parameter results in a validation error. The `EnsureValid*` overloads will throw an `ArgumentNullException` (or a more specific `ArgumentException`) in this case.
+* **Empty collections** – `ValidateEntities<T>` treats an empty collection as valid; no errors are produced. `EnsureValidEntities<T>` therefore completes without throwing for an empty enumerable.
+* **Thread‑safety** – All members are static and stateless; they do not modify shared mutable data. Consequently, they are safe to call concurrently from multiple threads.
+* **Extensibility** – Because the methods are generic and rely on external conventions (e.g., attribute‑based rules or naming patterns), adding new validation rules does not require changes to the method signatures.
+* **Performance** – Validation incurs a cost proportional to the number of items inspected. For large collections, consider validating in batches or using `ValidatePredicate<T>` to pre‑filter data before full entity validation.
