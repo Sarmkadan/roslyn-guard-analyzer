@@ -609,3 +609,83 @@ var validationResult = ValidationExtensions.ValidateAll(
 );
 Console.WriteLine(validationResult.IsValid ? "All validations passed" : $"Validations failed: {string.Join(", ", validationResult.Errors)}");
 ```
+
+## ServiceCollectionExtensionsValidation
+
+
+The `ServiceCollectionExtensionsValidation` class provides extension methods for validating service configuration in .NET applications. It helps validate service collection registrations for common types like data directories, positive integers, log levels, and report formats. The validation methods return detailed error information when validation fails, allowing for precise error handling and configuration debugging.
+
+### Usage Example
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using RoslynGuardAnalyzer.Infrastructure;
+
+// Create a service collection
+var services = new ServiceCollection();
+
+// Register services with validation
+services.AddLogging();
+services.AddSingleton<IAnalysisService, AnalysisService>();
+
+// Validate data directory configuration
+var dataDirErrors = services.ValidateDataDirectory();
+if (dataDirErrors.Any())
+{
+    foreach (var error in dataDirErrors)
+    {
+        Console.WriteLine($"Data directory error: {error}");
+    }
+    return;
+}
+
+// Validate positive integer configuration
+var positiveIntErrors = services.ValidatePositiveInt("MaxConcurrentAnalyses", 10);
+if (positiveIntErrors.Any())
+{
+    foreach (var error in positiveIntErrors)
+    {
+        Console.WriteLine($"Positive int error: {error}");
+    }
+}
+
+// Validate log level configuration
+var logLevelErrors = services.ValidateLogLevel("MinimumLogLevel", "Information");
+if (logLevelErrors.Any())
+{
+    foreach (var error in logLevelErrors)
+    {
+        Console.WriteLine($"Log level error: {error}");
+    }
+}
+
+// Validate report format configuration
+var reportFormatErrors = services.ValidateReportFormat("OutputFormat", "json");
+if (reportFormatErrors.Any())
+{
+    foreach (var error in reportFormatErrors)
+    {
+        Console.WriteLine($"Report format error: {error}");
+    }
+}
+
+// Build service provider and validate all configurations
+var serviceProvider = services.BuildServiceProvider();
+
+// Check if all validations pass
+if (services.IsValid())
+{
+    Console.WriteLine("All service configurations are valid!");
+}
+else
+{
+    var allErrors = services.Validate();
+    foreach (var error in allErrors)
+    {
+        Console.WriteLine(error);
+    }
+}
+
+// Ensure all validations pass (throws on failure)
+services.EnsureValid();
+```
