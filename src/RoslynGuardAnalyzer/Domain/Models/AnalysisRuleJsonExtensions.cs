@@ -12,7 +12,7 @@ using System.Text.Json.Serialization;
 namespace RoslynGuardAnalyzer.Domain.Models;
 
 /// <summary>
-/// Provides JSON serialization and deserialization extensions for <see cref="AnalysisRule"/>.
+/// Provides System.Text.Json serialization and deserialization extensions for <see cref="AnalysisRule"/>.
 /// </summary>
 public static class AnalysisRuleJsonExtensions
 {
@@ -25,7 +25,7 @@ public static class AnalysisRuleJsonExtensions
     };
 
     /// <summary>
-    /// Serializes the specified <see cref="AnalysisRule"/> to a JSON string.
+    /// Serializes the <see cref="AnalysisRule"/> to a JSON string.
     /// </summary>
     /// <param name="value">The analysis rule to serialize.</param>
     /// <param name="indented">Whether to format the JSON with indentation for readability.</param>
@@ -43,14 +43,22 @@ public static class AnalysisRuleJsonExtensions
     }
 
     /// <summary>
-    /// Deserializes an <see cref="AnalysisRule"/> from a JSON string.
+    /// Deserializes a JSON string to an <see cref="AnalysisRule"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>The deserialized analysis rule, or null if the JSON is invalid.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <returns>The deserialized <see cref="AnalysisRule"/> instance, or <see langword="null"/> if the JSON is invalid.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static AnalysisRule? FromJson(string json)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json, nameof(json));
+        ArgumentException.ThrowIfNullOrEmpty(json);
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new ArgumentException(
+                "JSON string cannot consist only of whitespace characters.",
+                nameof(json));
+        }
 
         try
         {
@@ -63,15 +71,22 @@ public static class AnalysisRuleJsonExtensions
     }
 
     /// <summary>
-    /// Attempts to deserialize an <see cref="AnalysisRule"/> from a JSON string.
+    /// Attempts to deserialize a JSON string to an <see cref="AnalysisRule"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized analysis rule if successful.</param>
-    /// <returns>True if deserialization succeeded; otherwise false.</returns>
-    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
+    /// <param name="value">Receives the deserialized analysis rule, or null if deserialization fails.</param>
+    /// <returns>True if deserialization succeeds; otherwise false.</returns>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is <see langword="null"/>, empty, or consists only of whitespace.</exception>
     public static bool TryFromJson(string json, out AnalysisRule? value)
     {
-        ArgumentException.ThrowIfNullOrEmpty(json, nameof(json));
+        ArgumentException.ThrowIfNullOrEmpty(json);
+
+        value = null;
+
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return false;
+        }
 
         try
         {
@@ -80,7 +95,6 @@ public static class AnalysisRuleJsonExtensions
         }
         catch (JsonException)
         {
-            value = null;
             return false;
         }
     }
