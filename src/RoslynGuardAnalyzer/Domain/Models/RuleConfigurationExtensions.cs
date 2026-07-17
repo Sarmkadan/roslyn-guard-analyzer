@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
 using RoslynGuardAnalyzer.Core;
@@ -27,7 +26,7 @@ public static class RuleConfigurationExtensions
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        return configuration.EnabledRules.Any(r => r.DefaultSeverity >= severity);
+        return configuration.EnabledRules.Exists(r => r.DefaultSeverity >= severity);
     }
 
     /// <summary>
@@ -67,6 +66,7 @@ public static class RuleConfigurationExtensions
     /// <param name="prefix">The prefix to filter setting keys by.</param>
     /// <returns>An <see cref="IEnumerable{String}"/> of setting keys that start with the prefix.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="configuration"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="prefix"/> is <see langword="null"/> or empty.</exception>
     public static IEnumerable<string> GetCustomSettingKeysWithPrefix(this RuleConfiguration configuration, string prefix)
     {
         ArgumentNullException.ThrowIfNull(configuration);
