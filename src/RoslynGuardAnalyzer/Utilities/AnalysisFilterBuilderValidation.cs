@@ -55,6 +55,8 @@ public static class AnalysisFilterBuilderValidation
     /// <param name="severity">The severity level string to validate.</param>
     /// <param name="paramName">The name of the parameter being validated.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="severity"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="paramName"/> is null or empty.</exception>
     public static IReadOnlyList<string> ValidateSeverity(this string severity, string paramName = "severity")
     {
         ArgumentException.ThrowIfNullOrEmpty(severity, paramName);
@@ -84,6 +86,8 @@ public static class AnalysisFilterBuilderValidation
     /// <param name="ruleName">The rule name to validate.</param>
     /// <param name="paramName">The name of the parameter being validated.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ruleName"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="paramName"/> is null or empty.</exception>
     public static IReadOnlyList<string> ValidateRuleName(this string ruleName, string paramName = "ruleName")
     {
         ArgumentException.ThrowIfNullOrEmpty(ruleName, paramName);
@@ -102,6 +106,8 @@ public static class AnalysisFilterBuilderValidation
     /// <param name="filePath">The file path to validate.</param>
     /// <param name="paramName">The name of the parameter being validated.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="filePath"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="paramName"/> is null or empty.</exception>
     public static IReadOnlyList<string> ValidateFilePath(this string filePath, string paramName = "filePath")
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath, paramName);
@@ -136,6 +142,8 @@ public static class AnalysisFilterBuilderValidation
     /// <param name="text">The text to validate.</param>
     /// <param name="paramName">The name of the parameter being validated.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="text"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="paramName"/> is null or empty.</exception>
     public static IReadOnlyList<string> ValidateMessageText(this string text, string paramName = "text")
     {
         ArgumentException.ThrowIfNullOrEmpty(text, paramName);
@@ -154,6 +162,8 @@ public static class AnalysisFilterBuilderValidation
     /// <param name="predicate">The predicate to validate.</param>
     /// <param name="paramName">The name of the parameter being validated.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="predicate"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when <paramref name="paramName"/> is null or empty.</exception>
     public static IReadOnlyList<string> ValidatePredicate(this Func<RuleViolation, bool> predicate, string paramName = "predicate")
     {
         ArgumentNullException.ThrowIfNull(predicate, paramName);
@@ -167,6 +177,7 @@ public static class AnalysisFilterBuilderValidation
     /// <param name="ruleNames">The rule names to validate.</param>
     /// <param name="paramName">The name of the parameter being validated.</param>
     /// <returns>A list of validation problems; empty if valid.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ruleNames"/> is null.</exception>
     public static IReadOnlyList<string> ValidateRuleNames(this IEnumerable<string> ruleNames, string paramName = "ruleNames")
     {
         ArgumentNullException.ThrowIfNull(ruleNames, paramName);
