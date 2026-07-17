@@ -53,7 +53,7 @@ public static class RuleConfigurationBuilderJsonExtensions
     /// Deserializes a JSON string to a <see cref="RuleConfigurationBuilder"/>.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>A new <see cref="RuleConfigurationBuilder"/> instance, or null if the JSON is invalid.</returns>
+    /// <returns>A new <see cref="RuleConfigurationBuilder"/> instance, or null if the JSON is invalid or null.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
     public static RuleConfigurationBuilder? FromJson(string json)
     {
@@ -63,48 +63,55 @@ public static class RuleConfigurationBuilderJsonExtensions
         {
             var config = JsonSerializer.Deserialize<RuleConfiguration>(json, _jsonSerializerOptions);
 
-            if (config is null)
-            {
-                return null;
-            }
-
-            var builder = new RuleConfigurationBuilder(config.Name ?? "DeserializedRule")
-                .WithDescription(config.Description ?? string.Empty);
-
-            if (config.CustomSettings.TryGetValue("Enabled", out var enabledValue) &&
-                bool.TryParse(enabledValue, out var enabledBool))
-            {
-                builder.WithEnabled(enabledBool);
-            }
-            else
-            {
-                builder.WithEnabled(true);
-            }
-
-            if (config.CustomSettings.TryGetValue("Severity", out var severity))
-            {
-                builder.WithSeverity(severity);
-            }
-
-            foreach (var setting in config.CustomSettings)
-            {
-                if (setting.Key is "Enabled" or "Severity")
-                {
-                    continue;
-                }
-
-                if (setting.Value is not null)
-                {
-                    builder.WithParameter(setting.Key, setting.Value);
-                }
-            }
-
-            return builder;
+            return config is null
+                ? null
+                : FromJson(config);
         }
         catch (JsonException)
         {
             return null;
         }
+    }
+
+    /// <summary>
+    /// Deserializes a <see cref="RuleConfiguration"/> to a <see cref="RuleConfigurationBuilder"/>.
+    /// </summary>
+    /// <param name="config">The configuration to build from.</param>
+    /// <returns>A new <see cref="RuleConfigurationBuilder"/> instance.</returns>
+    private static RuleConfigurationBuilder FromJson(RuleConfiguration config)
+    {
+        var builder = new RuleConfigurationBuilder(config.Name ?? "DeserializedRule")
+            .WithDescription(config.Description ?? string.Empty);
+
+        if (config.CustomSettings.TryGetValue("Enabled", out var enabledValue) &&
+            bool.TryParse(enabledValue, out var enabledBool))
+        {
+            builder.WithEnabled(enabledBool);
+        }
+        else
+        {
+            builder.WithEnabled(true);
+        }
+
+        if (config.CustomSettings.TryGetValue("Severity", out var severity))
+        {
+            builder.WithSeverity(severity);
+        }
+
+        foreach (var setting in config.CustomSettings)
+        {
+            if (setting.Key is "Enabled" or "Severity")
+            {
+                continue;
+            }
+
+            if (setting.Value is not null)
+            {
+                builder.WithParameter(setting.Key, setting.Value);
+            }
+        }
+
+        return builder;
     }
 
     /// <summary>
