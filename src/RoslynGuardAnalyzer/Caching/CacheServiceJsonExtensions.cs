@@ -49,7 +49,7 @@ public static class CacheServiceJsonExtensions
     /// Deserializes a JSON string to a <see cref="CacheService"/> instance.
     /// </summary>
     /// <param name="json">The JSON string to deserialize. Must not be null or whitespace.</param>
-    /// <returns>A <see cref="CacheService"/> instance, or null if the JSON is empty.</returns>
+    /// <returns>A <see cref="CacheService"/> instance, or null if the JSON is empty or whitespace.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or whitespace.</exception>
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized.</exception>
     public static CacheService? FromJson(string json)
@@ -71,11 +71,16 @@ public static class CacheServiceJsonExtensions
     /// <param name="value">Receives the deserialized <see cref="CacheService"/> instance, or null if deserialization fails.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or whitespace.</exception>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid.</exception>
     public static bool TryFromJson(string json, out CacheService? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
 
-        value = default;
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            value = default;
+            return false;
+        }
 
         try
         {
@@ -84,6 +89,7 @@ public static class CacheServiceJsonExtensions
         }
         catch (JsonException)
         {
+            value = default;
             return false;
         }
     }
