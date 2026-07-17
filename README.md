@@ -939,6 +939,97 @@ long totalComponentTime = metrics.GetTotalComponentTime();
 Console.WriteLine($"Total component time: {totalComponentTime} ms");
 ```
 
+## CacheKeyGeneratorValidation
+
+The `CacheKeyGeneratorValidation` class provides validation methods for cache key generation parameters used by `CacheKeyGenerator`. It ensures that inputs to cache key generation methods are valid before they are processed, preventing invalid cache keys and related errors. Each validation method returns an `IReadOnlyList<string>` containing any validation problems; an empty list indicates the parameters are valid.
+
+### Usage Example
+
+```csharp
+using System;
+using RoslynGuardAnalyzer.Caching;
+
+// Validate project analysis key parameters
+var projectValidationErrors = CacheKeyGeneratorValidation.ValidateGenerateProjectAnalysisKey(
+    projectPath: "/src/MyProject/MyProject.csproj",
+    configHash: "a1b2c3d4"
+);
+
+if (projectValidationErrors.Count > 0)
+{
+    Console.WriteLine("Project analysis key validation failed:");
+    foreach (var error in projectValidationErrors)
+    {
+        Console.WriteLine($"  - {error}");
+    }
+}
+
+// Validate file analysis key parameters
+var fileValidationErrors = CacheKeyGeneratorValidation.ValidateGenerateFileAnalysisKey(
+    filePath: "/src/MyProject/Program.cs",
+    fileContentHash: "e5f6a7b8"
+);
+
+if (fileValidationErrors.Count == 0)
+{
+    Console.WriteLine("File analysis key parameters are valid.");
+}
+
+// Validate rule execution key parameters
+var ruleValidationErrors = CacheKeyGeneratorValidation.ValidateGenerateRuleExecutionKey(
+    ruleName: "NAM001",
+    targetName: "MyClass"
+);
+
+if (ruleValidationErrors.Count == 0)
+{
+    Console.WriteLine("Rule execution key parameters are valid.");
+}
+
+// Validate code element key parameters
+var elementValidationErrors = CacheKeyGeneratorValidation.ValidateGenerateCodeElementKey(
+    fullTypeName: "MyNamespace.MyClass+MyNestedType",
+    memberName: "MyMethod"
+);
+
+if (elementValidationErrors.Count == 0)
+{
+    Console.WriteLine("Code element key parameters are valid.");
+}
+
+// Validate hash computation parameters
+var hashValidationErrors = CacheKeyGeneratorValidation.ValidateComputeHash(
+    input: "some input data"
+);
+
+if (hashValidationErrors.Count == 0)
+{
+    Console.WriteLine("Hash computation parameters are valid.");
+}
+
+// Validate composite key creation parameters
+var compositeValidationErrors = CacheKeyGeneratorValidation.ValidateCreateCompositeKey(
+    "component1",
+    "component2",
+    "component3"
+);
+
+if (compositeValidationErrors.Count == 0)
+{
+    Console.WriteLine("Composite key parameters are valid.");
+}
+
+// Validate pattern key parameters
+var patternValidationErrors = CacheKeyGeneratorValidation.ValidateGeneratePatternKey(
+    prefix: "pattern_prefix"
+);
+
+if (patternValidationErrors.Count == 0)
+{
+    Console.WriteLine("Pattern key parameters are valid.");
+}
+```
+
 ## ServiceCollectionExtensionsValidation
 
 
