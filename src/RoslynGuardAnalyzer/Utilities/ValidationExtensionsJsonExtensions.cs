@@ -34,7 +34,9 @@ public static class ValidationExtensionsJsonExtensions
     /// <exception cref="ArgumentException">Thrown when <paramref name="value"/> is not the ValidationExtensions type.</exception>
     public static string ToJson(this object? value, bool indented = false)
     {
-        if (value is null || !(value.GetType() == typeof(ValidationExtensions)))
+        ArgumentNullException.ThrowIfNull(value);
+
+        if (value.GetType() != typeof(ValidationExtensions))
         {
             throw new ArgumentException($"Parameter must be of type {nameof(ValidationExtensions)}", nameof(value));
         }
@@ -50,19 +52,26 @@ public static class ValidationExtensionsJsonExtensions
     }
 
     /// <summary>
-    /// Deserializes a JSON string into a ValidationExtensions type.
+    /// Internal type marker for JSON serialization.
+    /// </summary>
+    public sealed class TypeMarker
+    {
+        public string? Type { get; set; }
+    }
+
+    /// <summary>
+    /// Deserializes a JSON string into a ValidationExtensions type marker.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <returns>A ValidationExtensions type if successful; otherwise, null.</returns>
+    /// <returns>A <see cref="TypeMarker"/> instance if successful; otherwise, null.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
-    public static object? FromJson(string json)
+    public static TypeMarker? FromJson(string json)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
 
         try
         {
-            var result = JsonSerializer.Deserialize<TypeMarker>(json, _jsonSerializerOptions);
-            return result?.Type == nameof(ValidationExtensions) ? null : null;
+            return JsonSerializer.Deserialize<TypeMarker>(json, _jsonSerializerOptions);
         }
         catch (JsonException)
         {
@@ -71,40 +80,25 @@ public static class ValidationExtensionsJsonExtensions
     }
 
     /// <summary>
-    /// Attempts to deserialize a JSON string into a ValidationExtensions type.
+    /// Attempts to deserialize a JSON string into a ValidationExtensions type marker.
     /// </summary>
     /// <param name="json">The JSON string to deserialize.</param>
-    /// <param name="value">Receives the deserialized ValidationExtensions type if successful; otherwise, null.</param>
+    /// <param name="value">Receives the deserialized <see cref="TypeMarker"/> if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     /// <exception cref="ArgumentException">Thrown when <paramref name="json"/> is null or empty.</exception>
-    public static bool TryFromJson(string json, out object? value)
+    public static bool TryFromJson(string json, out TypeMarker? value)
     {
         ArgumentException.ThrowIfNullOrEmpty(json);
 
         try
         {
-            var result = JsonSerializer.Deserialize<TypeMarker>(json, _jsonSerializerOptions);
-            if (result?.Type == nameof(ValidationExtensions))
-            {
-                value = null;
-                return true;
-            }
-
-            value = null;
-            return false;
+            value = JsonSerializer.Deserialize<TypeMarker>(json, _jsonSerializerOptions);
+            return value is not null;
         }
         catch (JsonException)
         {
             value = null;
             return false;
         }
-    }
-
-    /// <summary>
-    /// Internal type marker for JSON serialization.
-    /// </summary>
-    private sealed class TypeMarker
-    {
-        public string? Type { get; set; }
     }
 }
