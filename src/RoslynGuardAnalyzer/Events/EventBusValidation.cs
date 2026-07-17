@@ -7,7 +7,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace RoslynGuardAnalyzer.Events;
 
@@ -28,11 +27,6 @@ public static class EventBusValidation
 
         var problems = new List<string>();
 
-        // EventBus itself doesn't have EventType or Handler as public members
-        // These are internal to the Subscription class
-        // The public API is: EventType (via Subscribe<TEvent>), Handler (via Subscribe),
-        // PublishAsync, Subscribe<TEvent>, Unsubscribe<TEvent>, ClearSubscriptions
-
         // Validate subscription count is reasonable
         var subscriptionCount = value.SubscriptionCount;
         if (subscriptionCount < 0)
@@ -40,8 +34,8 @@ public static class EventBusValidation
             problems.Add("SubscriptionCount cannot be negative.");
         }
 
-        // Validate that we can actually subscribe/unsubscribe without issues
-        // This is a basic sanity check that the event bus is in a usable state
+        // Validate that the event bus is in a usable state
+        // Try a basic operation to ensure the internal state is consistent
         try
         {
             value.ClearSubscriptions();
@@ -59,6 +53,7 @@ public static class EventBusValidation
     /// </summary>
     /// <param name="value">The event bus instance to check.</param>
     /// <returns><see langword="true"/> if the instance is valid; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="value"/> is null.</exception>
     public static bool IsValid(this EventBus value)
     {
         return value.Validate().Count == 0;
