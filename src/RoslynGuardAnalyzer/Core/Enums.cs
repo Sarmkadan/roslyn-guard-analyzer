@@ -65,7 +65,8 @@ public enum CodeElementType
     Property = 6,
     Field = 7,
     Parameter = 8,
-    ReturnType = 9
+    ReturnType = 9,
+    CatchBlock = 10
 }
 
 /// <summary>

@@ -49,5 +49,8 @@ public sealed class CustomRuleRegistry : ICustomRuleRegistry
     {
         var asyncVoidRule = AsyncVoidRule.Create();
         RegisterCustomRule(asyncVoidRule);
+
+        var emptyCatchRule = EmptyCatchRule.Create();
+        RegisterCustomRule(emptyCatchRule);
     }
 }
