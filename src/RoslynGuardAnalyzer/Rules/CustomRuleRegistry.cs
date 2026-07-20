@@ -2,7 +2,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Concurrent;
@@ -55,5 +55,8 @@ public sealed class CustomRuleRegistry : ICustomRuleRegistry
 
         var emptyCatchRule = EmptyCatchRule.Create();
         RegisterCustomRule(emptyCatchRule);
+
+        var emptyCatchBlockRule = EmptyCatchBlockRule.Create();
+        RegisterCustomRule(emptyCatchBlockRule);
     }
 }
