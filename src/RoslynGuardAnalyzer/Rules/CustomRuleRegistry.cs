@@ -50,6 +50,9 @@ public sealed class CustomRuleRegistry : ICustomRuleRegistry
         var asyncVoidRule = AsyncVoidRule.Create();
         RegisterCustomRule(asyncVoidRule);
 
+        var asyncVoidWarningRule = AsyncVoidWarningRule.Create();
+        RegisterCustomRule(asyncVoidWarningRule);
+
         var emptyCatchRule = EmptyCatchRule.Create();
         RegisterCustomRule(emptyCatchRule);
     }
