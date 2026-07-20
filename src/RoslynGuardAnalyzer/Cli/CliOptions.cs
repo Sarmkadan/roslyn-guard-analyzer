@@ -67,7 +67,7 @@ public sealed class CliOptions
             errors.Add("Log level must be between 0 (silent) and 4 (debug)");
 
         // Validate output format
-        var validFormats = new[] { "text", "json", "csv", "html", "xml" };
+        var validFormats = new[] { "text", "json", "csv", "html", "xml", "sarif" };
         if (!validFormats.Contains(OutputFormat.ToLowerInvariant()))
             errors.Add($"Invalid output format. Supported: {string.Join(", ", validFormats)}");
 

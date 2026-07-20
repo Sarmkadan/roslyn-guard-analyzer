@@ -27,6 +27,7 @@ public sealed class FormatterRegistry
         registry.Register(new JsonFormatter());
         registry.Register(new CsvFormatter());
         registry.Register(new HtmlFormatter());
+        registry.Register(new SarifFormatter());
         return registry;
     }
 
