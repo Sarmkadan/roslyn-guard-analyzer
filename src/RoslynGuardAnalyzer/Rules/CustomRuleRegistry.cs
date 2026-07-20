@@ -18,6 +18,14 @@ public sealed class CustomRuleRegistry : ICustomRuleRegistry
 {
     private readonly ConcurrentDictionary<string, CustomAnalysisRule> _rules = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CustomRuleRegistry"/> class.
+    /// </summary>
+    public CustomRuleRegistry()
+    {
+        InitializeBuiltInRules();
+    }
+
     /// <inheritdoc/>
     public void RegisterCustomRule(CustomAnalysisRule rule)
     {
@@ -32,5 +40,14 @@ public sealed class CustomRuleRegistry : ICustomRuleRegistry
     public IReadOnlyList<CustomAnalysisRule> GetCustomRules()
     {
         return _rules.Values.OrderBy(rule => rule.Id).ToList().AsReadOnly();
+    }
+
+    /// <summary>
+    /// Initializes the registry with built-in custom rules.
+    /// </summary>
+    private void InitializeBuiltInRules()
+    {
+        var asyncVoidRule = AsyncVoidRule.Create();
+        RegisterCustomRule(asyncVoidRule);
     }
 }
