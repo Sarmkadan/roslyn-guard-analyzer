@@ -274,6 +274,45 @@ public sealed class AnalysisService : IAnalysisService
 
                         elements.Add(methodElement);
                     }
+
+        // Detect catch blocks
+        if (line.Contains("catch") && line.Contains("("))
+        {
+            // Extract catch block identifier (exception variable name)
+            var catchKeywordIndex = line.IndexOf("catch", StringComparison.OrdinalIgnoreCase);
+            var openParenIndex = line.IndexOf('(', catchKeywordIndex);
+            var closeParenIndex = line.IndexOf(')', openParenIndex);
+
+            if (openParenIndex > 0 && closeParenIndex > openParenIndex)
+            {
+                var exceptionTypePart = line.Substring(openParenIndex + 1, closeParenIndex - openParenIndex - 1).Trim();
+                var exceptionVarName = string.Empty;
+
+                // Extract exception variable name if present (e.g., "catch (Exception ex)")
+                if (!string.IsNullOrEmpty(exceptionTypePart))
+                {
+                    var spaceIndex = exceptionTypePart.LastIndexOf(' ');
+                    if (spaceIndex > 0 && spaceIndex < exceptionTypePart.Length - 1)
+                    {
+                        exceptionVarName = exceptionTypePart.Substring(spaceIndex + 1).Trim();
+                    }
+                }
+
+                var catchBlockName = string.IsNullOrEmpty(exceptionVarName)
+                    ? "catch"
+                    : $"catch ({exceptionVarName})" ;
+
+                var catchElement = new CodeElement(catchBlockName, CodeElementType.CatchBlock, filePath)
+                {
+                    Namespace = currentNamespace,
+                    ParentName = currentClass,
+                    StartLineNumber = i + 1,
+                    IsPublic = true
+                };
+
+                elements.Add(catchElement);
+            }
+        }
                 }
             }
         }
