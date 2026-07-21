@@ -140,7 +140,7 @@ public sealed class CliOptions
         $"RuleFilterCount={RuleFilter.Count}, " +
         $"BaselineFile={BaselineFile}, " +
         $"CreateBaseline={CreateBaseline}, " +
-        $"FailOnSeverity={FailOnSeverity?.ToString() ?? \"<none>\"} " +
+        $"FailOnSeverity={FailOnSeverity?.ToString() ?? "<none>"} " +
         $"}};";
     }
 }
