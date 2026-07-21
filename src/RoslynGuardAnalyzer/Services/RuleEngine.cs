@@ -2,9 +2,10 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -42,8 +43,8 @@ public sealed class RuleEngine : IRuleEngine
         if (!rule.IsEnabled || elements is null || !elements.Any())
             return Task.FromResult(new List<RuleViolation>());
 
-        var activeElements = elements.Where(e => !e.Attributes.Any(a => 
-            a.Contains("SuppressRoslynGuard", StringComparison.OrdinalIgnoreCase) && 
+        var activeElements = elements.Where(e => !e.Attributes.Any(a =>
+            a.Contains("SuppressRoslynGuard", StringComparison.OrdinalIgnoreCase) &&
             a.Contains(rule.Id, StringComparison.OrdinalIgnoreCase)) &&
             !IsGuardSkipped(e, rule.Id)).ToList();
 
@@ -63,23 +64,56 @@ public sealed class RuleEngine : IRuleEngine
     }
 
     /// <summary>
-    /// Executes all enabled rules against code elements.
+    /// Executes all enabled rules against code elements using parallel processing.
     /// </summary>
     public async Task<List<RuleViolation>> ExecuteAllRulesAsync(List<CodeElement> elements)
     {
         if (elements is null || !elements.Any())
             return new List<RuleViolation>();
 
-        var violations = new List<RuleViolation>();
         var enabledRules = _ruleRegistry.GetAllRules().Where(r => r.IsEnabled).ToList();
 
-        foreach (var rule in enabledRules)
+        if (!enabledRules.Any())
+            return new List<RuleViolation>();
+
+        // Use thread-safe collection for violations
+        var violations = new ConcurrentBag<RuleViolation>();
+        var exceptions = new ConcurrentBag<Exception>();
+
+        // Process rules in parallel with bounded degree of parallelism
+        var parallelOptions = new ParallelOptions
         {
-            var ruleViolations = await ExecuteRuleAsync(rule, elements);
-            violations.AddRange(ruleViolations);
+            MaxDegreeOfParallelism = ParallelAnalysisConfig.MaxRuleParallelism
+        };
+
+        await Parallel.ForEachAsync(enabledRules, parallelOptions, async (rule, cancellationToken) =>
+        {
+            try
+            {
+                var ruleViolations = await ExecuteRuleAsync(rule, elements);
+                foreach (var violation in ruleViolations)
+                {
+                    violations.Add(violation);
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                exceptions.Add(new RuleExecutionException($"Failed to execute rule {rule.Id}", ex));
+            }
+        });
+
+        // Log any rule execution exceptions
+        foreach (var ex in exceptions)
+        {
+            Console.WriteLine($"Warning: {ex.Message}");
         }
 
-        return violations;
+        // Return violations in deterministic order (sorted by file path and line number)
+        return violations
+            .OrderBy(v => v.FilePath)
+            .ThenBy(v => v.LineNumber)
+            .ThenBy(v => v.RuleId)
+            .ToList();
     }
 
     /// <summary>
@@ -149,8 +183,8 @@ public sealed class RuleEngine : IRuleEngine
     /// for the given rule. Looks at:
     /// 1. <see cref="CodeElement.SuppressDirectives"/> set programmatically by parsers.
     /// 2. The line immediately preceding the element's declaration in its source file,
-    ///    which may contain <c>// GUARD_SKIP</c> (all rules) or
-    ///    <c>// GUARD_SKIP:RULE_ID</c> (specific rule).
+    /// which may contain <c>// GUARD_SKIP</c> (all rules) or
+    /// <c>// GUARD_SKIP:RULE_ID</c> (specific rule).
     /// </summary>
     private bool IsGuardSkipped(CodeElement element, string ruleId)
     {
@@ -219,6 +253,7 @@ public sealed class RuleEngine : IRuleEngine
         }
         return rule.DefaultSeverity;
     }
+
     private List<RuleViolation> CheckNamingConventions(AnalysisRule rule, List<CodeElement> elements)
     {
         var violations = new List<RuleViolation>();
@@ -226,7 +261,7 @@ public sealed class RuleEngine : IRuleEngine
         foreach (var element in elements)
         {
             var issues = ValidateNaming(element);
-            
+
             var sev = GetSeverity(rule, element.FilePath);
             if (!sev.HasValue) continue;
 
@@ -307,8 +342,7 @@ public sealed class RuleEngine : IRuleEngine
     };
 
     /// <summary>
-    /// Checks for null safety violations.
-    /// Flags public non-nullable reference-type properties and fields that are not
+    /// Checks for null safety violations. Flags public non-nullable reference-type properties and fields that are not
     /// value types, since they cannot be guaranteed to hold a non-null value without
     /// explicit initialization or nullable annotation.
     /// </summary>
@@ -394,4 +428,12 @@ public sealed class RuleEngine : IRuleEngine
 
         return -1;
     }
+}
+
+/// <summary>
+/// Custom exception for rule execution failures
+/// </summary>
+public class RuleExecutionException : Exception
+{
+    public RuleExecutionException(string message, Exception innerException) : base(message, innerException) { }
 }
