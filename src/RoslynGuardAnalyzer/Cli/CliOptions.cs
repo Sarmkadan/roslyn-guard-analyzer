@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using RoslynGuardAnalyzer.Core;
 
 namespace RoslynGuardAnalyzer.Cli;
 
@@ -34,6 +35,12 @@ public sealed class CliOptions
     public int LogLevel { get; set; } = 2;
     public string? BaselineFile { get; set; }
     public bool CreateBaseline { get; set; }
+
+    /// <summary>
+    /// New option: specifies the minimum severity that will cause a non‑zero exit code.
+    /// If null, the original behavior (any violation) is used.
+    /// </summary>
+    public SeverityLevel? FailOnSeverity { get; set; }
 
     /// <summary>
     /// Validates that the options are mutually consistent and required fields are set.
@@ -82,6 +89,13 @@ public sealed class CliOptions
                 errors.Add("Baseline file name contains invalid characters");
         }
 
+        // Validate --fail-on severity if provided
+        if (FailOnSeverity.HasValue)
+        {
+            // The enum parsing is already done by the CLI binder; just ensure the value is defined.
+            // No additional checks needed because any defined enum value is acceptable.
+        }
+
         return errors.Count == 0;
     }
 
@@ -98,6 +112,20 @@ public sealed class CliOptions
     public string? GetTargetPath() => !string.IsNullOrWhiteSpace(ProjectPath) ? ProjectPath : FilePath;
 
     /// <summary>
+    /// Returns true if a violation with the given severity should cause a failure
+    /// based on the current --fail-on setting.
+    /// </summary>
+    public bool ShouldFailForSeverity(SeverityLevel violationSeverity)
+    {
+        // If no explicit severity threshold is set, fall back to the original behavior.
+        if (!FailOnSeverity.HasValue)
+            return FailOnViolations;
+
+        // Fail only when the violation severity is greater than or equal to the threshold.
+        return violationSeverity >= FailOnSeverity.Value;
+    }
+
+    /// <summary>
     /// Creates a summary string of the options for logging.
     /// </summary>
     public override string ToString()
@@ -111,7 +139,8 @@ public sealed class CliOptions
         $"AnalysisTimeoutSeconds={AnalysisTimeoutSeconds}, " +
         $"RuleFilterCount={RuleFilter.Count}, " +
         $"BaselineFile={BaselineFile}, " +
-        $"CreateBaseline={CreateBaseline} " +
+        $"CreateBaseline={CreateBaseline}, " +
+        $"FailOnSeverity={FailOnSeverity?.ToString() ?? \"<none>\"} " +
         $"}};";
     }
 }
