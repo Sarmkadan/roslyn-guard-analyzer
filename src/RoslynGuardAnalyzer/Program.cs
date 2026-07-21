@@ -17,6 +17,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 using RoslynGuardAnalyzer.Configuration;
+using RoslynGuardAnalyzer.Domain.Models;
 using RoslynGuardAnalyzer.Infrastructure;
 using RoslynGuardAnalyzer.Services;
 
@@ -67,6 +68,7 @@ internal sealed class Program
             }
 
             var analysisService = serviceProvider.GetRequiredService<IAnalysisService>();
+    var baselineService = serviceProvider.GetRequiredService<IBaselineService>();
             var reportingService = serviceProvider.GetRequiredService<IReportingService>();
 
             Console.WriteLine("=== Roslyn Guard Analyzer ===");
@@ -123,6 +125,29 @@ internal sealed class Program
             Console.WriteLine();
 
             var result = await analysisService.AnalyzeProjectAsync(options.ProjectPath);
+    Baseline? baseline = null;
+    if (!string.IsNullOrWhiteSpace(options.BaselineFile))
+    {
+        baseline = await baselineService.LoadBaselineAsync(options.BaselineFile);
+        if (baseline != null)
+        {
+            Console.WriteLine($"Loaded baseline with {baseline.ViolationCount} violations from {options.BaselineFile}");
+        }
+    }
+    if (baseline != null)
+    {
+        result.Violations = baselineService.FilterNewViolations(result.Violations, baseline);
+        Console.WriteLine($"Filtered to {result.ViolationCount} new violations (removed violations present in baseline)");
+    }
+
+// Handle baseline creation
+if (options.CreateBaseline && !string.IsNullOrWhiteSpace(options.OutputFile))
+{
+    var newBaseline = baselineService.CreateBaseline(options.ProjectPath ?? "unknown", result.Violations);
+    await baselineService.SaveBaselineAsync(newBaseline, options.OutputFile);
+    Console.WriteLine($"Created baseline with {newBaseline.ViolationCount} violations at {options.OutputFile}");
+    return 0;
+}
             var report = reportingService.GenerateReport(result);
 
             if (!string.IsNullOrWhiteSpace(options.OutputFile))
@@ -207,6 +232,12 @@ internal sealed class Program
                 case "--quiet" or "-q":
                     options.LogLevel = 0;
                     break;
+        case "--baseline":
+            if (i + 1 < args.Length) options.BaselineFile = args[++i];
+            break;
+        case "--create-baseline":
+            options.CreateBaseline = true;
+            break;
                 case var arg when arg.StartsWith("--max-threads="):
                     if (int.TryParse(arg["--max-threads=".Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
                     {
@@ -255,6 +286,8 @@ internal sealed class Program
         Console.WriteLine("  --verbose, -v        Verbose output");
         Console.WriteLine("  --quiet, -q          Suppress console output");
         Console.WriteLine("  --max-threads=N       Maximum parallel threads (default: CPU count)");
+        Console.WriteLine(" --baseline <file> Load baseline violations from file for comparison");
+        Console.WriteLine(" --create-baseline Create baseline file with current violations");
         Console.WriteLine("  --timeout=N           Analysis timeout in seconds (default: 600)");
         Console.WriteLine("  --help, -h           Show this help message");
         Console.WriteLine("  --version            Show version information");

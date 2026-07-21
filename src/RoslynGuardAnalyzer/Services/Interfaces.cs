@@ -1,4 +1,5 @@
 #nullable enable
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 using System;
 
 using RoslynGuardAnalyzer.Domain.Models;
+
 namespace RoslynGuardAnalyzer.Services;
 
 /// <summary>
@@ -116,4 +118,38 @@ public interface IValidationService
     /// Validates a project path.
     /// </summary>
     (bool IsValid, string? Error) ValidateProjectPath(string projectPath);
+}
+
+/// <summary>
+/// Service interface for managing baseline files.
+/// </summary>
+public interface IBaselineService
+{
+    /// <summary>
+    /// Loads a baseline from file.
+    /// </summary>
+    Task<Baseline?> LoadBaselineAsync(string filePath);
+
+    /// <summary>
+    /// Saves a baseline to file.
+    /// </summary>
+    Task SaveBaselineAsync(Baseline baseline, string filePath);
+
+    /// <summary>
+    /// Filters violations to only return new violations not in baseline.
+    /// </summary>
+    List<RuleViolation> FilterNewViolations(
+        List<RuleViolation> violations,
+        Baseline? baseline,
+        TimeSpan baselineExpiration = default);
+
+    /// <summary>
+    /// Creates a baseline from analysis results.
+    /// </summary>
+    Baseline CreateBaseline(AnalysisResult result);
+
+    /// <summary>
+    /// Creates a baseline from violations.
+    /// </summary>
+    Baseline CreateBaseline(string projectName, List<RuleViolation> violations);
 }

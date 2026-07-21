@@ -3,7 +3,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Generic;
@@ -145,6 +145,20 @@ public sealed class RoslynGuardAnalyzerOptions
     public string? ConfigFile { get; set; }
 
     /// <summary>
+    /// Gets or sets the baseline file path for comparing violations.
+    /// Default: null (no baseline file)
+    /// </summary>
+    [Display(Name = "Baseline File")]
+    public string? BaselineFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to create a baseline file.
+    /// Default: false
+    /// </summary>
+    [Display(Name = "Create Baseline")]
+    public bool CreateBaseline { get; set; }
+
+    /// <summary>
     /// Validates the configuration using DataAnnotations validation.
     /// </summary>
     /// <returns>List of validation errors, empty if valid</returns>
@@ -196,8 +210,10 @@ public sealed class RoslynGuardAnalyzerOptions
                $" GenerateReport={GenerateReport}, " +
                $" MaxParallelThreads={MaxParallelThreads}, " +
                $" RuleFilterCount={RuleFilter.Count}, " +
-               $" ExcludePatternsCount={ExcludePatterns.Count}" +
-               $"}}";
+               $" ExcludePatternsCount={ExcludePatterns.Count}, " +
+               $" BaselineFile={BaselineFile ?? "null"}, " +
+               $" CreateBaseline={CreateBaseline}" +
+               $"}};";
     }
 
     /// <summary>
@@ -270,6 +286,16 @@ public sealed class RoslynGuardAnalyzerOptions
         if (cliOptions.ConfigFile is not null)
         {
             ConfigFile = cliOptions.ConfigFile;
+        }
+
+        if (!string.IsNullOrWhiteSpace(cliOptions.BaselineFile))
+        {
+            BaselineFile = cliOptions.BaselineFile;
+        }
+
+        if (cliOptions.CreateBaseline)
+        {
+            CreateBaseline = cliOptions.CreateBaseline;
         }
     }
 }
