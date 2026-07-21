@@ -2,14 +2,16 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System;
 using System.IO;
+using System.Threading;
 
 using Microsoft.Extensions.Logging;
 
@@ -18,6 +20,22 @@ using RoslynGuardAnalyzer.Domain.Models;
 using RoslynGuardAnalyzer.Exceptions;
 
 namespace RoslynGuardAnalyzer.Services;
+
+/// <summary>
+/// Configuration for parallel analysis
+/// </summary>
+public static class ParallelAnalysisConfig
+{
+    /// <summary>
+    /// Maximum degree of parallelism for file processing
+    /// </summary>
+    public static int MaxDegreeOfParallelism { get; set; } = Math.Min(Environment.ProcessorCount, 8);
+
+    /// <summary>
+    /// Maximum degree of parallelism for rule execution
+    /// </summary>
+    public static int MaxRuleParallelism { get; set; } = Math.Min(Environment.ProcessorCount, 4);
+}
 
 /// <summary>
 /// Orchestrates the complete analysis workflow for projects and files.
@@ -150,23 +168,44 @@ public sealed class AnalysisService : IAnalysisService
     }
 
     /// <summary>
-    /// Extracts code elements from all files in a project.
+    /// Extracts code elements from all files in a project using parallel processing.
     /// </summary>
     private async Task<List<CodeElement>> ExtractCodeElementsAsync(AnalysisProject project)
     {
-        var elements = new List<CodeElement>();
+        var allFiles = project.GetCSharpFiles().ToList();
+        var elements = new ConcurrentBag<CodeElement>();
+        var parseExceptions = new ConcurrentBag<Exception>();
 
-        foreach (var file in project.GetCSharpFiles())
+        // Process files in parallel with bounded degree of parallelism
+        var parallelOptions = new ParallelOptions
+        {
+            MaxDegreeOfParallelism = ParallelAnalysisConfig.MaxDegreeOfParallelism
+        };
+
+        await Parallel.ForEachAsync(allFiles, parallelOptions, async (file, cancellationToken) =>
         {
             try
             {
                 var fileElements = await ExtractCodeElementsFromFileAsync(file);
-                elements.AddRange(fileElements);
+                foreach (var element in fileElements)
+                {
+                    elements.Add(element);
+                }
             }
             catch (ParseException ex)
             {
-                Console.WriteLine($"Warning: Could not parse {file}: {ex.Message}");
+                parseExceptions.Add(ex);
             }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                parseExceptions.Add(new ParseException(file, $"Error parsing file: {ex.Message}", ex));
+            }
+        });
+
+        // Log parse exceptions
+        foreach (var ex in parseExceptions)
+        {
+            Console.WriteLine($"Warning: Could not parse {ex.Message}");
         }
 
         // Merge partial classes across multiple files
@@ -275,44 +314,44 @@ public sealed class AnalysisService : IAnalysisService
                         elements.Add(methodElement);
                     }
 
-        // Detect catch blocks
-        if (line.Contains("catch") && line.Contains("("))
-        {
-            // Extract catch block identifier (exception variable name)
-            var catchKeywordIndex = line.IndexOf("catch", StringComparison.OrdinalIgnoreCase);
-            var openParenIndex = line.IndexOf('(', catchKeywordIndex);
-            var closeParenIndex = line.IndexOf(')', openParenIndex);
-
-            if (openParenIndex > 0 && closeParenIndex > openParenIndex)
-            {
-                var exceptionTypePart = line.Substring(openParenIndex + 1, closeParenIndex - openParenIndex - 1).Trim();
-                var exceptionVarName = string.Empty;
-
-                // Extract exception variable name if present (e.g., "catch (Exception ex)")
-                if (!string.IsNullOrEmpty(exceptionTypePart))
-                {
-                    var spaceIndex = exceptionTypePart.LastIndexOf(' ');
-                    if (spaceIndex > 0 && spaceIndex < exceptionTypePart.Length - 1)
+                    // Detect catch blocks
+                    if (line.Contains("catch") && line.Contains("("))
                     {
-                        exceptionVarName = exceptionTypePart.Substring(spaceIndex + 1).Trim();
+                        // Extract catch block identifier (exception variable name)
+                        var catchKeywordIndex = line.IndexOf("catch", StringComparison.OrdinalIgnoreCase);
+                        var openParenIndex = line.IndexOf('(', catchKeywordIndex);
+                        var closeParenIndex = line.IndexOf(')', openParenIndex);
+
+                        if (openParenIndex > 0 && closeParenIndex > openParenIndex)
+                        {
+                            var exceptionTypePart = line.Substring(openParenIndex + 1, closeParenIndex - openParenIndex - 1).Trim();
+                            var exceptionVarName = string.Empty;
+
+                            // Extract exception variable name if present (e.g., "catch (Exception ex)")
+                            if (!string.IsNullOrEmpty(exceptionTypePart))
+                            {
+                                var spaceIndex = exceptionTypePart.LastIndexOf(' ');
+                                if (spaceIndex > 0 && spaceIndex < exceptionTypePart.Length - 1)
+                                {
+                                    exceptionVarName = exceptionTypePart.Substring(spaceIndex + 1).Trim();
+                                }
+                            }
+
+                            var catchBlockName = string.IsNullOrEmpty(exceptionVarName)
+                                ? "catch"
+                                : $"catch ({exceptionVarName})" ;
+
+                            var catchElement = new CodeElement(catchBlockName, CodeElementType.CatchBlock, filePath)
+                            {
+                                Namespace = currentNamespace,
+                                ParentName = currentClass,
+                                StartLineNumber = i + 1,
+                                IsPublic = true
+                            };
+
+                            elements.Add(catchElement);
+                        }
                     }
-                }
-
-                var catchBlockName = string.IsNullOrEmpty(exceptionVarName)
-                    ? "catch"
-                    : $"catch ({exceptionVarName})" ;
-
-                var catchElement = new CodeElement(catchBlockName, CodeElementType.CatchBlock, filePath)
-                {
-                    Namespace = currentNamespace,
-                    ParentName = currentClass,
-                    StartLineNumber = i + 1,
-                    IsPublic = true
-                };
-
-                elements.Add(catchElement);
-            }
-        }
                 }
             }
         }
