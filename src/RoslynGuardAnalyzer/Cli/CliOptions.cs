@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace RoslynGuardAnalyzer.Cli;
 
@@ -31,6 +32,8 @@ public sealed class CliOptions
     public string ReportType { get; set; } = "summary";
     public bool SkipCache { get; set; }
     public int LogLevel { get; set; } = 2;
+    public string? BaselineFile { get; set; }
+    public bool CreateBaseline { get; set; }
 
     /// <summary>
     /// Validates that the options are mutually consistent and required fields are set.
@@ -71,6 +74,14 @@ public sealed class CliOptions
         if (!validFormats.Contains(OutputFormat.ToLowerInvariant()))
             errors.Add($"Invalid output format. Supported: {string.Join(", ", validFormats)}");
 
+        // Validate baseline file if specified
+        if (!string.IsNullOrWhiteSpace(BaselineFile))
+        {
+            var fileName = Path.GetFileName(BaselineFile);
+            if (string.IsNullOrWhiteSpace(fileName) || fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+                errors.Add("Baseline file name contains invalid characters");
+        }
+
         return errors.Count == 0;
     }
 
@@ -78,8 +89,8 @@ public sealed class CliOptions
     /// Determines if the options are for analysis mode (requires project or file).
     /// </summary>
     public bool IsAnalysisMode => !ShowHelp && !ShowVersion &&
-                                    (!string.IsNullOrWhiteSpace(ProjectPath) ||
-                                     !string.IsNullOrWhiteSpace(FilePath));
+        (!string.IsNullOrWhiteSpace(ProjectPath) ||
+         !string.IsNullOrWhiteSpace(FilePath));
 
     /// <summary>
     /// Gets the target path for analysis (project or file).
@@ -92,13 +103,15 @@ public sealed class CliOptions
     public override string ToString()
     {
         return $"CliOptions {{ " +
-            $"ProjectPath={ProjectPath}, " +
-            $"FilePath={FilePath}, " +
-            $"OutputFormat={OutputFormat}, " +
-            $"Verbose={Verbose}, " +
-            $"MaxParallelThreads={MaxParallelThreads}, " +
-            $"AnalysisTimeoutSeconds={AnalysisTimeoutSeconds}, " +
-            $"RuleFilterCount={RuleFilter.Count} " +
-            $"}}";
+        $"ProjectPath={ProjectPath}, " +
+        $"FilePath={FilePath}, " +
+        $"OutputFormat={OutputFormat}, " +
+        $"Verbose={Verbose}, " +
+        $"MaxParallelThreads={MaxParallelThreads}, " +
+        $"AnalysisTimeoutSeconds={AnalysisTimeoutSeconds}, " +
+        $"RuleFilterCount={RuleFilter.Count}, " +
+        $"BaselineFile={BaselineFile}, " +
+        $"CreateBaseline={CreateBaseline} " +
+        $"}};";
     }
 }

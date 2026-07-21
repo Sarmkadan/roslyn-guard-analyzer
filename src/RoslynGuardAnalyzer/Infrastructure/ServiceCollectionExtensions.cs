@@ -83,6 +83,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IReportingService, ReportingService>();
         services.AddSingleton<IValidationService, ValidationService>();
         services.AddSingleton<IAnalysisService, AnalysisService>();
+    services.AddSingleton<IBaselineService, BaselineService>();
     }
 
     /// <summary>
