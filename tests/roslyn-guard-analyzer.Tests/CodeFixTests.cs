@@ -3,6 +3,7 @@
 
 using System;
 using RoslynGuardAnalyzer.CodeFixes;
+using RoslynGuardAnalyzer.Core;
 using Xunit;
 
 namespace RoslynGuardAnalyzer.Tests;
