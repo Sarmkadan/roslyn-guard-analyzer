@@ -5,6 +5,7 @@
 // =============================================================================
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
@@ -18,7 +19,7 @@ namespace RoslynGuardAnalyzer.Integration;
 /// </summary>
 public sealed class HttpClientFactory : IDisposable
 {
-    private readonly Dictionary<string, HttpClient> _clientCache = new();
+    private readonly ConcurrentDictionary<string, SocketsHttpHandler> _handlerCache = new();
     private readonly HttpClientFactoryOptions _options;
     private readonly Random _random = new();
 
@@ -52,24 +53,46 @@ public sealed class HttpClientFactory : IDisposable
 
         var key = clientName ?? baseUrl;
 
-        lock (_clientCache)
+        var handler = _handlerCache.GetOrAdd(key, _ => CreateHandler(baseUrl));
+
+        var client = new HttpClient(handler, disposeHandler: false)
         {
-            if (_clientCache.TryGetValue(key, out var existingClient))
-                return existingClient;
+            BaseAddress = new Uri(baseUrl),
+            Timeout = _options.DefaultTimeout
+        };
 
-            var client = new HttpClient
-            {
-                BaseAddress = new Uri(baseUrl),
-                Timeout = _options.DefaultTimeout
-            };
+        // Set default headers
+        client.DefaultRequestHeaders.Add("User-Agent", "RoslynGuardAnalyzer/1.0");
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
 
-            // Set default headers
-            client.DefaultRequestHeaders.Add("User-Agent", "RoslynGuardAnalyzer/1.0");
-            client.DefaultRequestHeaders.Add("Accept", "application/json");
+        return client;
+    }
 
-            _clientCache[key] = client;
-            return client;
+    /// <summary>
+    /// Creates a <see cref="SocketsHttpHandler"/> configured for connection pooling and DNS refresh.
+    /// </summary>
+    /// <param name="baseUrl">The base URL for the handler.</param>
+    /// <returns>A configured <see cref="SocketsHttpHandler"/> instance.</returns>
+    private SocketsHttpHandler CreateHandler(string baseUrl)
+    {
+        var handler = new SocketsHttpHandler
+        {
+            PooledConnectionLifetime = _options.PooledConnectionLifetime,
+            PooledConnectionIdleTimeout = _options.PooledConnectionLifetime,
+            MaxConnectionsPerServer = _options.MaxConnectionsPerServer,
+            EnableMultipleHttp2Connections = true,
+            UseProxy = true,
+            UseCookies = false,
+            ActivityHeadersPropagator = null
+        };
+
+        if (_options.EnableDnsRefresh)
+        {
+            // Enable DNS refresh by setting the connection lifetime
+            // The handler will automatically refresh DNS when pooled connections expire
         }
+
+        return handler;
     }
 
     /// <summary>
@@ -182,21 +205,20 @@ public sealed class HttpClientFactory : IDisposable
     }
 
     /// <summary>
-    /// Clears the client cache and disposes all cached <see cref="HttpClient"/> instances.
+    /// Clears the client cache and disposes all cached <see cref="SocketsHttpHandler"/> instances.
     /// </summary>
     public void ClearCache()
     {
-        lock (_clientCache)
+        foreach (var handler in _handlerCache.Values)
         {
-            foreach (var client in _clientCache.Values)
-                client?.Dispose();
-
-            _clientCache.Clear();
+            handler.Dispose();
         }
+
+        _handlerCache.Clear();
     }
 
     /// <summary>
-    /// Disposes the factory, clearing the client cache.
+    /// Disposes the factory, clearing the handler cache.
     /// </summary>
     public void Dispose() => ClearCache();
 
