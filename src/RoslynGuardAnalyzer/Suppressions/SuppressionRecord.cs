@@ -13,7 +13,7 @@ namespace RoslynGuardAnalyzer.Suppressions;
 /// <summary>
 /// Represents a persisted rule suppression entry.
 /// </summary>
-public sealed class SuppressionRecord
+public sealed class SuppressionRecord : IEquatable<SuppressionRecord>
 {
     /// <summary>
     /// Gets or sets the unique suppression identifier.
@@ -88,4 +88,65 @@ public sealed class SuppressionRecord
         var elementName = violation.GetMetadata("ElementName") ?? violation.GetMetadata("TargetElement");
         return string.Equals(TargetElement, elementName, StringComparison.OrdinalIgnoreCase);
     }
+
+    /// <summary>
+    /// Determines whether the specified <see cref="SuppressionRecord"/> is equal to this instance.
+    /// Two suppression records are considered equal if they have the same RuleId and TargetFile (after normalization).
+    /// </summary>
+    /// <param name="other">The suppression record to compare with this instance.</param>
+    /// <returns>true if the specified object is equal to this instance; otherwise, false.</returns>
+    public bool Equals(SuppressionRecord? other)
+    {
+        if (other is null)
+            return false;
+
+        // Two suppression records are considered equal if they suppress the same rule in the same file
+        // This matches the logic used in Matches() method for consistency
+        return string.Equals(RuleId, other.RuleId, StringComparison.OrdinalIgnoreCase) &&
+               PathNormalizer.AreEquivalent(TargetFile ?? string.Empty, other.TargetFile ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Determines whether the specified object is equal to this instance.
+    /// </summary>
+    /// <param name="obj">The object to compare with this instance.</param>
+    /// <returns>true if the specified object is equal to this instance; otherwise, false.</returns>
+    public override bool Equals(object? obj) => Equals(obj as SuppressionRecord);
+
+    /// <summary>
+    /// Returns a hash code for this instance.
+    /// </summary>
+    /// <returns>A hash code for this instance.</returns>
+    public override int GetHashCode()
+    {
+        // Use the same fields that are compared in Equals for consistency
+        // with hash-based collections
+        unchecked
+        {
+            var hashCode = StringComparer.OrdinalIgnoreCase.GetHashCode(RuleId);
+            hashCode = (hashCode * 397) ^ PathNormalizer.GetHashCode(TargetFile ?? string.Empty);
+            return hashCode;
+        }
+    }
+
+    /// <summary>
+    /// Determines whether two suppression records are equal.
+    /// </summary>
+    /// <param name="left">The first suppression record to compare.</param>
+    /// <param name="right">The second suppression record to compare.</param>
+    /// <returns>true if the two suppression records are equal; otherwise, false.</returns>
+    public static bool operator ==(SuppressionRecord? left, SuppressionRecord? right)
+    {
+        if (left is null)
+            return right is null;
+        return left.Equals(right);
+    }
+
+    /// <summary>
+    /// Determines whether two suppression records are not equal.
+    /// </summary>
+    /// <param name="left">The first suppression record to compare.</param>
+    /// <param name="right">The second suppression record to compare.</param>
+    /// <returns>true if the two suppression records are not equal; otherwise, false.</returns>
+    public static bool operator !=(SuppressionRecord? left, SuppressionRecord? right) => !(left == right);
 }
