@@ -251,13 +251,31 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
 
     public bool Equals(BaselineViolation? other)
     {
-        if (other is null) return false;
-        return Id == other.Id;
+        if (other is null)
+            return false;
+
+        // Two BaselineViolations are considered equal if they have the same
+        // RuleId, FilePath (normalized), and ContentHash
+        // This matches the logic used in the Matches() method for consistency
+        return string.Equals(RuleId, other.RuleId, StringComparison.Ordinal) &&
+               PathNormalizer.AreEquivalent(FilePath, other.FilePath) &&
+               string.Equals(ContentHash, other.ContentHash, StringComparison.Ordinal);
     }
 
     public override bool Equals(object? obj) => Equals(obj as BaselineViolation);
 
-    public override int GetHashCode() => Id.GetHashCode();
+    public override int GetHashCode()
+    {
+        // Use the same fields that are compared in Equals
+        // for consistency between equality and hash-based collections
+        unchecked
+        {
+            var hashCode = StringComparer.Ordinal.GetHashCode(RuleId);
+            hashCode = (hashCode * 397) ^ PathNormalizer.GetHashCode(FilePath);
+            hashCode = (hashCode * 397) ^ StringComparer.Ordinal.GetHashCode(ContentHash);
+            return hashCode;
+        }
+    }
 
     public override string ToString() =>
         $"BaselineViolation {{ RuleId={RuleId}, File={PathNormalizer.NormalizeForDisplay(FilePath)}, Line={LineNumber}, Hash={ContentHash[..8]}... }}";
