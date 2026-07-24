@@ -299,6 +299,9 @@ public sealed class Baseline
     [JsonPropertyName("version")]
     public string Version { get; set; } = "1.0";
 
+[JsonPropertyName("schemaVersion")]
+public string SchemaVersion { get; set; } = "1.0";
+
     [JsonPropertyName("projectName")]
     public string ProjectName { get; set; } = string.Empty;
 
