@@ -111,17 +111,22 @@ public sealed class ViolationReport
     /// <summary>
     /// Updates report statistics based on contained violations.
     /// </summary>
-    private void UpdateStatistics()
-    {
-        var allViolations = ViolationGroups.SelectMany(g => g.Violations).ToList();
+        private void UpdateStatistics()
+        {
+            var allViolations = ViolationGroups.SelectMany(g => g.Violations).ToList();
 
-        Statistics.TotalViolations = allViolations.Count;
-        Statistics.CriticalCount = allViolations.Count(v => v.Severity == SeverityLevel.Critical);
-        Statistics.ErrorCount = allViolations.Count(v => v.Severity == SeverityLevel.Error);
-        Statistics.WarningCount = allViolations.Count(v => v.Severity == SeverityLevel.Warning);
-        Statistics.InfoCount = allViolations.Count(v => v.Severity == SeverityLevel.Info);
-        Statistics.AffectedFileCount = allViolations.Select(v => v.FilePath).Distinct().Count();
-    }
+            Statistics.TotalViolations = allViolations.Count;
+            Statistics.CriticalCount = allViolations.Count(v => v.Severity == SeverityLevel.Critical);
+            Statistics.ErrorCount = allViolations.Count(v => v.Severity == SeverityLevel.Error);
+            Statistics.WarningCount = allViolations.Count(v => v.Severity == SeverityLevel.Warning);
+            Statistics.InfoCount = allViolations.Count(v => v.Severity == SeverityLevel.Info);
+            Statistics.AffectedFileCount = allViolations.Select(v => v.FilePath).Where(fp => !string.IsNullOrEmpty(fp)).Distinct().Count();
+            Statistics.AffectedNamespaceCount = allViolations.Select(v => v.GetMetadata("Namespace")).Where(ns => !string.IsNullOrEmpty(ns)).Distinct().Count();
+            Statistics.RuleCount = allViolations.Select(v => v.RuleId).Where(rid => !string.IsNullOrEmpty(rid)).Distinct().Count();
+            Statistics.AverageViolationsPerFile = Statistics.AffectedFileCount > 0
+                ? (double)Statistics.TotalViolations / Statistics.AffectedFileCount
+                : 0;
+        }
 
     /// <summary>
     /// Generates a summary text for the report.
