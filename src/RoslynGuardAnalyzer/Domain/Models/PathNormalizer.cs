@@ -149,4 +149,19 @@ public static class PathNormalizer
     {
         return Equals(path1, path2, Mode.CaseInsensitive);
     }
+
+    /// <summary>
+    /// Gets a hash code for a file path using the same normalization as Equals.
+    /// </summary>
+    /// <param name="filePath">The file path to get hash code for</param>
+    /// <returns>Hash code for the normalized file path</returns>
+    /// <exception cref="ArgumentNullException">Thrown when filePath is null</exception>
+    public static int GetHashCode(string filePath)
+    {
+        ArgumentNullException.ThrowIfNull(filePath);
+
+        // Normalize the path using the same mode as Equals (CaseInsensitive)
+        var normalized = Normalize(filePath, Mode.CaseInsensitive);
+        return StringComparer.Ordinal.GetHashCode(normalized);
+    }
 }
