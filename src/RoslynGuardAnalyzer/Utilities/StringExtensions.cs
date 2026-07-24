@@ -92,11 +92,45 @@ public static class StringExtensions
             if (!needsConversion)
                 return CapitalizeFirstLetter(text);
 
-            // Count parts to determine if we need allocation
-            int partCount = 1;
+            // Normalize consecutive separators and trim leading/trailing separators
+            var normalized = new StringBuilder(text.Length);
+            bool prevIsSeparator = true; // Start as true to skip leading separators
+
             for (int i = 0; i < text.Length; i++)
             {
-                if (separators.Contains(text[i]))
+                char c = text[i];
+                if (separators.Contains(c))
+                {
+                    // Only add separator if previous char wasn't a separator
+                    if (!prevIsSeparator)
+                    {
+                        normalized.Append(' '); // Use space as normalized separator
+                        prevIsSeparator = true;
+                    }
+                }
+                else
+                {
+                    normalized.Append(c);
+                    prevIsSeparator = false;
+                }
+            }
+
+            // Remove trailing separator if any
+            if (prevIsSeparator && normalized.Length > 0)
+            {
+                normalized.Length--;
+            }
+
+            string normalizedText = normalized.ToString();
+
+            if (string.IsNullOrEmpty(normalizedText))
+                return string.Empty;
+
+            // Count parts to determine if we need allocation
+            int partCount = 1;
+            for (int i = 0; i < normalizedText.Length; i++)
+            {
+                if (normalizedText[i] == ' ')
                     partCount++;
             }
 
@@ -110,9 +144,9 @@ public static class StringExtensions
                 int partIndex = 0;
                 partStarts[partIndex++] = 0;
 
-                for (int i = 0; i < text.Length; i++)
+                for (int i = 0; i < normalizedText.Length; i++)
                 {
-                    if (separators.Contains(text[i]))
+                    if (normalizedText[i] == ' ')
                     {
                         partStarts[partIndex++] = i + 1;
                     }
@@ -123,7 +157,7 @@ public static class StringExtensions
                 for (int i = 0; i < partIndex; i++)
                 {
                     int start = partStarts[i];
-                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : text.Length;
+                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : normalizedText.Length;
                     int partLength = end - start;
 
                     if (partLength > 0)
@@ -137,7 +171,7 @@ public static class StringExtensions
                     return string.Empty;
 
                 // Use string.Create for zero-allocation result
-                return string.Create(resultLength, text, (span, state) =>
+                return string.Create(resultLength, normalizedText, (span, state) =>
                 {
                     int charIndex = 0;
                     for (int i = 0; i < partIndex; i++)
@@ -270,29 +304,79 @@ public static class StringExtensions
 
         static string ConvertToSnakeCase(string text)
         {
-            // Calculate required length first
-            int resultLength = text.Length;
-            for (int i = 1; i < text.Length; i++)
+            // Normalize consecutive separators and handle leading/trailing separators
+            var normalized = new StringBuilder(text.Length);
+            bool prevIsSeparator = true; // Start as true to skip leading separators
+
+            for (int i = 0; i < text.Length; i++)
             {
-                if (char.IsUpper(text[i]) && text[i - 1] != '_')
+                char c = text[i];
+                if (c == '_' || c == '-' || c == ' ')
+                {
+                    // Only add separator if previous char wasn't a separator
+                    if (!prevIsSeparator)
+                    {
+                        normalized.Append('_');
+                        prevIsSeparator = true;
+                    }
+                }
+                else
+                {
+                    normalized.Append(c);
+                    prevIsSeparator = false;
+                }
+            }
+
+            // Remove trailing separator if any
+            if (prevIsSeparator && normalized.Length > 0)
+            {
+                normalized.Length--;
+            }
+
+            string normalizedText = normalized.ToString();
+
+            if (string.IsNullOrEmpty(normalizedText))
+                return string.Empty;
+
+            // Calculate required length first - handle acronyms properly
+            int resultLength = normalizedText.Length;
+            for (int i = 1; i < normalizedText.Length; i++)
+            {
+                // Insert underscore before uppercase letter if previous char is lowercase or digit
+                // This handles both word boundaries and acronyms properly
+                char prevChar = normalizedText[i - 1];
+                char currChar = normalizedText[i];
+
+                if (char.IsUpper(currChar) &&
+                    (char.IsLower(prevChar) || char.IsDigit(prevChar)) &&
+                    prevChar != '_')
                     resultLength++;
             }
 
-            if (resultLength == text.Length)
-                return text.ToLowerInvariant();
+            if (resultLength == normalizedText.Length)
+                return normalizedText.ToLowerInvariant();
 
             // Use string.Create for zero-allocation result
-            return string.Create(resultLength, text, (span, state) =>
+            return string.Create(resultLength, normalizedText, (span, state) =>
             {
                 int charIndex = 0;
                 for (int i = 0; i < state.Length; i++)
                 {
                     char c = state[i];
+
+                    // Insert underscore before uppercase letter if previous char is lowercase or digit
                     if (char.IsUpper(c))
                     {
-                        // Insert underscore before uppercase letter (except first character)
-                        if (i > 0 && charIndex < span.Length)
-                            span[charIndex++] = '_';
+                        // Insert underscore before uppercase letter if previous char is lowercase or digit
+                        if (i > 0)
+                        {
+                            char prevChar = state[i - 1];
+                            if ((char.IsLower(prevChar) || char.IsDigit(prevChar)) && prevChar != '_')
+                            {
+                                if (charIndex < span.Length)
+                                    span[charIndex++] = '_';
+                            }
+                        }
 
                         if (charIndex < span.Length)
                             span[charIndex++] = char.ToLowerInvariant(c);
@@ -363,11 +447,45 @@ public static class StringExtensions
             if (!needsConversion)
                 return text.ToLowerInvariant();
 
-            // Count parts
-            int partCount = 1;
+            // Normalize consecutive separators and handle leading/trailing separators
+            var normalized = new StringBuilder(text.Length);
+            bool prevIsSeparator = true; // Start as true to skip leading separators
+
             for (int i = 0; i < text.Length; i++)
             {
-                if (separators.Contains(text[i]))
+                char c = text[i];
+                if (separators.Contains(c))
+                {
+                    // Only add separator if previous char wasn't a separator
+                    if (!prevIsSeparator)
+                    {
+                        normalized.Append('-');
+                        prevIsSeparator = true;
+                    }
+                }
+                else
+                {
+                    normalized.Append(c);
+                    prevIsSeparator = false;
+                }
+            }
+
+            // Remove trailing separator if any
+            if (prevIsSeparator && normalized.Length > 0)
+            {
+                normalized.Length--;
+            }
+
+            string normalizedText = normalized.ToString();
+
+            if (string.IsNullOrEmpty(normalizedText))
+                return string.Empty;
+
+            // Count parts
+            int partCount = 1;
+            for (int i = 0; i < normalizedText.Length; i++)
+            {
+                if (separators.Contains(normalizedText[i]))
                     partCount++;
             }
 
@@ -380,9 +498,9 @@ public static class StringExtensions
                 int partIndex = 0;
                 partStarts[partIndex++] = 0;
 
-                for (int i = 0; i < text.Length; i++)
+                for (int i = 0; i < normalizedText.Length; i++)
                 {
-                    if (separators.Contains(text[i]))
+                    if (separators.Contains(normalizedText[i]))
                     {
                         partStarts[partIndex++] = i + 1;
                     }
@@ -393,7 +511,7 @@ public static class StringExtensions
                 for (int i = 0; i < partIndex; i++)
                 {
                     int start = partStarts[i];
-                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : text.Length;
+                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : normalizedText.Length;
                     int partLength = end - start;
 
                     if (partLength > 0)
@@ -407,7 +525,7 @@ public static class StringExtensions
                 if (resultLength == 0)
                     return string.Empty;
 
-                return string.Create(resultLength, text, (span, state) =>
+                return string.Create(resultLength, normalizedText, (span, state) =>
                 {
                     int charIndex = 0;
                     for (int i = 0; i < partIndex; i++)
