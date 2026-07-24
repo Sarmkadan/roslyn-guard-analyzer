@@ -155,6 +155,8 @@ public sealed class BaselineService : IBaselineService
     /// <summary>
     /// Creates a baseline from analysis results.
     /// </summary>
+    /// <param name="result">Analysis results containing violations to baseline</param>
+    /// <returns>Baseline containing all violations</returns>
     public Baseline CreateBaseline(AnalysisResult result)
     {
         if (result is null)
@@ -164,8 +166,7 @@ public sealed class BaselineService : IBaselineService
 
         foreach (var violation in result.Violations)
         {
-            var contentHash = BaselineViolation.ComputeContentHash(violation);
-            var baselineViolation = BaselineViolation.FromRuleViolation(violation, contentHash);
+            var baselineViolation = BaselineViolation.FromRuleViolation(violation);
             baseline.AddViolation(baselineViolation);
         }
 
@@ -181,6 +182,9 @@ public sealed class BaselineService : IBaselineService
     /// <summary>
     /// Creates a baseline from violations.
     /// </summary>
+    /// <param name="projectName">Name of the project being baselined</param>
+    /// <param name="violations">List of violations to include in baseline</param>
+    /// <returns>Baseline containing all violations</returns>
     public Baseline CreateBaseline(string projectName, List<RuleViolation> violations)
     {
         if (string.IsNullOrWhiteSpace(projectName))
@@ -193,8 +197,7 @@ public sealed class BaselineService : IBaselineService
 
         foreach (var violation in violations)
         {
-            var contentHash = BaselineViolation.ComputeContentHash(violation);
-            var baselineViolation = BaselineViolation.FromRuleViolation(violation, contentHash);
+            var baselineViolation = BaselineViolation.FromRuleViolation(violation);
             baseline.AddViolation(baselineViolation);
         }
 

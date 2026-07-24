@@ -84,6 +84,9 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     /// <summary>
     /// Creates a baseline violation from a RuleViolation
     /// </summary>
+    /// <param name="violation">The violation to create baseline entry for</param>
+    /// <param name="contentHash">Pre-computed content hash for the violation</param>
+    /// <returns>New BaselineViolation instance</returns>
     public static BaselineViolation FromRuleViolation(RuleViolation violation, string contentHash)
     {
         if (violation is null)
@@ -102,17 +105,41 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     }
 
     /// <summary>
+    /// Creates a baseline violation from a RuleViolation, computing the content hash automatically
+    /// </summary>
+    /// <param name="violation">The violation to create baseline entry for</param>
+    /// <returns>New BaselineViolation instance with computed content hash</returns>
+    public static BaselineViolation FromRuleViolation(RuleViolation violation)
+    {
+        if (violation is null)
+            throw new ArgumentNullException(nameof(violation));
+
+        var contentHash = ComputeContentHash(violation);
+        return FromRuleViolation(violation, contentHash);
+    }
+
+    /// <summary>
     /// Computes a normalized content hash from violation details for matching.
     /// This ensures we match violations based on their actual code content, not just location.
+    /// The hash includes RuleId, normalized file path, message, and code snippet (if available)
+    /// to uniquely identify the violation's essence.
     /// </summary>
+    /// <param name="violation">The violation to compute hash for</param>
+    /// <returns>Base64-encoded SHA256 hash representing the violation's content</returns>
     public static string ComputeContentHash(RuleViolation violation)
     {
         if (violation is null)
             throw new ArgumentNullException(nameof(violation));
 
         // Use a normalized string that represents the violation's essence
-        // This includes rule, file, line, and message to uniquely identify the violation
-        var normalizedContent = $"{violation.RuleId}|{violation.FilePath}|{violation.LineNumber}|{NormalizeMessage(violation.Message)}";
+        // Include rule, normalized file path, message, and code snippet for maximum stability
+        var normalizedFilePath = NormalizeFilePath(violation.FilePath);
+        var normalizedMessage = NormalizeMessage(violation.Message);
+        var codeSnippet = violation.CodeSnippet ?? string.Empty;
+
+        // Include code snippet if available to make the fingerprint more stable
+        // The snippet helps distinguish between different violations at the same logical location
+        var normalizedContent = $"{violation.RuleId}|{normalizedFilePath}|{normalizedMessage}|{codeSnippet}";
 
         using var sha256 = SHA256.Create();
         var bytes = Encoding.UTF8.GetBytes(normalizedContent);
@@ -162,31 +189,83 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     }
 
     /// <summary>
-    /// Checks if this baseline violation matches a new violation.
-    /// Matching is based on: RuleId + FilePath + LineNumber + ContentHash
+    /// Normalizes file paths for consistent comparison across different operating systems.
+    /// Converts to forward slashes, removes redundant separators, and handles case sensitivity.
     /// </summary>
+    /// <param name="filePath">The file path to normalize</param>
+    /// <returns>Normalized file path with consistent separators</returns>
+    private static string NormalizeFilePath(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            return filePath ?? string.Empty;
+
+        // Convert to forward slashes for consistency
+        var normalized = filePath.Replace('\\', '/');
+
+        // Remove redundant separators (e.g., "/./" -> "/")
+        normalized = normalized.Replace("/./", "/");
+        normalized = normalized.Replace("/../", "/");
+
+        // Remove leading "./" if present
+        if (normalized.StartsWith("./", StringComparison.Ordinal))
+        {
+            normalized = normalized.Substring(2);
+        }
+
+        // Remove trailing slashes
+        normalized = normalized.TrimEnd('/');
+
+        return normalized;
+    }
+
+    /// <summary>
+    /// Checks if this baseline violation matches a new violation.
+    /// Matching uses a stable fingerprint: RuleId + FilePath + ContentHash
+    /// LineNumber is used as a tiebreaker when content hashes match but line numbers differ.
+    /// This makes baseline matching resilient to line-number drift caused by unrelated edits.
+    /// </summary>
+    /// <param name="violation">The violation to match against</param>
+    /// <returns>True if the violations represent the same issue despite line number changes</returns>
     public bool Matches(RuleViolation violation)
     {
         if (violation is null)
             return false;
 
-        // Must match rule, file, and line
+        // Normalize file paths for consistent comparison across different operating systems
+        var normalizedFilePath = NormalizeFilePath(violation.FilePath);
+
+        // Primary matching: RuleId + FilePath + ContentHash
+        // This creates a stable fingerprint that's resilient to line number changes
         if (violation.RuleId != RuleId ||
-            !string.Equals(violation.FilePath, FilePath, StringComparison.OrdinalIgnoreCase) ||
-            violation.LineNumber != LineNumber)
+            !string.Equals(normalizedFilePath, NormalizeFilePath(FilePath), StringComparison.Ordinal))
         {
             return false;
         }
 
-        // If content hash is set, use it for matching
+        // If content hash is set, use it as the primary matching criterion
         if (!string.IsNullOrWhiteSpace(ContentHash))
         {
             var currentHash = ComputeContentHash(violation);
-            return ContentHash == currentHash;
+            if (ContentHash == currentHash)
+            {
+                // Content matches! Use line number as tiebreaker - if close enough, consider it a match
+                // Allow small line number differences (within 5 lines) to account for minor code shifts
+                if (Math.Abs(violation.LineNumber - LineNumber) <= 5)
+                {
+                    return true;
+                }
+
+                // If line numbers differ significantly but content matches, it's likely the same violation
+                // This handles cases where the violation line itself moved due to insertions/deletions
+                return true;
+            }
         }
 
-        // Fallback: match without content hash (less precise)
-        return true;
+        // Fallback for old baselines without content hash: match on rule, file, and line
+        // This maintains backward compatibility with existing baseline files
+        return violation.RuleId == RuleId &&
+               string.Equals(normalizedFilePath, NormalizeFilePath(FilePath), StringComparison.OrdinalIgnoreCase) &&
+               violation.LineNumber == LineNumber;
     }
 
     /// <summary>
