@@ -153,8 +153,9 @@ public sealed class AnalysisService : IAnalysisService
         var csFiles = Directory.GetFiles(projectDir, "*.cs", SearchOption.AllDirectories);
         foreach (var file in csFiles)
         {
-            // Skip common exclusion patterns
-            if (file.Contains("bin") || file.Contains("obj") || file.Contains(".git"))
+            // Skip build output and VCS directories. Match whole path segments only,
+            // so files like "Binding.cs" or folders like "Turbine/" are not excluded.
+            if (IsInExcludedDirectory(file))
                 continue;
 
             project.AddSourceFile(file);
@@ -165,6 +166,26 @@ public sealed class AnalysisService : IAnalysisService
         project.SetProperty("TargetFramework", "net10.0");
 
         return project;
+    }
+
+    private static readonly HashSet<string> ExcludedDirectoryNames =
+        new(StringComparer.OrdinalIgnoreCase) { "bin", "obj", ".git" };
+
+    /// <summary>
+    /// Returns true when any directory segment of the path is a build-output
+    /// or VCS directory (bin, obj, .git). Compares whole segments, not substrings.
+    /// </summary>
+    private static bool IsInExcludedDirectory(string filePath)
+    {
+        var dir = Path.GetDirectoryName(filePath);
+        while (!string.IsNullOrEmpty(dir))
+        {
+            var segment = Path.GetFileName(dir);
+            if (ExcludedDirectoryNames.Contains(segment))
+                return true;
+            dir = Path.GetDirectoryName(dir);
+        }
+        return false;
     }
 
     /// <summary>
@@ -313,11 +334,14 @@ public sealed class AnalysisService : IAnalysisService
 
                         elements.Add(methodElement);
                     }
+                }
 
-                    // Detect catch blocks
-                    if (line.Contains("catch") && line.Contains("("))
-                    {
-                        // Extract catch block identifier (exception variable name)
+                // Detect catch blocks. This must be a top-level check: catch lines
+                // never contain "public ", so nesting it in the method branch above
+                // would make it unreachable.
+                if (line.StartsWith("catch", StringComparison.Ordinal) && line.Contains("("))
+                {
+                    // Extract catch block identifier (exception variable name)
                         var catchKeywordIndex = line.IndexOf("catch", StringComparison.OrdinalIgnoreCase);
                         var openParenIndex = line.IndexOf('(', catchKeywordIndex);
                         var closeParenIndex = line.IndexOf(')', openParenIndex);
@@ -351,7 +375,6 @@ public sealed class AnalysisService : IAnalysisService
 
                             elements.Add(catchElement);
                         }
-                    }
                 }
             }
         }

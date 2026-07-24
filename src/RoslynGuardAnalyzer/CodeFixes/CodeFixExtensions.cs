@@ -153,7 +153,7 @@ public static class CodeFixExtensions
     public static bool TargetsFile(this CodeFix fix, string filePath)
     {
         ArgumentNullException.ThrowIfNull(fix);
-        ArgumentException.ThrowIfNullOrEmpty(filePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
 
         return string.Equals(fix.FilePath, filePath, StringComparison.OrdinalIgnoreCase);
     }

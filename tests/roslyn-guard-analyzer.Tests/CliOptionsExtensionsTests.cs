@@ -72,7 +72,9 @@ public class CliOptionsExtensionsTests
     public void ValidateOutputSettings_Throws_ArgumentException_When_Report_Type_Is_Not_Specified()
     {
         // Arrange
-        var options = new CliOptions { GenerateReport = true };
+        // ReportType defaults to "summary", so it must be cleared explicitly
+        // to exercise the missing-report-type validation path.
+        var options = new CliOptions { GenerateReport = true, ReportType = string.Empty };
 
         // Act & Assert
         Assert.Throws<ArgumentException>(() => CliOptionsExtensions.ValidateOutputSettings(options));

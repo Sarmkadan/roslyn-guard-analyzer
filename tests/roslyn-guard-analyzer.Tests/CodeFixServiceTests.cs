@@ -90,9 +90,16 @@ public sealed class CodeFixServiceTests
 
         // Assert
         fixes.Should().BeEmpty();
-        _logger.Received(1).LogDebug(
-            Arg.Is<string>("No fix provider registered for rule {RuleId}."),
-            Arg.Any<object[]>());
+
+        // LogDebug is a static extension method, so NSubstitute cannot verify it
+        // directly; inspect the underlying ILogger.Log calls instead.
+        var debugCalls = _logger.ReceivedCalls()
+            .Where(c => c.GetMethodInfo().Name == nameof(ILogger.Log)
+                && c.GetArguments().FirstOrDefault() is LogLevel.Debug
+                && c.GetArguments().Any(a =>
+                    a?.ToString()?.Contains("No fix provider registered") == true));
+
+        debugCalls.Should().HaveCount(1);
     }
 
     /// <summary>
