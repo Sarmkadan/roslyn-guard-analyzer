@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 
 using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
 
 namespace RoslynGuardAnalyzer.Services;
 
@@ -173,16 +174,27 @@ public sealed class ValidationService : IValidationService
     /// <summary>
     /// Checks if a string is a valid regex pattern.
     /// </summary>
+    /// <param name="pattern">The regex pattern to validate.</param>
+    /// <returns>True if the pattern is valid; otherwise false.</returns>
     private bool IsValidRegexPattern(string pattern)
     {
+        if (string.IsNullOrWhiteSpace(pattern))
+        {
+            return true; // Empty patterns are valid
+        }
+
         try
         {
-            _ = new System.Text.RegularExpressions.Regex(pattern);
+            _ = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.None, CustomAnalysisRuleJsonExtensions.RegexCompilationTimeout);
             return true;
         }
         catch (System.Text.RegularExpressions.RegexParseException)
         {
             return false;
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException)
+        {
+            return false; // Pattern would cause timeout during compilation
         }
         catch
         {
