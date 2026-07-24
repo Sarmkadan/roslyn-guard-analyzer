@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RoslynGuardAnalyzer.Events;
@@ -105,7 +106,7 @@ public interface IEventBus
     /// <typeparam name="TEvent">The type of event to subscribe to.</typeparam>
     /// <param name="handler">The handler that will be invoked when the event is published.</param>
     /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
-    void Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent;
+    IDisposable Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent;
 
     /// <summary>
     /// Subscribes to events of a specific type with cancellation support.
@@ -115,7 +116,7 @@ public interface IEventBus
     /// <param name="cancellationToken">A cancellation token to observe while subscribing.</param>
     /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
     /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
-    void Subscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent;
+    IDisposable Subscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent;
 
     /// <summary>
     /// Unsubscribes a handler from events of a specific type.

@@ -18,10 +18,13 @@ namespace RoslynGuardAnalyzer.Events;
 /// </summary>
 public sealed class EventBus : IEventBus
 {
-    private sealed class Subscription
+    private sealed class Subscription : IDisposable
     {
         public required Type EventType { get; init; }
         public required Delegate Handler { get; init; }
+        public required Action UnsubscribeAction { get; init; }
+
+        public void Dispose() => UnsubscribeAction();
     }
 
     private readonly List<Subscription> _subscriptions = [];
@@ -40,7 +43,15 @@ public sealed class EventBus : IEventBus
         ArgumentNullException.ThrowIfNull(@event);
 
         var exceptions = new List<Exception>();
-        var matchingSubscriptions = GetMatchingSubscriptions(@event.GetType());
+        List<Subscription> matchingSubscriptions;
+
+        // Take a snapshot of subscriptions to prevent issues when unsubscribing during dispatch
+        lock (_lockObject)
+        {
+            matchingSubscriptions = _subscriptions
+                .Where(s => s.EventType.IsAssignableFrom(@event.GetType()))
+                .ToList();
+        }
 
         if (matchingSubscriptions.Count == 0)
             return; // No subscribers for this event type
@@ -88,7 +99,15 @@ public sealed class EventBus : IEventBus
         cancellationToken.ThrowIfCancellationRequested();
 
         var exceptions = new List<Exception>();
-        var matchingSubscriptions = GetMatchingSubscriptions(@event.GetType());
+        List<Subscription> matchingSubscriptions;
+
+        // Take a snapshot of subscriptions to prevent issues when unsubscribing during dispatch
+        lock (_lockObject)
+        {
+            matchingSubscriptions = _subscriptions
+                .Where(s => s.EventType.IsAssignableFrom(@event.GetType()))
+                .ToList();
+        }
 
         if (matchingSubscriptions.Count == 0)
             return; // No subscribers for this event type
@@ -132,19 +151,25 @@ public sealed class EventBus : IEventBus
     /// </summary>
     /// <typeparam name="TEvent">The type of event to subscribe to.</typeparam>
     /// <param name="handler">The handler that will be invoked when the event is published.</param>
+    /// <returns>An <see cref="IDisposable"/> that can be used to unsubscribe the handler.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
-    public void Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
+    public IDisposable Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
     {
         ArgumentNullException.ThrowIfNull(handler);
 
+        Subscription subscription;
         lock (_lockObject)
         {
-            _subscriptions.Add(new Subscription
+            subscription = new Subscription
             {
                 EventType = typeof(TEvent),
-                Handler = handler
-            });
+                Handler = handler,
+                UnsubscribeAction = () => Unsubscribe(handler)
+            };
+            _subscriptions.Add(subscription);
         }
+
+        return subscription;
     }
 
     /// <summary>
@@ -153,21 +178,27 @@ public sealed class EventBus : IEventBus
     /// <typeparam name="TEvent">The type of event to subscribe to.</typeparam>
     /// <param name="handler">The handler that will be invoked when the event is published.</param>
     /// <param name="cancellationToken">A cancellation token to observe while subscribing.</param>
+    /// <returns>An <see cref="IDisposable"/> that can be used to unsubscribe the handler.</returns>
     /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
     /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
-    public void Subscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent
+    public IDisposable Subscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent
     {
         ArgumentNullException.ThrowIfNull(handler);
         cancellationToken.ThrowIfCancellationRequested();
 
+        Subscription subscription;
         lock (_lockObject)
         {
-            _subscriptions.Add(new Subscription
+            subscription = new Subscription
             {
                 EventType = typeof(TEvent),
-                Handler = handler
-            });
+                Handler = handler,
+                UnsubscribeAction = () => Unsubscribe(handler, cancellationToken)
+            };
+            _subscriptions.Add(subscription);
         }
+
+        return subscription;
     }
 
     /// <summary>
@@ -235,18 +266,4 @@ public sealed class EventBus : IEventBus
         }
     }
 
-    /// <summary>
-    /// Gets subscriptions matching a specific event type.
-    /// </summary>
-    /// <param name="eventType">The type of event to match.</param>
-    /// <returns>A list of matching subscriptions.</returns>
-    private List<Subscription> GetMatchingSubscriptions(Type eventType)
-    {
-        lock (_lockObject)
-        {
-            return _subscriptions
-                .Where(s => s.EventType.IsAssignableFrom(eventType))
-                .ToList();
-        }
-    }
 }
