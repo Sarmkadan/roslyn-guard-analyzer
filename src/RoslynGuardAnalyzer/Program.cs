@@ -62,13 +62,13 @@ internal sealed class Program
                 Console.Error.WriteLine("Configuration validation errors:");
                 foreach (var error in validationErrors)
                 {
-                    Console.Error.WriteLine($"  - {error}");
+                    Console.Error.WriteLine($" - {error}");
                 }
-                return 1;
+                return (int)Cli.ExitCode.BadArguments;
             }
 
             var analysisService = serviceProvider.GetRequiredService<IAnalysisService>();
-    var baselineService = serviceProvider.GetRequiredService<IBaselineService>();
+            var baselineService = serviceProvider.GetRequiredService<IBaselineService>();
             var reportingService = serviceProvider.GetRequiredService<IReportingService>();
 
             Console.WriteLine("=== Roslyn Guard Analyzer ===");
@@ -79,13 +79,13 @@ internal sealed class Program
             if (cliOptions.ShowHelp)
             {
                 ShowHelp();
-                return 0;
+                return (int)Cli.ExitCode.Success;
             }
 
             if (cliOptions.ShowVersion)
             {
                 ShowVersion();
-                return 0;
+                return (int)Cli.ExitCode.Success;
             }
 
             // CLI options override configuration
@@ -98,22 +98,22 @@ internal sealed class Program
                 Console.Error.WriteLine("Configuration validation errors after CLI merge:");
                 foreach (var error in validationErrors)
                 {
-                    Console.Error.WriteLine($"  - {error}");
+                    Console.Error.WriteLine($" - {error}");
                 }
-                return 1;
+                return (int)Cli.ExitCode.BadArguments;
             }
 
             if (string.IsNullOrWhiteSpace(options.ProjectPath))
             {
                 Console.Error.WriteLine("Error: Project path must be specified");
                 ShowHelp();
-                return 1;
+                return (int)Cli.ExitCode.BadArguments;
             }
 
             if (!Directory.Exists(options.ProjectPath) && !File.Exists(options.ProjectPath))
             {
                 Console.Error.WriteLine($"Error: Project path not found: {options.ProjectPath}");
-                return 1;
+                return (int)Cli.ExitCode.BadArguments;
             }
 
             Console.WriteLine($"Analyzing: {options.ProjectPath}");
@@ -125,29 +125,29 @@ internal sealed class Program
             Console.WriteLine();
 
             var result = await analysisService.AnalyzeProjectAsync(options.ProjectPath);
-    Baseline? baseline = null;
-    if (!string.IsNullOrWhiteSpace(options.BaselineFile))
-    {
-        baseline = await baselineService.LoadBaselineAsync(options.BaselineFile);
-        if (baseline != null)
-        {
-            Console.WriteLine($"Loaded baseline with {baseline.ViolationCount} violations from {options.BaselineFile}");
-        }
-    }
-    if (baseline != null)
-    {
-        result.Violations = baselineService.FilterNewViolations(result.Violations, baseline);
-        Console.WriteLine($"Filtered to {result.ViolationCount} new violations (removed violations present in baseline)");
-    }
+            Baseline? baseline = null;
+            if (!string.IsNullOrWhiteSpace(options.BaselineFile))
+            {
+                baseline = await baselineService.LoadBaselineAsync(options.BaselineFile);
+                if (baseline != null)
+                {
+                    Console.WriteLine($"Loaded baseline with {baseline.ViolationCount} violations from {options.BaselineFile}");
+                }
+            }
+            if (baseline != null)
+            {
+                result.Violations = baselineService.FilterNewViolations(result.Violations, baseline);
+                Console.WriteLine($"Filtered to {result.ViolationCount} new violations (removed violations present in baseline)");
+            }
 
-// Handle baseline creation
-if (options.CreateBaseline && !string.IsNullOrWhiteSpace(options.OutputFile))
-{
-    var newBaseline = baselineService.CreateBaseline(options.ProjectPath ?? "unknown", result.Violations);
-    await baselineService.SaveBaselineAsync(newBaseline, options.OutputFile);
-    Console.WriteLine($"Created baseline with {newBaseline.ViolationCount} violations at {options.OutputFile}");
-    return 0;
-}
+            // Handle baseline creation
+            if (options.CreateBaseline && !string.IsNullOrWhiteSpace(options.OutputFile))
+            {
+                var newBaseline = baselineService.CreateBaseline(options.ProjectPath ?? "unknown", result.Violations);
+                await baselineService.SaveBaselineAsync(newBaseline, options.OutputFile);
+                Console.WriteLine($"Created baseline with {newBaseline.ViolationCount} violations at {options.OutputFile}");
+                return (int)Cli.ExitCode.Success;
+            }
             var report = reportingService.GenerateReport(result);
 
             if (!string.IsNullOrWhiteSpace(options.OutputFile))
@@ -162,25 +162,31 @@ if (options.CreateBaseline && !string.IsNullOrWhiteSpace(options.OutputFile))
 
             Console.WriteLine($"\nAnalysis completed: {result.ViolationCount} violations found");
 
-            return options.FailOnViolations && result.ViolationCount > 0 ? 1 : 0;
+            // Return exit code based on violation count and --strict flag
+            if (result.ViolationCount > 0)
+            {
+                return (int)Cli.ExitCode.ViolationsFound;
+            }
+
+            return (int)Cli.ExitCode.Success;
         }
         catch (OptionsValidationException ex)
         {
             Console.Error.WriteLine("Configuration validation failed:");
             foreach (var failure in ex.Failures)
             {
-                Console.Error.WriteLine($"  - {failure}");
+                Console.Error.WriteLine($" - {failure}");
             }
-            return 1;
+            return (int)Cli.ExitCode.BadArguments;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Fatal error: {ex.Message}");
-            if (ex is not null)
+            if (ex.StackTrace is not null)
             {
                 Console.Error.WriteLine(ex.StackTrace);
             }
-            return -1;
+            return (int)Cli.ExitCode.InternalError;
         }
     }
 
@@ -232,12 +238,12 @@ if (options.CreateBaseline && !string.IsNullOrWhiteSpace(options.OutputFile))
                 case "--quiet" or "-q":
                     options.LogLevel = 0;
                     break;
-        case "--baseline":
-            if (i + 1 < args.Length) options.BaselineFile = args[++i];
-            break;
-        case "--create-baseline":
-            options.CreateBaseline = true;
-            break;
+                case "--baseline":
+                    if (i + 1 < args.Length) options.BaselineFile = args[++i];
+                    break;
+                case "--create-baseline":
+                    options.CreateBaseline = true;
+                    break;
                 case var arg when arg.StartsWith("--max-threads="):
                     if (int.TryParse(arg["--max-threads=".Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
                     {
@@ -270,32 +276,32 @@ if (options.CreateBaseline && !string.IsNullOrWhiteSpace(options.OutputFile))
     {
         Console.WriteLine("Roslyn Guard Analyzer - Usage:");
         Console.WriteLine();
-        Console.WriteLine("  roslyn-guard-analyzer <path> [options]");
+        Console.WriteLine(" roslyn-guard-analyzer <path> [options]");
         Console.WriteLine();
         Console.WriteLine("Arguments:");
-        Console.WriteLine("  <path>              Project file (.csproj) or directory to analyze");
+        Console.WriteLine(" <path> Project file (.csproj) or directory to analyze");
         Console.WriteLine();
         Console.WriteLine("Options:");
-        Console.WriteLine("  --project <path>     Project file or directory path");
-        Console.WriteLine("  --file <path>        Single file to analyze");
-        Console.WriteLine("  --format, -f <type>  Output format: text, json, csv, html, xml");
-        Console.WriteLine("  --output, -o <file>  Output file path");
-        Console.WriteLine("  --config, -c <file>  Configuration file path");
-        Console.WriteLine("  --rules, -r <ids>   Comma-separated rule IDs to execute");
-        Console.WriteLine("  --strict, -s         Fail on any violation (exit code 1)");
-        Console.WriteLine("  --verbose, -v        Verbose output");
-        Console.WriteLine("  --quiet, -q          Suppress console output");
-        Console.WriteLine("  --max-threads=N       Maximum parallel threads (default: CPU count)");
+        Console.WriteLine(" --project <path> Project file or directory path");
+        Console.WriteLine(" --file <path> Single file to analyze");
+        Console.WriteLine(" --format, -f <type> Output format: text, json, csv, html, xml");
+        Console.WriteLine(" --output, -o <file> Output file path");
+        Console.WriteLine(" --config, -c <file> Configuration file path");
+        Console.WriteLine(" --rules, -r <ids> Comma-separated rule IDs to execute");
+        Console.WriteLine(" --strict, -s Fail on any violation (exit code 1)");
+        Console.WriteLine(" --verbose, -v Verbose output");
+        Console.WriteLine(" --quiet, -q Suppress console output");
+        Console.WriteLine(" --max-threads=N Maximum parallel threads (default: CPU count)");
         Console.WriteLine(" --baseline <file> Load baseline violations from file for comparison");
         Console.WriteLine(" --create-baseline Create baseline file with current violations");
-        Console.WriteLine("  --timeout=N           Analysis timeout in seconds (default: 600)");
-        Console.WriteLine("  --help, -h           Show this help message");
-        Console.WriteLine("  --version            Show version information");
+        Console.WriteLine(" --timeout=N Analysis timeout in seconds (default: 600)");
+        Console.WriteLine(" --help, -h Show this help message");
+        Console.WriteLine(" --version Show version information");
         Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  roslyn-guard-analyzer ./src/MyProject.csproj");
-        Console.WriteLine("  roslyn-guard-analyzer . --format json --output report.json");
-        Console.WriteLine("  roslyn-guard-analyzer ./src -r LYR001,NAM001 --strict");
+        Console.WriteLine(" roslyn-guard-analyzer ./src/MyProject.csproj");
+        Console.WriteLine(" roslyn-guard-analyzer . --format json --output report.json");
+        Console.WriteLine(" roslyn-guard-analyzer ./src -r LYR001,NAM001 --strict");
     }
 
     /// <summary>
