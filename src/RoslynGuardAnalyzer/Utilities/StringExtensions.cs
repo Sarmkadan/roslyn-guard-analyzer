@@ -731,33 +731,115 @@ public static class StringExtensions
     /// <summary>
     /// Gets the Levenshtein distance between two strings (for fuzzy matching).
     /// </summary>
+    /// <remarks>
+    /// The Levenshtein distance is the minimum number of single-character edits (insertions, deletions, or substitutions)
+    /// required to change one string into the other. This implementation uses the two-row variant with early-exit optimization,
+    /// providing O(min(m,n)) space complexity instead of the naive O(m*n) 2D matrix approach.
+    /// </remarks>
     /// <param name="text1">The first string.</param>
     /// <param name="text2">The second string.</param>
     /// <returns>The Levenshtein distance between the two strings.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="text1"/> or <paramref name="text2"/> is <see langword="null"/></exception>
     public static int LevenshteinDistance(this string text1, string text2)
     {
         ArgumentNullException.ThrowIfNull(text1);
         ArgumentNullException.ThrowIfNull(text2);
 
-        var matrix = new int[text1.Length + 1, text2.Length + 1];
+        return LevenshteinDistance(text1, text2, maxDistance: int.MaxValue);
+    }
 
-        for (int i = 0; i <= text1.Length; i++)
-            matrix[i, 0] = i;
+    /// <summary>
+    /// Gets the Levenshtein distance between two strings with an optional maximum distance threshold.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The Levenshtein distance is the minimum number of single-character edits (insertions, deletions, or substitutions)
+    /// required to change one string into the other. This implementation uses the two-row variant with early-exit optimization,
+    /// providing O(min(m,n)) space complexity instead of the naive O(m*n) 2D matrix approach.
+    /// </para>
+    /// <para>
+    /// The <paramref name="maxDistance"/> parameter enables early-exit optimization: if the distance exceeds the threshold,
+    /// the algorithm terminates early without computing the full distance. This is particularly useful for fuzzy matching
+    /// scenarios where you only care whether two strings are "close enough" (e.g., for 'did you mean' suggestions).
+    /// </para>
+    /// <para>
+    /// Time complexity: O(m*n) in the worst case, but often much better with early-exit.
+    /// Space complexity: O(min(m,n)) - only two rows are stored in memory.
+    /// </para>
+    /// </remarks>
+    /// <param name="text1">The first string.</param>
+    /// <param name="text2">The second string.</param>
+    /// <param name="maxDistance">The maximum distance to compute. If the distance exceeds this value, the method returns <paramref name="maxDistance"/> + 1.</param>
+    /// <returns>
+    /// The Levenshtein distance between the two strings, or <paramref name="maxDistance"/> + 1 if the distance exceeds <paramref name="maxDistance"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException"><paramref name="text1"/> or <paramref name="text2"/> is <see langword="null"/></exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="maxDistance"/> is negative.</exception>
+    public static int LevenshteinDistance(this string text1, string text2, int maxDistance)
+    {
+        ArgumentNullException.ThrowIfNull(text1);
+        ArgumentNullException.ThrowIfNull(text2);
+        ArgumentOutOfRangeException.ThrowIfNegative(maxDistance);
 
-        for (int j = 0; j <= text2.Length; j++)
-            matrix[0, j] = j;
+        // Ensure text1 is the shorter string to minimize space usage
+        if (text2.Length < text1.Length)
+            (text1, text2) = (text2, text1);
 
-        for (int i = 1; i <= text1.Length; i++)
+        int m = text1.Length;
+        int n = text2.Length;
+
+        // Early exit: if the difference in length already exceeds maxDistance, return immediately
+        if (n - m > maxDistance)
+            return maxDistance + 1;
+
+        // Use two-row array instead of full matrix: O(min(m,n)) space
+        // We only need to keep track of the current and previous rows
+        int[] prevRow = new int[n + 1];
+        int[] currRow = new int[n + 1];
+
+        // Initialize the first row (empty text1 vs text2)
+        for (int j = 0; j <= n; j++)
+            prevRow[j] = j;
+
+        // Process each character of text1
+        for (int i = 1; i <= m; i++)
         {
-            for (int j = 1; j <= text2.Length; j++)
+            // Initialize first column (text1[0..i-1] vs empty text2)
+            currRow[0] = i;
+
+            int minInRow = currRow[0]; // Track minimum value in current row for early-exit optimization
+
+            for (int j = 1; j <= n; j++)
             {
-                var cost = text1[i - 1] == text2[j - 1] ? 0 : 1;
-                matrix[i, j] = Math.Min(
-                    Math.Min(matrix[i - 1, j] + 1, matrix[i, j - 1] + 1),
-                    matrix[i - 1, j - 1] + cost);
+                int cost = text1[i - 1] == text2[j - 1] ? 0 : 1;
+
+                // Compute the three possible operations:
+                // 1. Deletion (from previous row, same column)
+                // 2. Insertion (from current row, previous column)
+                // 3. Substitution (from previous row, previous column)
+                int deletion = prevRow[j] + 1;
+                int insertion = currRow[j - 1] + 1;
+                int substitution = prevRow[j - 1] + cost;
+
+                currRow[j] = Math.Min(Math.Min(deletion, insertion), substitution);
+
+                // Update minimum in current row
+                if (currRow[j] < minInRow)
+                    minInRow = currRow[j];
             }
+
+            // Early-exit optimization: if the minimum value in the current row already exceeds maxDistance,
+            // the final distance will also exceed maxDistance, so we can return early
+            if (minInRow > maxDistance)
+                return maxDistance + 1;
+
+            // Swap rows for next iteration
+            (prevRow, currRow) = (currRow, prevRow);
         }
 
-        return matrix[text1.Length, text2.Length];
+        int distance = prevRow[n];
+
+        // Clamp to maxDistance + 1 if exceeded
+        return distance > maxDistance ? maxDistance + 1 : distance;
     }
 }
