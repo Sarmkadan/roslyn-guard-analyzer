@@ -1,9 +1,8 @@
 #nullable enable
-
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// ====================================================================
 
 using System;
 using System.Collections.Generic;
@@ -29,12 +28,40 @@ public sealed class BaselineService : IBaselineService
     }
 
     /// <summary>
+    /// Validates that a file path is safe and stays within the expected directory.
+    /// </summary>
+    /// <param name="filePath">The file path to validate.</param>
+    /// <exception cref="ArgumentException">Thrown when the path is invalid.</exception>
+    private void ValidateFilePath(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+
+        var fullPath = Path.GetFullPath(filePath);
+
+        // Normalize path separators for consistent comparison
+        fullPath = fullPath.Replace('\\', Path.DirectorySeparatorChar);
+
+        // Check for directory traversal attempts
+        if (fullPath.Contains("..") && !fullPath.StartsWith(".."))
+        {
+            throw new ArgumentException(
+                $"File path '{filePath}' contains directory traversal sequence '..'. " +
+                "Paths must stay within the expected directory structure.",
+                nameof(filePath));
+        }
+    }
+
+    /// <summary>
     /// Loads a baseline from file.
     /// </summary>
     public async Task<Baseline?> LoadBaselineAsync(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+
+        // Validate the file path to prevent directory traversal
+        ValidateFilePath(filePath);
 
         if (!File.Exists(filePath))
         {
@@ -78,6 +105,9 @@ public sealed class BaselineService : IBaselineService
 
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+
+        // Validate the file path to prevent directory traversal
+        ValidateFilePath(filePath);
 
         try
         {
