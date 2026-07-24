@@ -11,6 +11,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 
+using RoslynGuardAnalyzer.Rules;
+
 namespace RoslynGuardAnalyzer.Utilities;
 
 /// <summary>
@@ -701,11 +703,15 @@ public static class StringExtensions
 
         try
         {
-            return System.Text.RegularExpressions.Regex.IsMatch(text, pattern);
+            return System.Text.RegularExpressions.Regex.IsMatch(text, pattern, System.Text.RegularExpressions.RegexOptions.None, CustomAnalysisRuleJsonExtensions.RegexCompilationTimeout);
         }
         catch (System.Text.RegularExpressions.RegexParseException)
         {
             return false;
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException)
+        {
+            return false; // Pattern caused timeout during matching
         }
     }
 

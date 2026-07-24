@@ -30,7 +30,7 @@ public static class CustomAnalysisRuleJsonExtensions
     };
 
     // Regex timeout to prevent ReDoS attacks (1 second timeout for user-provided patterns)
-    private static readonly TimeSpan _regexMatchTimeout = TimeSpan.FromSeconds(1);
+    internal static readonly TimeSpan RegexCompilationTimeout = TimeSpan.FromSeconds(1);
 
     // Maximum allowed regex complexity metrics
     private const int MaxRegexPatternLength = 500;
@@ -239,13 +239,13 @@ public static class CustomAnalysisRuleJsonExtensions
         {
             // Test the pattern with a simple match to detect obvious issues
             // Use a timeout to prevent hanging during validation
-            using var cts = new CancellationTokenSource(_regexMatchTimeout);
+            using var cts = new CancellationTokenSource(RegexCompilationTimeout);
             var matchTask = System.Threading.Tasks.Task.Run(() =>
             {
                 try
                 {
                     // Try a simple match to see if pattern is valid
-                    _ = Regex.Match("test", pattern, RegexOptions.None, _regexMatchTimeout);
+                    _ = Regex.Match("test", pattern, RegexOptions.None, RegexCompilationTimeout);
                     return true;
                 }
                 catch (RegexMatchTimeoutException)
