@@ -2,7 +2,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Collections.Generic;
@@ -32,6 +32,54 @@ public sealed class SuppressionManager : ISuppressionManager
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
+
+    /// <summary>
+    /// Validates that a file path is safe and stays within the expected directory.
+    /// </summary>
+    /// <param name="filePath">The file path to validate.</param>
+    /// <param name="expectedBaseDirectory">The expected base directory (optional).</param>
+    /// <exception cref="ArgumentException">Thrown when the path is invalid.</exception>
+    private void ValidateFilePath(string filePath, string? expectedBaseDirectory = null)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+
+        var fullPath = Path.GetFullPath(filePath);
+
+        // Normalize path separators for consistent comparison
+        fullPath = fullPath.Replace('\\', Path.DirectorySeparatorChar);
+
+        // Check for directory traversal attempts
+        if (fullPath.Contains("..") && !fullPath.StartsWith(".."))
+        {
+            throw new ArgumentException(
+                $"File path '{filePath}' contains directory traversal sequence '..'. " +
+                "Paths must stay within the expected directory structure.",
+                nameof(filePath));
+        }
+
+        // If an expected base directory is provided, verify the path stays within it
+        if (!string.IsNullOrWhiteSpace(expectedBaseDirectory))
+        {
+            var expectedFullPath = Path.GetFullPath(expectedBaseDirectory);
+            expectedFullPath = expectedFullPath.Replace('\\', Path.DirectorySeparatorChar);
+
+            // Ensure both paths end with directory separator for proper comparison
+            if (!expectedFullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                expectedFullPath += Path.DirectorySeparatorChar;
+            if (!fullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                fullPath += Path.DirectorySeparatorChar;
+
+            if (!fullPath.StartsWith(expectedFullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    $"File path '{filePath}' resolves to '{Path.GetFullPath(filePath)}' which " +
+                    $"is outside the expected directory '{expectedBaseDirectory}'.",
+                    nameof(filePath));
+            }
+        }
+    }
+
 
     /// <inheritdoc/>
     public void AddSuppression(SuppressionRecord record)
@@ -105,6 +153,9 @@ public sealed class SuppressionManager : ISuppressionManager
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
+
+    // Validate the file path to prevent directory traversal
+    ValidateFilePath(filePath);
         var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
             Directory.CreateDirectory(directory);
@@ -126,6 +177,9 @@ public sealed class SuppressionManager : ISuppressionManager
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
+
+    // Validate the file path to prevent directory traversal
+    ValidateFilePath(filePath);
         if (!File.Exists(filePath))
         {
             _logger.LogInformation("Suppression file {FilePath} does not exist. Nothing to load.", filePath);
