@@ -139,15 +139,12 @@ public sealed class RuleEngine : IRuleEngine
             {
                 if (dependency.EndsWith(".Tests", StringComparison.OrdinalIgnoreCase)) continue;
 
-                var dependencyLayer = elements
-                    .FirstOrDefault(e => e.Name == dependency || e.FullyQualifiedName == dependency)?
-                    .GetFullyQualifiedName();
+                var dependencyElement = elements
+                    .FirstOrDefault(e => e.Name == dependency || e.GetFullyQualifiedName() == dependency);
 
-                if (dependencyLayer is null) continue;
+                if (dependencyElement is null) continue;
 
-                var depLayer = GetElementLayer(
-                    elements.First(e => e.FullyQualifiedName == dependencyLayer),
-                    layerPatterns);
+                var depLayer = GetElementLayer(dependencyElement, layerPatterns);
 
                 if (depLayer < 0) continue;
 
@@ -175,8 +172,10 @@ public sealed class RuleEngine : IRuleEngine
         return violations;
     }
 
-    private readonly Dictionary<string, string[]> _editorConfigCache = new();
-    private readonly Dictionary<string, string[]> _fileLineCache = new();
+    // These caches are read and written from Parallel.ForEachAsync in
+    // ExecuteAllRulesAsync, so they must be thread-safe.
+    private readonly ConcurrentDictionary<string, string[]> _editorConfigCache = new();
+    private readonly ConcurrentDictionary<string, string[]> _fileLineCache = new();
 
     /// <summary>
     /// Checks whether a code element carries a GUARD_SKIP inline suppression directive
@@ -200,11 +199,7 @@ public sealed class RuleEngine : IRuleEngine
         if (string.IsNullOrEmpty(element.FilePath) || element.StartLineNumber <= 1 || !System.IO.File.Exists(element.FilePath))
             return false;
 
-        if (!_fileLineCache.TryGetValue(element.FilePath, out var lines))
-        {
-            lines = System.IO.File.ReadAllLines(element.FilePath);
-            _fileLineCache[element.FilePath] = lines;
-        }
+        var lines = _fileLineCache.GetOrAdd(element.FilePath, static path => System.IO.File.ReadAllLines(path));
 
         var prevLineIndex = element.StartLineNumber - 2; // convert 1-based to 0-based, then go back one line
         if (prevLineIndex < 0 || prevLineIndex >= lines.Length)
@@ -226,11 +221,7 @@ public sealed class RuleEngine : IRuleEngine
             var editorConfigPath = System.IO.Path.Combine(dir, ".editorconfig");
             if (System.IO.File.Exists(editorConfigPath))
             {
-                if (!_editorConfigCache.TryGetValue(editorConfigPath, out var lines))
-                {
-                    lines = System.IO.File.ReadAllLines(editorConfigPath);
-                    _editorConfigCache[editorConfigPath] = lines;
-                }
+                var lines = _editorConfigCache.GetOrAdd(editorConfigPath, static path => System.IO.File.ReadAllLines(path));
 
                 foreach (var line in lines)
                 {

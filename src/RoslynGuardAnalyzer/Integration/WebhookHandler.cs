@@ -30,7 +30,18 @@ public sealed class WebhookHandler
     private readonly HttpClientFactory _httpClientFactory;
     private readonly object _lockObject = new();
 
-    public WebhookHandler(HttpClientFactory? httpClientFactory = null)
+    /// <summary>
+    /// Parameterless constructor used by JSON deserialization. The optional-parameter
+    /// constructor below is not usable by System.Text.Json because its parameter does
+    /// not bind to any property.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonConstructor]
+    public WebhookHandler()
+        : this(null)
+    {
+    }
+
+    public WebhookHandler(HttpClientFactory? httpClientFactory)
     {
         _httpClientFactory = httpClientFactory ?? new HttpClientFactory();
     }

@@ -62,14 +62,26 @@ public static class EmptyCatchRule
                     bool hasOnlyComments = true;
 
                     // Scan forward to find matching braces
-                    for (int j = braceLine; j < Math.Min(braceLine + 20, lines.Length); j++)
+                    for (int j = braceLine; j <= Math.Min(braceLine + 20, lines.Length); j++)
                     {
                         var scanLine = lines[j - 1];
+
+                        // On the line that opens the block, only the text after the
+                        // opening brace belongs to the body - otherwise a K&R-style
+                        // "catch (Exception) {" header would count as content.
+                        var effective = scanLine;
+                        if (j == braceLine)
+                        {
+                            var braceIdx = scanLine.IndexOf('{');
+                            effective = braceIdx >= 0 ? scanLine.Substring(braceIdx + 1) : string.Empty;
+                        }
+
                         openBraceCount += scanLine.Count(c => c == '{');
                         closeBraceCount += scanLine.Count(c => c == '}');
 
-                        // Check if line has actual code (not just whitespace or comments)
-                        var trimmed = scanLine.Trim();
+                        // Check if line has actual code (not just whitespace,
+                        // braces, or comments).
+                        var trimmed = effective.Trim().Trim('{', '}').Trim();
                         if (!string.IsNullOrWhiteSpace(trimmed) &&
                             !trimmed.StartsWith("//", StringComparison.Ordinal) &&
                             !trimmed.StartsWith("/*", StringComparison.Ordinal) &&
@@ -79,6 +91,11 @@ public static class EmptyCatchRule
                             hasOnlyComments = false;
                             break;
                         }
+
+                        // Stop once the catch block's closing brace is reached so
+                        // code after the block is not mistaken for body content.
+                        if (openBraceCount > 0 && closeBraceCount >= openBraceCount)
+                            break;
                     }
 
                     // If we found the catch block body and it has no content

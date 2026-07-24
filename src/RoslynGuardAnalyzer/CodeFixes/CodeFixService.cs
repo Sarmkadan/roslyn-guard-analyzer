@@ -178,18 +178,38 @@ public sealed class CodeFixService : ICodeFixService
     {
         try
         {
-            var lines = await File.ReadAllLinesAsync(filePath, cancellationToken);
+            // Read as raw text so the file's original line endings and the
+            // presence/absence of a trailing newline can be preserved exactly.
+            // WriteAllLinesAsync would append a newline to every file it touches.
+            var originalText = await File.ReadAllTextAsync(filePath, cancellationToken);
+            var newline = originalText.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
+            var lines = originalText.Split('\n');
+            for (var li = 0; li < lines.Length; li++)
+                lines[li] = lines[li].TrimEnd('\r');
             var appliedCountBefore = result.AppliedFixes.Count;
 
             // Process in reverse line order to avoid index drift when replacements
             // change line lengths (single-line replacements only, so no offset needed).
             var ordered = fixes.OrderByDescending(f => f.StartLine).ToList();
 
+            // Only one fix may modify a given line per pass. Without this,
+            // cascading fixes on the same line double-apply (e.g. an interface
+            // prefix fix followed by an overlapping one yields "IIMyInterface").
+            var modifiedLines = new HashSet<int>();
+
             foreach (var fix in ordered)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 var idx = fix.StartLine - 1;
+
+                if (modifiedLines.Contains(idx))
+                {
+                    result.AppliedFixes.Add(fix);
+                    result.Messages.Add(
+                        $"Superseded by an earlier fix on the same line: {fix.Title} — {filePath}:{fix.StartLine}");
+                    continue;
+                }
 
                 if (idx < 0 || idx >= lines.Length)
                 {
@@ -214,6 +234,7 @@ public sealed class CodeFixService : ICodeFixService
                     fix.ReplacementCode,
                     StringComparison.Ordinal);
 
+                modifiedLines.Add(idx);
                 result.AppliedFixes.Add(fix);
                 result.Messages.Add($"Applied: {fix.Title} — {filePath}:{fix.StartLine}");
             }
@@ -222,7 +243,7 @@ public sealed class CodeFixService : ICodeFixService
 
             if (!dryRun && anyApplied)
             {
-                await File.WriteAllLinesAsync(filePath, lines, cancellationToken);
+                await File.WriteAllTextAsync(filePath, string.Join(newline, lines), cancellationToken);
                 _logger.LogInformation(
                     "Wrote {Count} fix(es) to '{File}'.",
                     result.AppliedFixes.Count - appliedCountBefore,
@@ -280,9 +301,11 @@ public sealed class CodeFixService : ICodeFixService
         if (string.IsNullOrWhiteSpace(violation.CodeSnippet))
             return null;
 
+        // Allow optional modifiers (async, static, etc.) between the access
+        // modifier and the return type, e.g. "public async Task MyMethod()".
         var match = Regex.Match(
             violation.CodeSnippet,
-            @"(?:public|private|protected|internal)\s+\S+\s+(?<name>\w+)\s*\(");
+            @"(?:public|private|protected|internal)(?:\s+(?:static|async|virtual|override|sealed|new|unsafe|extern))*\s+\S+\s+(?<name>\w+)\s*\(");
 
         if (!match.Success)
             return null;

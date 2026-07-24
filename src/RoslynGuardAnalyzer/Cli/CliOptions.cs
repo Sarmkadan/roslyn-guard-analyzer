@@ -43,6 +43,13 @@ public sealed class CliOptions
     public SeverityLevel? FailOnSeverity { get; set; }
 
     /// <summary>
+    /// Characters that are invalid in file names on at least one supported
+    /// platform (Windows superset), used for portable baseline-name validation.
+    /// </summary>
+    private static readonly char[] PortableInvalidFileNameChars =
+        ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '\0'];
+
+    /// <summary>
     /// Validates that the options are mutually consistent and required fields are set.
     /// Project/file paths are mutually exclusive; at least one must be specified for analysis.
     /// </summary>
@@ -84,8 +91,14 @@ public sealed class CliOptions
         // Validate baseline file if specified
         if (!string.IsNullOrWhiteSpace(BaselineFile))
         {
+            // Use an explicit portable character set rather than
+            // Path.GetInvalidFileNameChars(): on Linux that returns only
+            // '\0' and '/', so names like "invalid|name.json" would pass
+            // validation there but fail once the baseline is used on Windows.
             var fileName = Path.GetFileName(BaselineFile);
-            if (string.IsNullOrWhiteSpace(fileName) || fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            if (string.IsNullOrWhiteSpace(fileName)
+                || fileName.IndexOfAny(PortableInvalidFileNameChars) >= 0
+                || fileName.Any(char.IsControl))
                 errors.Add("Baseline file name contains invalid characters");
         }
 
