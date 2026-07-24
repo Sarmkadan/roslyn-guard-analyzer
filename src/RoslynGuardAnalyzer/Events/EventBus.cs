@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RoslynGuardAnalyzer.Events;
@@ -28,25 +29,24 @@ public sealed class EventBus : IEventBus
 
     /// <summary>
     /// Publishes an event to all registered subscribers asynchronously.
-    /// Exceptions from subscribers are logged but don't prevent other subscribers from running.
     /// </summary>
+    /// <param name="event">The event to publish.</param>
+    /// <returns>A task that completes when the event has been published to all subscribers.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="event"/> is <see langword="null"/></exception>
+    /// <exception cref="AggregateException">Thrown if any subscribers throw exceptions. The <see cref="AggregateException.InnerExceptions"/>
+    /// contains all individual exceptions from subscribers.</exception>
     public async Task PublishAsync(IEvent @event)
     {
-        if (@event is null)
-            throw new ArgumentNullException(nameof(@event));
+        ArgumentNullException.ThrowIfNull(@event);
 
-        lock (_lockObject)
-        {
-            var matching = _subscriptions
-                .Where(s => s.EventType.IsAssignableFrom(@event.GetType()))
-                .ToList();
+        var exceptions = new List<Exception>();
+        var matchingSubscriptions = GetMatchingSubscriptions(@event.GetType());
 
-            if (matching.Count == 0)
-                return; // No subscribers for this event type
-        }
+        if (matchingSubscriptions.Count == 0)
+            return; // No subscribers for this event type
 
-        // Execute handlers outside the lock
-        foreach (var subscription in GetMatchingSubscriptions(@event.GetType()))
+        // Execute handlers outside the lock and collect exceptions
+        foreach (var subscription in matchingSubscriptions)
         {
             try
             {
@@ -59,8 +59,70 @@ public sealed class EventBus : IEventBus
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Error handling event {subscription.EventType.Name}: {ex.Message}");
+                exceptions.Add(ex);
             }
+        }
+
+        // Throw aggregated exceptions if any occurred
+        if (exceptions.Count > 0)
+        {
+            throw new AggregateException(
+                $"One or more subscribers failed while handling event {@event.EventType}",
+                exceptions);
+        }
+    }
+
+    /// <summary>
+    /// Publishes an event to all registered subscribers asynchronously with cancellation support.
+    /// </summary>
+    /// <param name="event">The event to publish.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while publishing.</param>
+    /// <returns>A task that completes when the event has been published to all subscribers or when cancelled.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="event"/> is <see langword="null"/></exception>
+    /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
+    /// <exception cref="AggregateException">Thrown if any subscribers throw exceptions. The <see cref="AggregateException.InnerExceptions"/>
+    /// contains all individual exceptions from subscribers.</exception>
+    public async Task PublishAsync(IEvent @event, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var exceptions = new List<Exception>();
+        var matchingSubscriptions = GetMatchingSubscriptions(@event.GetType());
+
+        if (matchingSubscriptions.Count == 0)
+            return; // No subscribers for this event type
+
+        // Execute handlers outside the lock and collect exceptions
+        foreach (var subscription in matchingSubscriptions)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                if (subscription.Handler is Delegate handler)
+                {
+                    var task = (Task?)handler.DynamicInvoke(@event);
+                    if (task is not null)
+                        await task;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        }
+
+        // Throw aggregated exceptions if any occurred
+        if (exceptions.Count > 0)
+        {
+            throw new AggregateException(
+                $"One or more subscribers failed while handling event {@event.EventType}",
+                exceptions);
         }
     }
 
@@ -68,10 +130,35 @@ public sealed class EventBus : IEventBus
     /// Subscribes to events of a specific type.
     /// Multiple handlers can subscribe to the same event type.
     /// </summary>
+    /// <typeparam name="TEvent">The type of event to subscribe to.</typeparam>
+    /// <param name="handler">The handler that will be invoked when the event is published.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
     public void Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
     {
-        if (handler is null)
-            throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
+
+        lock (_lockObject)
+        {
+            _subscriptions.Add(new Subscription
+            {
+                EventType = typeof(TEvent),
+                Handler = handler
+            });
+        }
+    }
+
+    /// <summary>
+    /// Subscribes to events of a specific type with cancellation support.
+    /// </summary>
+    /// <typeparam name="TEvent">The type of event to subscribe to.</typeparam>
+    /// <param name="handler">The handler that will be invoked when the event is published.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while subscribing.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
+    /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
+    public void Subscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        cancellationToken.ThrowIfCancellationRequested();
 
         lock (_lockObject)
         {
@@ -87,10 +174,33 @@ public sealed class EventBus : IEventBus
     /// Unsubscribes a handler from events of a specific type.
     /// Removes all matching subscriptions for the handler.
     /// </summary>
+    /// <typeparam name="TEvent">The type of event to unsubscribe from.</typeparam>
+    /// <param name="handler">The handler to remove.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
     public void Unsubscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
     {
-        if (handler is null)
-            throw new ArgumentNullException(nameof(handler));
+        ArgumentNullException.ThrowIfNull(handler);
+
+        lock (_lockObject)
+        {
+            _subscriptions.RemoveAll(s =>
+                s.EventType == typeof(TEvent) &&
+                s.Handler == (Delegate)(object)handler);
+        }
+    }
+
+    /// <summary>
+    /// Unsubscribes a handler from events of a specific type with cancellation support.
+    /// </summary>
+    /// <typeparam name="TEvent">The type of event to unsubscribe from.</typeparam>
+    /// <param name="handler">The handler to remove.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while unsubscribing.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
+    /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
+    public void Unsubscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        cancellationToken.ThrowIfCancellationRequested();
 
         lock (_lockObject)
         {
@@ -128,6 +238,8 @@ public sealed class EventBus : IEventBus
     /// <summary>
     /// Gets subscriptions matching a specific event type.
     /// </summary>
+    /// <param name="eventType">The type of event to match.</param>
+    /// <returns>A list of matching subscriptions.</returns>
     private List<Subscription> GetMatchingSubscriptions(Type eventType)
     {
         lock (_lockObject)

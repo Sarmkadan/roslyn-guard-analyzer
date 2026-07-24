@@ -201,7 +201,7 @@ public class EventBusTests
     }
 
     [Fact]
-    public async Task PublishAsync_WithHandlerThrowingException_LogsErrorButContinues()
+    public async Task PublishAsync_WithHandlerThrowingException_AggregatesExceptions()
     {
         // Arrange
         var eventBus = new EventBus();
@@ -224,11 +224,11 @@ public class EventBusTests
         eventBus.Subscribe(throwingHandler);
         eventBus.Subscribe(normalHandler);
 
-        // Act - should not throw even though one handler throws
+        // Act - should throw AggregateException even though we continue to call all handlers
         Func<Task> act = async () => await eventBus.PublishAsync(testEvent);
-        await act.Should().NotThrowAsync();
+        await act.Should().ThrowAsync<AggregateException>();
 
-        // Assert - both handlers should have been called
+        // Assert - both handlers should have been called despite exception
         handler1CallCount.Should().Be(1);
         handler2CallCount.Should().Be(1);
     }
