@@ -123,6 +123,19 @@ Computes the Levenshtein distance (edit distance) between two strings.
 - **Returns**: `int` – the minimum number of single-character edits (insertions, deletions, or substitutions) required to change one string into the other.
 - **Throws**: `ArgumentNullException` if `value` or `other` is `null`.
 
+### `LevenshteinDistance` (with maxDistance parameter)
+
+Computes the Levenshtein distance with an optional maximum distance threshold for early-exit optimization.
+
+- **Parameters**:
+  - `this string value` – the first string.
+  - `string other` – the second string.
+  - `int maxDistance` – the maximum distance to compute. If the distance exceeds this value, returns `maxDistance + 1`.
+- **Returns**: `int` – the Levenshtein distance, or `maxDistance + 1` if the distance exceeds `maxDistance`.
+- **Throws**: `ArgumentNullException` if `value` or `other` is `null`; `ArgumentOutOfRangeException` if `maxDistance` is negative.
+
+**Note**: The algorithm uses the two-row variant with O(min(m,n)) space complexity and includes early-exit optimization for performance when only checking if strings are "close enough".
+
 ## Usage
 
 ```csharp
