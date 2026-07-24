@@ -7,6 +7,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -17,12 +18,22 @@ namespace RoslynGuardAnalyzer.Cli;
 /// </summary>
 public static class CliArgumentParserJsonExtensions
 {
+    // Maximum JSON depth to prevent stack overflow attacks with deeply nested structures
+    private const int MaxJsonDepth = 64;
+
+    // Maximum allowed input size in bytes to prevent memory exhaustion attacks
+    private const int MaxJsonInputSize = 1024 * 1024; // 1 MB
+
+    // Maximum allowed length for file paths to prevent path traversal and excessive memory usage
+    private const int MaxPathLength = 2048;
+
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+        MaxDepth = MaxJsonDepth
     };
 
     /// <summary>
@@ -49,9 +60,18 @@ public static class CliArgumentParserJsonExtensions
     /// <param name="json">The JSON string to deserialize.</param>
     /// <returns>A CliArgumentParser instance if successful; otherwise, null.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when the JSON input exceeds size limits or contains invalid data.</exception>
     public static CliArgumentParser? FromJson(string json)
     {
         ArgumentNullException.ThrowIfNull(json);
+
+        // Validate input size to prevent memory exhaustion attacks
+        if (json.Length > MaxJsonInputSize)
+        {
+            throw new ArgumentException(
+                $"JSON input exceeds maximum allowed size of {MaxJsonInputSize} bytes. Actual size: {json.Length} bytes.",
+                nameof(json));
+        }
 
         var options = JsonSerializer.Deserialize<CliOptions>(json, _jsonOptions);
         return options is not null ? new CliArgumentParser(ToArgs(options)) : null;
@@ -64,6 +84,7 @@ public static class CliArgumentParserJsonExtensions
     /// <param name="value">Receives the deserialized CliArgumentParser if successful; otherwise, null.</param>
     /// <returns>True if deserialization succeeded; otherwise, false.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="json"/> is null.</exception>
+    /// <exception cref="ArgumentException">Thrown when the JSON input exceeds size limits.</exception>
     public static bool TryFromJson(string json, out CliArgumentParser? value)
     {
         ArgumentNullException.ThrowIfNull(json);
@@ -72,6 +93,12 @@ public static class CliArgumentParserJsonExtensions
 
         try
         {
+            // Validate input size to prevent memory exhaustion attacks
+            if (json.Length > MaxJsonInputSize)
+            {
+                return false;
+            }
+
             var options = JsonSerializer.Deserialize<CliOptions>(json, _jsonOptions);
             if (options is not null)
             {
