@@ -58,5 +58,8 @@ public sealed class CustomRuleRegistry : ICustomRuleRegistry
 
         var emptyCatchBlockRule = EmptyCatchBlockRule.Create();
         RegisterCustomRule(emptyCatchBlockRule);
+
+        var meaningfulTypeNameRule = MeaningfulTypeNameRule.Create();
+        RegisterCustomRule(meaningfulTypeNameRule);
     }
 }
