@@ -5,10 +5,11 @@
 // =============================================================================
 
 using System;
+using System.Buffers;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace RoslynGuardAnalyzer.Utilities;
 
@@ -30,16 +31,142 @@ public static class StringExtensions
         if (string.IsNullOrWhiteSpace(text))
             return text;
 
-        var parts = text.Split(new[] { '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        var sb = new StringBuilder();
+        // Early-out: if already in PascalCase format, return as-is
+        if (IsPascalCase(text))
+            return text;
 
-        foreach (var part in parts)
+        // Fast path for common cases without separators
+        if (text.Length <= 128 && !ContainsAny(text, '_', '-', ' '))
         {
-            if (part.Length > 0)
-                sb.Append(char.ToUpperInvariant(part[0]) + part[1..].ToLowerInvariant());
+            return CapitalizeFirstLetter(text);
         }
 
-        return sb.ToString();
+        return ConvertToPascalCase(text);
+
+        static string CapitalizeFirstLetter(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return s;
+
+            if (s.Length == 1)
+                return char.ToUpperInvariant(s[0]).ToString();
+
+            return char.ToUpperInvariant(s[0]) + s[1..];
+        }
+
+        static bool IsPascalCase(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return true;
+
+            // Check if already in PascalCase (no separators, first char uppercase)
+            if (s.Length > 0 && !char.IsUpper(s[0]))
+                return false;
+
+            // Check for separators that shouldn't be in PascalCase
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c == '_' || c == '-' || c == ' ')
+                    return false;
+            }
+
+            return true;
+        }
+
+        static string ConvertToPascalCase(string text)
+        {
+            var separators = new[] { '_', '-', ' ' };
+            bool needsConversion = false;
+
+            // First pass: check if conversion is needed
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (separators.Contains(text[i]))
+                {
+                    needsConversion = true;
+                    break;
+                }
+            }
+
+            if (!needsConversion)
+                return CapitalizeFirstLetter(text);
+
+            // Count parts to determine if we need allocation
+            int partCount = 1;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (separators.Contains(text[i]))
+                    partCount++;
+            }
+
+            // Use ArrayPool for part tracking if needed
+            int[] partStarts = partCount <= 16
+                ? stackalloc int[16].ToArray()
+                : ArrayPool<int>.Shared.Rent(partCount);
+
+            try
+            {
+                int partIndex = 0;
+                partStarts[partIndex++] = 0;
+
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (separators.Contains(text[i]))
+                    {
+                        partStarts[partIndex++] = i + 1;
+                    }
+                }
+
+                // Calculate total length needed
+                int resultLength = 0;
+                for (int i = 0; i < partIndex; i++)
+                {
+                    int start = partStarts[i];
+                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : text.Length;
+                    int partLength = end - start;
+
+                    if (partLength > 0)
+                    {
+                        resultLength += 1; // First char uppercase
+                        resultLength += partLength - 1; // Rest lowercase
+                    }
+                }
+
+                if (resultLength == 0)
+                    return string.Empty;
+
+                // Use string.Create for zero-allocation result
+                return string.Create(resultLength, text, (span, state) =>
+                {
+                    int charIndex = 0;
+                    for (int i = 0; i < partIndex; i++)
+                    {
+                        int start = partStarts[i];
+                        int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : state.Length;
+                        int partLength = end - start;
+
+                        if (partLength > 0)
+                        {
+                            // Capitalize first letter
+                            if (charIndex < span.Length)
+                                span[charIndex++] = char.ToUpperInvariant(state[start]);
+
+                            // Lowercase remaining letters
+                            for (int j = start + 1; j < end && charIndex < span.Length; j++)
+                            {
+                                span[charIndex++] = char.ToLowerInvariant(state[j]);
+                            }
+                        }
+                    }
+                });
+            }
+            finally
+            {
+                if (partCount > 16)
+                    ArrayPool<int>.Shared.Return(partStarts);
+            }
+        }
     }
 
     /// <summary>
@@ -52,11 +179,38 @@ public static class StringExtensions
     {
         ArgumentNullException.ThrowIfNull(text);
 
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        // Early-out: if already in camelCase format, return as-is
+        if (IsCamelCase(text))
+            return text;
+
         var pascal = text.ToPascalCase();
         if (pascal.Length == 0)
             return pascal;
 
         return char.ToLowerInvariant(pascal[0]) + pascal[1..];
+
+        static bool IsCamelCase(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return true;
+
+            // Check if already in camelCase (no separators, first char lowercase)
+            if (s.Length > 0 && !char.IsLower(s[0]))
+                return false;
+
+            // Check for separators that shouldn't be in camelCase
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c == '_' || c == '-' || c == ' ')
+                    return false;
+            }
+
+            return true;
+        }
     }
 
     /// <summary>
@@ -72,22 +226,85 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(text))
             return text;
 
-        var sb = new StringBuilder();
-        var previousWasUpper = false;
+        // Early-out: if already in snake_case format, return as-is
+        if (IsSnakeCase(text))
+            return text;
 
-        for (int i = 0; i < text.Length; i++)
+        // Fast path for strings that don't need conversion
+        if (text.Length <= 128)
         {
-            var currentChar = text[i];
-            var currentIsUpper = char.IsUpper(currentChar);
+            bool needsConversion = false;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (char.IsUpper(text[i]))
+                {
+                    needsConversion = true;
+                    break;
+                }
+            }
 
-            if (currentIsUpper && i > 0 && !previousWasUpper)
-                sb.Append('_');
-
-            sb.Append(char.ToLowerInvariant(currentChar));
-            previousWasUpper = currentIsUpper;
+            if (!needsConversion)
+                return text.ToLowerInvariant();
         }
 
-        return sb.ToString();
+        return ConvertToSnakeCase(text);
+
+        static bool IsSnakeCase(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return true;
+
+            // Check if already in snake_case (only lowercase and underscores)
+            bool hasUnderscore = false;
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c == '_')
+                    hasUnderscore = true;
+                else if (char.IsUpper(c))
+                    return false;
+            }
+
+            return hasUnderscore || !s.Contains('_');
+        }
+
+        static string ConvertToSnakeCase(string text)
+        {
+            // Calculate required length first
+            int resultLength = text.Length;
+            for (int i = 1; i < text.Length; i++)
+            {
+                if (char.IsUpper(text[i]) && text[i - 1] != '_')
+                    resultLength++;
+            }
+
+            if (resultLength == text.Length)
+                return text.ToLowerInvariant();
+
+            // Use string.Create for zero-allocation result
+            return string.Create(resultLength, text, (span, state) =>
+            {
+                int charIndex = 0;
+                for (int i = 0; i < state.Length; i++)
+                {
+                    char c = state[i];
+                    if (char.IsUpper(c))
+                    {
+                        // Insert underscore before uppercase letter (except first character)
+                        if (i > 0 && charIndex < span.Length)
+                            span[charIndex++] = '_';
+
+                        if (charIndex < span.Length)
+                            span[charIndex++] = char.ToLowerInvariant(c);
+                    }
+                    else
+                    {
+                        if (charIndex < span.Length)
+                            span[charIndex++] = c;
+                    }
+                }
+            });
+        }
     }
 
     /// <summary>
@@ -100,7 +317,145 @@ public static class StringExtensions
     {
         ArgumentNullException.ThrowIfNull(text);
 
-        return text.ToSnakeCase().Replace('_', '-');
+        if (string.IsNullOrWhiteSpace(text))
+            return text;
+
+        // Early-out: if already in kebab-case format, return as-is
+        if (IsKebabCase(text))
+            return text;
+
+        return ConvertToKebabCase(text);
+
+        static bool IsKebabCase(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return true;
+
+            // Check if already in kebab-case (only lowercase and hyphens)
+            bool hasHyphen = false;
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c == '-')
+                    hasHyphen = true;
+                else if (char.IsUpper(c))
+                    return false;
+            }
+
+            return hasHyphen || !s.Contains('-');
+        }
+
+        static string ConvertToKebabCase(string text)
+        {
+            var separators = new[] { '_', '-', ' ' };
+            bool needsConversion = false;
+
+            // First pass: check if conversion is needed
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (separators.Contains(text[i]))
+                {
+                    needsConversion = true;
+                    break;
+                }
+            }
+
+            if (!needsConversion)
+                return text.ToLowerInvariant();
+
+            // Count parts
+            int partCount = 1;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (separators.Contains(text[i]))
+                    partCount++;
+            }
+
+            int[] partStarts = partCount <= 16
+                ? stackalloc int[16].ToArray()
+                : ArrayPool<int>.Shared.Rent(partCount);
+
+            try
+            {
+                int partIndex = 0;
+                partStarts[partIndex++] = 0;
+
+                for (int i = 0; i < text.Length; i++)
+                {
+                    if (separators.Contains(text[i]))
+                    {
+                        partStarts[partIndex++] = i + 1;
+                    }
+                }
+
+                // Calculate total length
+                int resultLength = 0;
+                for (int i = 0; i < partIndex; i++)
+                {
+                    int start = partStarts[i];
+                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : text.Length;
+                    int partLength = end - start;
+
+                    if (partLength > 0)
+                    {
+                        resultLength += partLength;
+                        if (i < partIndex - 1)
+                            resultLength++; // hyphen
+                    }
+                }
+
+                if (resultLength == 0)
+                    return string.Empty;
+
+                return string.Create(resultLength, text, (span, state) =>
+                {
+                    int charIndex = 0;
+                    for (int i = 0; i < partIndex; i++)
+                    {
+                        int start = partStarts[i];
+                        int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : state.Length;
+                        int partLength = end - start;
+
+                        if (partLength > 0)
+                        {
+                            for (int j = start; j < end; j++)
+                            {
+                                if (charIndex < span.Length)
+                                    span[charIndex++] = char.ToLowerInvariant(state[j]);
+                            }
+
+                            if (i < partIndex - 1 && charIndex < span.Length)
+                                span[charIndex++] = '-';
+                        }
+                    }
+                });
+            }
+            finally
+            {
+                if (partCount > 16)
+                    ArrayPool<int>.Shared.Return(partStarts);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Checks if a string contains any of the specified characters.
+    /// </summary>
+    /// <param name="s">The string to check.</param>
+    /// <param name="chars">Characters to search for.</param>
+    /// <returns>True if any character is found; otherwise, false.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool ContainsAny(string s, params char[] chars)
+    {
+        foreach (char c in s)
+        {
+            for (int j = 0; j < chars.Length; j++)
+            {
+                if (c == chars[j])
+                    return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>
@@ -228,9 +583,9 @@ public static class StringExtensions
 
         try
         {
-            return Regex.IsMatch(text, pattern);
+            return System.Text.RegularExpressions.Regex.IsMatch(text, pattern);
         }
-        catch (RegexParseException)
+        catch (System.Text.RegularExpressions.RegexParseException)
         {
             return false;
         }
