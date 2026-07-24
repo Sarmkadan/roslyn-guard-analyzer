@@ -11,6 +11,24 @@ using System.Linq;
 namespace RoslynGuardAnalyzer.Cli;
 
 /// <summary>
+/// Exit codes returned by the analyzer.
+/// </summary>
+public enum ExitCode : int
+{
+    /// <summary>Clean execution with no violations.</summary>
+    Success = 0,
+
+    /// <summary>Violations found (when --strict is enabled).</summary>
+    ViolationsFound = 1,
+
+    /// <summary>Bad arguments or validation errors.</summary>
+    BadArguments = 2,
+
+    /// <summary>Internal error or unhandled exception.</summary>
+    InternalError = 3
+}
+
+/// <summary>
 /// High-level CLI command processor that orchestrates parsing and validation.
 /// Acts as a facade for CLI argument parsing and help text generation.
 /// </summary>
@@ -27,7 +45,7 @@ public sealed class CommandLineProcessor
     /// <summary>
     /// Processes the command-line arguments and validates them.
     /// </summary>
-    public (bool Success, CliOptions Options, List<string> Errors) Process()
+    public (bool Success, ExitCode ExitCode, CliOptions Options, List<string> Errors) Process()
     {
         var errors = new List<string>();
 
@@ -39,13 +57,13 @@ public sealed class CommandLineProcessor
             if (_parsedOptions.ShowHelp)
             {
                 Console.WriteLine(HelpGenerator.GenerateFullHelp());
-                return (true, _parsedOptions, errors);
+                return (true, ExitCode.Success, _parsedOptions, errors);
             }
 
             if (_parsedOptions.ShowVersion)
             {
                 Console.WriteLine(HelpGenerator.GenerateVersion());
-                return (true, _parsedOptions, errors);
+                return (true, ExitCode.Success, _parsedOptions, errors);
             }
 
             // Validate the options
@@ -53,16 +71,16 @@ public sealed class CommandLineProcessor
             {
                 errors.AddRange(validationErrors);
                 PrintErrors(errors);
-                return (false, _parsedOptions, errors);
+                return (false, ExitCode.BadArguments, _parsedOptions, errors);
             }
 
-            return (true, _parsedOptions, errors);
+            return (true, ExitCode.Success, _parsedOptions, errors);
         }
         catch (Exception ex)
         {
             errors.Add($"Unexpected error: {ex.Message}");
             PrintErrors(errors);
-            return (false, _parsedOptions ?? new CliOptions(), errors);
+            return (false, ExitCode.InternalError, _parsedOptions ?? new CliOptions(), errors);
         }
     }
 
@@ -82,7 +100,7 @@ public sealed class CommandLineProcessor
         Console.Error.WriteLine("Errors:");
         foreach (var error in errors)
         {
-            Console.Error.WriteLine($"  - {error}");
+            Console.Error.WriteLine($" - {error}");
         }
 
         Console.Error.WriteLine();
@@ -131,14 +149,14 @@ public sealed class CommandLineProcessor
             return;
 
         Console.WriteLine("Configuration:");
-        Console.WriteLine($"  Target: {_parsedOptions.GetTargetPath()}");
-        Console.WriteLine($"  Format: {_parsedOptions.OutputFormat}");
-        Console.WriteLine($"  Timeout: {_parsedOptions.AnalysisTimeoutSeconds}s");
-        Console.WriteLine($"  Threads: {_parsedOptions.MaxParallelThreads}");
+        Console.WriteLine($" Target: {_parsedOptions.GetTargetPath()}");
+        Console.WriteLine($" Format: {_parsedOptions.OutputFormat}");
+        Console.WriteLine($" Timeout: {_parsedOptions.AnalysisTimeoutSeconds}s");
+        Console.WriteLine($" Threads: {_parsedOptions.MaxParallelThreads}");
 
         if (_parsedOptions.RuleFilter.Count > 0)
         {
-            Console.WriteLine($"  Filtered Rules: {string.Join(", ", _parsedOptions.RuleFilter)}");
+            Console.WriteLine($" Filtered Rules: {string.Join(", ", _parsedOptions.RuleFilter)}");
         }
 
         Console.WriteLine();
