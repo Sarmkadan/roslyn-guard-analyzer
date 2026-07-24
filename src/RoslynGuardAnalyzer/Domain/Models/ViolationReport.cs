@@ -4,13 +4,15 @@
 // CTO & Software Architect
 // =============================================================================
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System;
 
 using RoslynGuardAnalyzer.Core;
+
+using PathNormalizer = RoslynGuardAnalyzer.Domain.Models.PathNormalizer;
+
 namespace RoslynGuardAnalyzer.Domain.Models;
 
 /// <summary>
@@ -100,7 +102,7 @@ public sealed class ViolationReport
         {
             violations.AddRange(
                 group.Violations.Where(v =>
-                    v.FilePath.Equals(filePath, StringComparison.OrdinalIgnoreCase)));
+                    PathNormalizer.AreEquivalent(v.FilePath, filePath)));
         }
 
         return violations;

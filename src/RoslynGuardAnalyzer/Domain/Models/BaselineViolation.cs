@@ -3,13 +3,15 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+using PathNormalizer = RoslynGuardAnalyzer.Domain.Models.PathNormalizer;
 
 namespace RoslynGuardAnalyzer.Domain.Models;
 
@@ -133,7 +135,7 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
 
         // Use a normalized string that represents the violation's essence
         // Include rule, normalized file path, message, and code snippet for maximum stability
-        var normalizedFilePath = NormalizeFilePath(violation.FilePath);
+        var normalizedFilePath = PathNormalizer.Normalize(violation.FilePath);
         var normalizedMessage = NormalizeMessage(violation.Message);
         var codeSnippet = violation.CodeSnippet ?? string.Empty;
 
@@ -189,36 +191,6 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     }
 
     /// <summary>
-    /// Normalizes file paths for consistent comparison across different operating systems.
-    /// Converts to forward slashes, removes redundant separators, and handles case sensitivity.
-    /// </summary>
-    /// <param name="filePath">The file path to normalize</param>
-    /// <returns>Normalized file path with consistent separators</returns>
-    private static string NormalizeFilePath(string filePath)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-            return filePath ?? string.Empty;
-
-        // Convert to forward slashes for consistency
-        var normalized = filePath.Replace('\\', '/');
-
-        // Remove redundant separators (e.g., "/./" -> "/")
-        normalized = normalized.Replace("/./", "/");
-        normalized = normalized.Replace("/../", "/");
-
-        // Remove leading "./" if present
-        if (normalized.StartsWith("./", StringComparison.Ordinal))
-        {
-            normalized = normalized.Substring(2);
-        }
-
-        // Remove trailing slashes
-        normalized = normalized.TrimEnd('/');
-
-        return normalized;
-    }
-
-    /// <summary>
     /// Checks if this baseline violation matches a new violation.
     /// Matching uses a stable fingerprint: RuleId + FilePath + ContentHash
     /// LineNumber is used as a tiebreaker when content hashes match but line numbers differ.
@@ -232,12 +204,12 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
             return false;
 
         // Normalize file paths for consistent comparison across different operating systems
-        var normalizedFilePath = NormalizeFilePath(violation.FilePath);
+        var normalizedFilePath = PathNormalizer.Normalize(violation.FilePath);
 
         // Primary matching: RuleId + FilePath + ContentHash
         // This creates a stable fingerprint that's resilient to line number changes
         if (violation.RuleId != RuleId ||
-            !string.Equals(normalizedFilePath, NormalizeFilePath(FilePath), StringComparison.Ordinal))
+            !PathNormalizer.Equals(normalizedFilePath, PathNormalizer.Normalize(FilePath)))
         {
             return false;
         }
@@ -264,7 +236,7 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
         // Fallback for old baselines without content hash: match on rule, file, and line
         // This maintains backward compatibility with existing baseline files
         return violation.RuleId == RuleId &&
-               string.Equals(normalizedFilePath, NormalizeFilePath(FilePath), StringComparison.OrdinalIgnoreCase) &&
+               PathNormalizer.AreEquivalent(violation.FilePath, FilePath) &&
                violation.LineNumber == LineNumber;
     }
 
@@ -288,7 +260,7 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     public override int GetHashCode() => Id.GetHashCode();
 
     public override string ToString() =>
-        $"BaselineViolation {{ RuleId={RuleId}, File={FilePath}, Line={LineNumber}, Hash={ContentHash[..8]}... }}";
+        $"BaselineViolation {{ RuleId={RuleId}, File={PathNormalizer.NormalizeForDisplay(FilePath)}, Line={LineNumber}, Hash={ContentHash[..8]}... }}";
 }
 
 /// <summary>
@@ -299,8 +271,8 @@ public sealed class Baseline
     [JsonPropertyName("version")]
     public string Version { get; set; } = "1.0";
 
-[JsonPropertyName("schemaVersion")]
-public string SchemaVersion { get; set; } = "1.0";
+    [JsonPropertyName("schemaVersion")]
+    public string SchemaVersion { get; set; } = "1.0";
 
     [JsonPropertyName("projectName")]
     public string ProjectName { get; set; } = string.Empty;

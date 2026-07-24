@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System;
 
 using RoslynGuardAnalyzer.Core;
+using PathNormalizer = RoslynGuardAnalyzer.Domain.Models.PathNormalizer;
 namespace RoslynGuardAnalyzer.Domain.Models;
 
 /// <summary>
@@ -64,7 +65,7 @@ public sealed class RuleViolation
     /// <returns>Formatted location string (e.g., "file.cs(42, 15)").</returns>
     public string GetFormattedLocation()
     {
-        var fileName = Path.GetFileName(FilePath);
+        var fileName = PathNormalizer.GetFileName(FilePath);
         return $"{fileName}({LineNumber}, {ColumnNumber})";
     }
 

@@ -1,8 +1,9 @@
 #nullable enable
+
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System;
 using RoslynGuardAnalyzer.Domain.Models;
@@ -73,9 +74,13 @@ public sealed class SuppressionRecord
         if (ExpiresAt.HasValue && ExpiresAt.Value <= DateTime.UtcNow)
             return false;
 
-        if (!string.IsNullOrWhiteSpace(TargetFile) &&
-            !string.Equals(TargetFile, violation.FilePath, StringComparison.OrdinalIgnoreCase))
-            return false;
+        if (!string.IsNullOrWhiteSpace(TargetFile))
+        {
+            var normalizedTargetFile = PathNormalizer.Normalize(TargetFile);
+            var normalizedViolationFile = PathNormalizer.Normalize(violation.FilePath);
+            if (!PathNormalizer.AreEquivalent(normalizedTargetFile, normalizedViolationFile))
+                return false;
+        }
 
         if (string.IsNullOrWhiteSpace(TargetElement))
             return true;

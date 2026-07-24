@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
+using PathNormalizer = RoslynGuardAnalyzer.Domain.Models.PathNormalizer;
+
 namespace RoslynGuardAnalyzer.Domain.Models
 {
     /// <summary>
