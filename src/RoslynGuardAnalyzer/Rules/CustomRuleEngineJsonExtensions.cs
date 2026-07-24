@@ -8,7 +8,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using RoslynGuardAnalyzer.Utilities;
 
 namespace RoslynGuardAnalyzer.Rules;
 
@@ -17,14 +17,7 @@ namespace RoslynGuardAnalyzer.Rules;
 /// </summary>
 public static class CustomRuleEngineJsonExtensions
 {
-    private static readonly JsonSerializerOptions _options = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-    };
+    private static readonly JsonSerializerOptions _options = JsonIoHelper.CreateOptions(false);
 
     /// <summary>
     /// Serializes the specified <see cref="CustomRuleEngine"/> instance to a JSON string.
