@@ -31,4 +31,22 @@ public sealed class HttpClientFactoryOptions
     /// Gets the duration for which the circuit breaker remains open before allowing new attempts.
     /// </summary>
     public TimeSpan CircuitBreakerOpenDuration { get; init; } = TimeSpan.FromSeconds(30);
+
+/// <summary>
+/// Gets the lifetime of pooled connections in the <see cref="SocketsHttpHandler"/>.
+/// Defaults to 2 minutes, which balances DNS refresh with connection reuse.
+/// </summary>
+public TimeSpan PooledConnectionLifetime { get; init; } = TimeSpan.FromMinutes(2);
+
+/// <summary>
+/// Gets the maximum number of connections per server endpoint.
+/// Defaults to 100, which is the .NET default for HttpClient.
+/// </summary>
+public int MaxConnectionsPerServer { get; init; } = 100;
+
+/// <summary>
+/// Gets whether to enable DNS refresh for pooled connections.
+/// When true, DNS records are refreshed after <see cref="PooledConnectionLifetime"/>.
+/// </summary>
+public bool EnableDnsRefresh { get; init; } = true;
 }

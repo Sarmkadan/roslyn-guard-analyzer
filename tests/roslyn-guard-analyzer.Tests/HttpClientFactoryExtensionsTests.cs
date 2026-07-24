@@ -1,7 +1,5 @@
-// Copyright (c) 2024
-// SPDX-License-Identifier: MIT
-
-using System;
+// Copyright (c) 2024 2 // SPDX-License-Identifier: MIT 4 using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
@@ -231,5 +229,70 @@ public class HttpClientFactoryExtensionsTests
 
         // Act and Assert
         await Assert.ThrowsAsync<ArgumentException>(() => HttpClientFactoryExtensions.PostJsonAsync(factory, string.Empty, path, jsonContent, clientName));
+    }
+
+    [Fact]
+    public void CreateClient_ReusesSameHandler_ForSameBaseUrl()
+    {
+        // Arrange
+        var factory = new HttpClientFactory();
+        var baseUrl = "https://example.com";
+
+        // Act - create multiple clients for the same base URL
+        var client1 = factory.CreateClient(baseUrl);
+        var client2 = factory.CreateClient(baseUrl);
+
+        // Assert - both clients should work correctly
+        Assert.NotNull(client1);
+        Assert.NotNull(client2);
+        Assert.Equal(baseUrl + "/", client1.BaseAddress?.AbsoluteUri);
+        Assert.Equal(baseUrl + "/", client2.BaseAddress?.AbsoluteUri);
+
+        client1.Dispose();
+        client2.Dispose();
+    }
+
+    [Fact]
+    public void CreateClient_CreatesDifferentClients_ForDifferentBaseUrls()
+    {
+        // Arrange
+        var factory = new HttpClientFactory();
+        var baseUrl1 = "https://api.example.com";
+        var baseUrl2 = "https://api2.example.com";
+
+        // Act
+        var client1 = factory.CreateClient(baseUrl1);
+        var client2 = factory.CreateClient(baseUrl2);
+
+        // Assert
+        Assert.NotNull(client1);
+        Assert.NotNull(client2);
+        Assert.Equal(baseUrl1 + "/", client1.BaseAddress?.AbsoluteUri);
+        Assert.Equal(baseUrl2 + "/", client2.BaseAddress?.AbsoluteUri);
+
+        client1.Dispose();
+        client2.Dispose();
+    }
+
+    [Fact]
+    public void CreateClient_WithCustomName_ReusesClient()
+    {
+        // Arrange
+        var factory = new HttpClientFactory();
+        var baseUrl = "https://example.com";
+        var clientName = "my-custom-client";
+
+        // Act - create multiple clients with the same custom name
+        var client1 = factory.CreateClient(baseUrl, clientName);
+        var client2 = factory.CreateClient(baseUrl, clientName);
+
+        // Assert - both clients should work correctly
+        Assert.NotNull(client1);
+        Assert.NotNull(client2);
+        Assert.Equal(baseUrl + "/", client1.BaseAddress?.AbsoluteUri);
+        Assert.Equal(baseUrl + "/", client2.BaseAddress?.AbsoluteUri);
+
+        client1.Dispose();
+        client2.Dispose();
     }
 }
