@@ -9,7 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using RoslynGuardAnalyzer.Utilities;
 
 namespace RoslynGuardAnalyzer.Domain.Models;
 
@@ -19,24 +19,7 @@ namespace RoslynGuardAnalyzer.Domain.Models;
 /// </summary>
 public static class AnalysisResultJsonExtensions
 {
-    // Maximum JSON depth to prevent stack overflow attacks with deeply nested structures
-    private const int MaxJsonDepth = 128;
-
-    // Maximum allowed input size in bytes to prevent memory exhaustion attacks
-    private const int MaxJsonInputSize = 10 * 1024 * 1024; // 10 MB
-
-    // Maximum allowed length for file paths to prevent path traversal and excessive memory usage
-    private const int MaxPathLength = 4096;
-
-    private static readonly JsonSerializerOptions _jsonSerializerOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        ReferenceHandler = ReferenceHandler.IgnoreCycles,
-        MaxDepth = MaxJsonDepth,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-    };
+    private static readonly JsonSerializerOptions _jsonSerializerOptions = JsonIoHelper.CreateOptions(false, true);
 
     /// <summary>
     /// Serializes an AnalysisResult to a JSON string.
@@ -68,13 +51,7 @@ public static class AnalysisResultJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        // Validate input size to prevent memory exhaustion attacks
-        if (json.Length > MaxJsonInputSize)
-        {
-            throw new ArgumentException(
-                $"JSON input exceeds maximum allowed size of {MaxJsonInputSize} bytes. Actual size: {json.Length} bytes.",
-                nameof(json));
-        }
+        JsonIoHelper.ValidateJsonSize(json, nameof(json));
 
         return string.IsNullOrWhiteSpace(json)
             ? null
@@ -95,19 +72,15 @@ public static class AnalysisResultJsonExtensions
 
         value = null;
 
-        // Validate input size to prevent memory exhaustion attacks
-        if (json.Length > MaxJsonInputSize)
-        {
-            return false;
-        }
-
-        if (string.IsNullOrWhiteSpace(json))
-        {
-            return false;
-        }
-
         try
         {
+            JsonIoHelper.ValidateJsonSize(json, nameof(json));
+
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
             value = JsonSerializer.Deserialize<AnalysisResult>(json, _jsonSerializerOptions);
             return true;
         }

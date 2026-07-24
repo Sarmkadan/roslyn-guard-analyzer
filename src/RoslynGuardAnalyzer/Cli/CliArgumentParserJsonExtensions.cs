@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using RoslynGuardAnalyzer.Utilities;
 
 namespace RoslynGuardAnalyzer.Cli;
 
@@ -18,23 +18,7 @@ namespace RoslynGuardAnalyzer.Cli;
 /// </summary>
 public static class CliArgumentParserJsonExtensions
 {
-    // Maximum JSON depth to prevent stack overflow attacks with deeply nested structures
-    private const int MaxJsonDepth = 64;
-
-    // Maximum allowed input size in bytes to prevent memory exhaustion attacks
-    private const int MaxJsonInputSize = 1024 * 1024; // 1 MB
-
-    // Maximum allowed length for file paths to prevent path traversal and excessive memory usage
-    private const int MaxPathLength = 2048;
-
-    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-        MaxDepth = MaxJsonDepth
-    };
+    private static readonly JsonSerializerOptions _jsonOptions = JsonIoHelper.CreateOptions(false);
 
     /// <summary>
     /// Serializes the CliArgumentParser to a JSON string.
@@ -65,13 +49,7 @@ public static class CliArgumentParserJsonExtensions
     {
         ArgumentNullException.ThrowIfNull(json);
 
-        // Validate input size to prevent memory exhaustion attacks
-        if (json.Length > MaxJsonInputSize)
-        {
-            throw new ArgumentException(
-                $"JSON input exceeds maximum allowed size of {MaxJsonInputSize} bytes. Actual size: {json.Length} bytes.",
-                nameof(json));
-        }
+        JsonIoHelper.ValidateJsonSize(json, nameof(json));
 
         var options = JsonSerializer.Deserialize<CliOptions>(json, _jsonOptions);
         return options is not null ? new CliArgumentParser(ToArgs(options)) : null;
@@ -93,11 +71,7 @@ public static class CliArgumentParserJsonExtensions
 
         try
         {
-            // Validate input size to prevent memory exhaustion attacks
-            if (json.Length > MaxJsonInputSize)
-            {
-                return false;
-            }
+            JsonIoHelper.ValidateJsonSize(json, nameof(json));
 
             var options = JsonSerializer.Deserialize<CliOptions>(json, _jsonOptions);
             if (options is not null)

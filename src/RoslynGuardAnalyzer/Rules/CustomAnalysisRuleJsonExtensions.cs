@@ -8,10 +8,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using RoslynGuardAnalyzer.Domain.Models;
 using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Utilities;
 
 namespace RoslynGuardAnalyzer.Rules;
 
@@ -21,13 +21,7 @@ namespace RoslynGuardAnalyzer.Rules;
 /// </summary>
 public static class CustomAnalysisRuleJsonExtensions
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
-    };
+    private static readonly JsonSerializerOptions _jsonOptions = JsonIoHelper.CreateOptions(false);
 
     // Regex timeout to prevent ReDoS attacks (1 second timeout for user-provided patterns)
     internal static readonly TimeSpan RegexCompilationTimeout = TimeSpan.FromSeconds(1);
@@ -67,7 +61,7 @@ public static class CustomAnalysisRuleJsonExtensions
     /// <exception cref="InvalidOperationException">The rule definition contains security violations or invalid configuration.</exception>
     public static CustomAnalysisRule FromJson(string json)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        JsonIoHelper.ValidateNotNullOrWhiteSpace(json, nameof(json));
 
         CustomAnalysisRule? rule;
         try
