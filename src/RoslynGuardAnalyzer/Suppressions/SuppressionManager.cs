@@ -80,7 +80,6 @@ public sealed class SuppressionManager : ISuppressionManager
         }
     }
 
-
     /// <inheritdoc/>
     public void AddSuppression(SuppressionRecord record)
     {
@@ -153,22 +152,31 @@ public sealed class SuppressionManager : ISuppressionManager
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
-
-    // Validate the file path to prevent directory traversal
-    ValidateFilePath(filePath);
-        var directory = Path.GetDirectoryName(filePath);
-        if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
-            Directory.CreateDirectory(directory);
-
-        List<SuppressionRecord> snapshot;
-        lock (_syncRoot)
+        try
         {
-            snapshot = _records.Values.OrderBy(record => record.CreatedAt).ToList();
-        }
+            // Validate the file path to prevent directory traversal
+            ValidateFilePath(filePath);
+            var directory = Path.GetDirectoryName(filePath);
+            if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
+                Directory.CreateDirectory(directory);
 
-        var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(filePath, json, cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation("Saved {Count} suppression records to {FilePath}.", snapshot.Count, filePath);
+            List<SuppressionRecord> snapshot;
+            lock (_syncRoot)
+            {
+                snapshot = _records.Values.OrderBy(record => record.CreatedAt).ToList();
+            }
+
+            var json = JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(filePath, json, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("Saved {Count} suppression records to {FilePath}.", snapshot.Count, filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save suppression records to {FilePath}", filePath);
+            // Swallow the exception - file persistence failures should not crash the application
+            // The exception is logged but not re-thrown to maintain consistent error handling
+            // with the event bus pattern where failures are handled gracefully
+        }
     }
 
     /// <inheritdoc/>
@@ -177,28 +185,38 @@ public sealed class SuppressionManager : ISuppressionManager
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
-
-    // Validate the file path to prevent directory traversal
-    ValidateFilePath(filePath);
-        if (!File.Exists(filePath))
+        try
         {
-            _logger.LogInformation("Suppression file {FilePath} does not exist. Nothing to load.", filePath);
-            return;
+            // Validate the file path to prevent directory traversal
+            ValidateFilePath(filePath);
+
+            if (!File.Exists(filePath))
+            {
+                _logger.LogInformation("Suppression file {FilePath} does not exist. Nothing to load.", filePath);
+                return;
+            }
+
+            var json = await File.ReadAllTextAsync(filePath, cancellationToken).ConfigureAwait(false);
+            var records = JsonSerializer.Deserialize<List<SuppressionRecord>>(json) ?? [];
+            var activeRecords = records
+                .Where(record => !record.ExpiresAt.HasValue || record.ExpiresAt.Value > DateTime.UtcNow)
+                .ToList();
+
+            lock (_syncRoot)
+            {
+                _records.Clear();
+                foreach (var record in activeRecords)
+                    _records[record.Id] = record;
+            }
+
+            _logger.LogInformation("Loaded {Count} active suppression records from {FilePath}.", activeRecords.Count, filePath);
         }
-
-        var json = await File.ReadAllTextAsync(filePath, cancellationToken).ConfigureAwait(false);
-        var records = JsonSerializer.Deserialize<List<SuppressionRecord>>(json) ?? [];
-        var activeRecords = records
-            .Where(record => !record.ExpiresAt.HasValue || record.ExpiresAt.Value > DateTime.UtcNow)
-            .ToList();
-
-        lock (_syncRoot)
+        catch (Exception ex)
         {
-            _records.Clear();
-            foreach (var record in activeRecords)
-                _records[record.Id] = record;
+            _logger.LogError(ex, "Failed to load suppression records from {FilePath}", filePath);
+            // Swallow the exception - file loading failures should not crash the application
+            // If the file is corrupted or unreadable, we continue with an empty suppression list
+            // This maintains consistency with the event bus pattern where failures are handled gracefully
         }
-
-        _logger.LogInformation("Loaded {Count} active suppression records from {FilePath}.", activeRecords.Count, filePath);
     }
 }

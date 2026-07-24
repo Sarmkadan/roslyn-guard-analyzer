@@ -2,7 +2,7 @@
 // =============================================================================
 // Author: Vladyslav Zaiets | https://sarmkadan.com
 // CTO & Software Architect
-// =============================================================================
+// =====================================================================
 
 using System.Collections.Generic;
 using System.Threading;
@@ -44,10 +44,25 @@ public interface ISuppressionManager
     /// <summary>
     /// Saves suppressions to a JSON file.
     /// </summary>
+    /// <param name="filePath">The file path to save suppressions to.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while saving.</param>
+    /// <remarks>
+    /// If the file cannot be written (e.g., due to permissions, disk errors, or invalid paths),
+    /// the exception is swallowed and logged by the implementation. Callers should not need to handle
+    /// exceptions from this method.
+    /// </remarks>
     Task SaveAsync(string filePath, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Loads suppressions from a JSON file.
     /// </summary>
+    /// <param name="filePath">The file path to load suppressions from.</param>
+    /// <param name="cancellationToken">A cancellation token to observe while loading.</param>
+    /// <remarks>
+    /// If the file does not exist, the operation completes silently without throwing.
+    /// If the file exists but cannot be loaded (e.g., due to corruption, permissions, or format errors),
+    /// the exception is swallowed and logged by the implementation. Callers should not need to handle
+    /// exceptions from this method.
+    /// </remarks>
     Task LoadAsync(string filePath, CancellationToken cancellationToken = default);
 }
