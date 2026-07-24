@@ -1,3 +1,6 @@
+using System;
+using RoslynGuardAnalyzer.Domain.Models;
+
 namespace RoslynGuardAnalyzer.Suppressions;
 
 /// <summary>
@@ -26,7 +29,8 @@ public static class SuppressionRecordExtensions
     public static string GetDescription(this SuppressionRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
-        return $"Suppression for rule '{record.RuleId}' in file '{record.TargetFile ?? "(unknown)"}' at '{record.TargetElement ?? "(unknown)"}'. Justification: '{record.Justification}'. Author: '{record.Author}'. Active: {record.IsActive}.";
+        var displayPath = PathNormalizer.NormalizeForDisplay(record.TargetFile ?? "(unknown)");
+        return $"Suppression for rule '{record.RuleId}' in file '{displayPath}' at '{record.TargetElement ?? "(unknown)"}'. Justification: '{record.Justification}'. Author: '{record.Author}'. Active: {record.IsActive}.";
     }
 
     /// <summary>
@@ -43,6 +47,11 @@ public static class SuppressionRecordExtensions
         ArgumentNullException.ThrowIfNull(record);
         ArgumentException.ThrowIfNullOrEmpty(ruleId);
         ArgumentException.ThrowIfNullOrEmpty(targetFile);
-        return string.Equals(record.RuleId, ruleId, StringComparison.Ordinal) && string.Equals(record.TargetFile, targetFile, StringComparison.Ordinal);
+
+        var normalizedTargetFile = PathNormalizer.Normalize(targetFile);
+        var normalizedRecordTarget = PathNormalizer.Normalize(record.TargetFile ?? string.Empty);
+
+        return string.Equals(record.RuleId, ruleId, StringComparison.Ordinal) &&
+               PathNormalizer.AreEquivalent(normalizedTargetFile, normalizedRecordTarget);
     }
 }
