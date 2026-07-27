@@ -99,5 +99,8 @@ public enum ReportFormat
     Xml = 2,
 
     /// <summary>CSV format.</summary>
-    Csv = 3
+    Csv = 3,
+
+    /// <summary>SARIF format.</summary>
+    Sarif = 4
 }
