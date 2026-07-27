@@ -22,16 +22,33 @@ from pathlib import Path
 
 def run_dotnet(command: str) -> int:
     """
-    Executes a dotnet command in the repository root.
+    Executes a dotnet command in the repository root where the .sln file resides.
 
     Returns the exit code of the subprocess.
     """
-    repo_root = Path(__file__).resolve().parent
-    # Ensure we are in the repository root where the .sln file resides
+    # The script lives in the task-factory root, but the actual solution is under
+    # `workdir/roslyn-guard-analyzer`.  Compute the correct repository root.
+    script_dir = Path(__file__).resolve().parent
+    repo_root = script_dir / "workdir" / "roslyn-guard-analyzer"
+
+    # Verify that the .sln file exists in the calculated root; if not, fall back
+    # to the script directory (useful for future extensions).
+    if not any(repo_root.glob("*.sln")):
+        repo_root = script_dir
+
+    # Ensure the .NET SDK is available.
     try:
-        subprocess.run(["dotnet", "--version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(
+            ["dotnet", "--version"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
     except (FileNotFoundError, subprocess.CalledProcessError):
-        print("Error: .NET SDK is not installed or not available in PATH.", file=sys.stderr)
+        print(
+            "Error: .NET SDK is not installed or not available in PATH.",
+            file=sys.stderr,
+        )
         return 1
 
     result = subprocess.run(
@@ -43,7 +60,9 @@ def run_dotnet(command: str) -> int:
     return result.returncode
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Helper script to build/test the RoslynGuardAnalyzer project.")
+    parser = argparse.ArgumentParser(
+        description="Helper script to build/test the RoslynGuardAnalyzer project."
+    )
     parser.add_argument(
         "command",
         nargs="?",
