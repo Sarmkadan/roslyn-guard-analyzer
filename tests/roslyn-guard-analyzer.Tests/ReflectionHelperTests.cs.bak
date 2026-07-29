@@ -1,0 +1,363 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Threading.Tasks;
+using Xunit;
+using RoslynGuardAnalyzer.Utilities;
+
+namespace RoslynGuardAnalyzer.Tests
+{
+    public class ReflectionHelperTests
+    {
+        // Test type for reflection tests
+        private class TestType
+        {
+            public int PublicField;
+            public string PublicProperty { get; set; } = default!;
+
+            [Obsolete]
+            public void ObsoleteMethod() { }
+
+            public async Task AsyncMethod() { await Task.Yield(); }
+
+            public int NonVirtualMethod(int x) => x;
+
+            public virtual int VirtualMethod(int x) => x;
+
+            public static int StaticMethod(int x) => x;
+        }
+
+        // Test inheritance hierarchy
+        private class BaseClass { }
+        private class DerivedClass : BaseClass { }
+        private class AnotherDerivedClass : DerivedClass { }
+
+        [Fact]
+        public void GetPublicMethods_HappyPath()
+        {
+            // Arrange
+            var type = typeof(TestType);
+
+            // Act
+            var methods = ReflectionHelper.GetPublicMethods(type);
+
+            // Assert
+            Assert.NotNull(methods);
+            Assert.Contains(methods, m => m.Name == nameof(TestType.ObsoleteMethod));
+            Assert.Contains(methods, m => m.Name == nameof(TestType.AsyncMethod));
+            Assert.Contains(methods, m => m.Name == nameof(TestType.NonVirtualMethod));
+            Assert.Contains(methods, m => m.Name == nameof(TestType.VirtualMethod));
+            Assert.Contains(methods, m => m.Name == nameof(TestType.StaticMethod));
+            // Property getters/setters are special names and should be filtered out
+            Assert.DoesNotContain(methods, m => m.Name == "set_PublicProperty");
+            Assert.DoesNotContain(methods, m => m.Name == "get_PublicProperty");
+        }
+
+        [Fact]
+        public void GetPublicMethods_NullInput_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.GetPublicMethods(null!));
+        }
+
+        [Fact]
+        public void GetPublicProperties_HappyPath()
+        {
+            // Arrange
+            var type = typeof(TestType);
+
+            // Act
+            var properties = ReflectionHelper.GetPublicProperties(type);
+
+            // Assert
+            Assert.NotNull(properties);
+            Assert.Contains(properties, p => p.Name == nameof(TestType.PublicProperty));
+        }
+
+        [Fact]
+        public void GetPublicProperties_NullInput_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.GetPublicProperties(null!));
+        }
+
+        [Fact]
+        public void GetPublicFields_HappyPath()
+        {
+            // Arrange
+            var type = typeof(TestType);
+
+            // Act
+            var fields = ReflectionHelper.GetPublicFields(type);
+
+            // Assert
+            Assert.NotNull(fields);
+            Assert.Contains(fields, f => f.Name == nameof(TestType.PublicField));
+        }
+
+        [Fact]
+        public void GetPublicFields_NullInput_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.GetPublicFields(null!));
+        }
+
+        [Fact]
+        public void ImplementsInterface_HappyPath_ReturnsTrue()
+        {
+            // Arrange
+            var type = typeof(List<int>);
+            var interfaceType = typeof(IEnumerable<int>);
+
+            // Act
+            var result = ReflectionHelper.ImplementsInterface(type, interfaceType);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void ImplementsInterface_HappyPath_ReturnsFalse()
+        {
+            // Arrange
+            var type = typeof(string);
+            var interfaceType = typeof(IEnumerable<int>);
+
+            // Act
+            var result = ReflectionHelper.ImplementsInterface(type, interfaceType);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void ImplementsInterface_NullType_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.ImplementsInterface(null!, typeof(int)));
+        }
+
+        [Fact]
+        public void ImplementsInterface_NullInterfaceType_ReturnsFalse()
+        {
+            // Act
+            var result = ReflectionHelper.ImplementsInterface(typeof(int), null!);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsSubclassOf_HappyPath_ReturnsTrue()
+        {
+            // Arrange
+            var type = typeof(DerivedClass);
+            var baseType = typeof(BaseClass);
+
+            // Act
+            var result = ReflectionHelper.IsSubclassOf(type, baseType);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void IsSubclassOf_HappyPath_ReturnsFalse()
+        {
+            // Arrange
+            var type = typeof(BaseClass);
+            var baseType = typeof(DerivedClass);
+
+            // Act
+            var result = ReflectionHelper.IsSubclassOf(type, baseType);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsSubclassOf_NullType_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.IsSubclassOf(null!, typeof(BaseClass)));
+        }
+
+        [Fact]
+        public void IsSubclassOf_NullBaseType_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => ReflectionHelper.IsSubclassOf(typeof(int), null!));
+        }
+
+        [Fact]
+        public void GetAttributes_HappyPath_ReturnsAttributes()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.ObsoleteMethod))!;
+
+            // Act
+            var attributes = ReflectionHelper.GetAttributes<ObsoleteAttribute>(method);
+
+            // Assert
+            Assert.NotNull(attributes);
+            Assert.Single(attributes);
+        }
+
+        [Fact]
+        public void GetAttributes_HappyPath_ReturnsEmptyWhenNoAttributes()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.NonVirtualMethod))!;
+
+            // Act
+            var attributes = ReflectionHelper.GetAttributes<ObsoleteAttribute>(method);
+
+            // Assert
+            Assert.NotNull(attributes);
+            Assert.Empty(attributes);
+        }
+
+        [Fact]
+        public void GetAttributes_NullInput_ThrowsArgumentNullException()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => ReflectionHelper.GetAttributes<ObsoleteAttribute>(null!));
+        }
+
+        [Fact]
+        public void IsAsync_HappyPath_ReturnsTrue()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.AsyncMethod))!;
+
+            // Act
+            var result = ReflectionHelper.IsAsync(method);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void IsAsync_HappyPath_ReturnsFalse()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.NonVirtualMethod))!;
+
+            // Act
+            var result = ReflectionHelper.IsAsync(method);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsAsync_NullInput_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.IsAsync(null!));
+        }
+
+        [Fact]
+        public void IsVirtual_HappyPath_ReturnsTrue()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.VirtualMethod))!;
+
+            // Act
+            var result = ReflectionHelper.IsVirtual(method);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void IsVirtual_HappyPath_ReturnsFalse()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.NonVirtualMethod))!;
+
+            // Act
+            var result = ReflectionHelper.IsVirtual(method);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void IsVirtual_NullInput_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.IsVirtual(null!));
+        }
+
+        [Fact]
+        public void GetParameterCount_HappyPath()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.NonVirtualMethod), new[] { typeof(int) })!;
+
+            // Act
+            var count = ReflectionHelper.GetParameterCount(method);
+
+            // Assert
+            Assert.Equal(1, count);
+        }
+
+        [Fact]
+        public void GetParameterCount_HappyPath_ZeroParameters()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.ObsoleteMethod))!;
+
+            // Act
+            var count = ReflectionHelper.GetParameterCount(method);
+
+            // Assert
+            Assert.Equal(0, count);
+        }
+
+        [Fact]
+        public void GetParameterCount_NullInput_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.GetParameterCount(null!));
+        }
+
+        [Fact]
+        public void GetParameterNames_HappyPath()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.NonVirtualMethod), new[] { typeof(int) })!;
+
+            // Act
+            var names = ReflectionHelper.GetParameterNames(method).ToArray();
+
+            // Assert
+            Assert.NotNull(names);
+            Assert.Single(names);
+            Assert.Equal("x", names[0]);
+        }
+
+        [Fact]
+        public void GetParameterNames_HappyPath_NoParameters()
+        {
+            // Arrange
+            var method = typeof(TestType).GetMethod(nameof(TestType.ObsoleteMethod))!;
+
+            // Act
+            var names = ReflectionHelper.GetParameterNames(method).ToArray();
+
+            // Assert
+            Assert.NotNull(names);
+            Assert.Empty(names);
+        }
+
+        [Fact]
+        public void GetParameterNames_NullInput_ThrowsNullReferenceException()
+        {
+            // Act & Assert
+            Assert.Throws<NullReferenceException>(() => ReflectionHelper.GetParameterNames(null!));
+        }
+    }
+}
