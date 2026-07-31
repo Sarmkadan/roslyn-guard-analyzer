@@ -91,7 +91,7 @@ public sealed class SuppressionRecord : IEquatable<SuppressionRecord>
 
     /// <summary>
     /// Determines whether the specified <see cref="SuppressionRecord"/> is equal to this instance.
-    /// Two suppression records are considered equal if they have the same RuleId and TargetFile (after normalization).
+    /// Equality is based on all public properties.
     /// </summary>
     /// <param name="other">The suppression record to compare with this instance.</param>
     /// <returns>true if the specified object is equal to this instance; otherwise, false.</returns>
@@ -100,10 +100,14 @@ public sealed class SuppressionRecord : IEquatable<SuppressionRecord>
         if (other is null)
             return false;
 
-        // Two suppression records are considered equal if they suppress the same rule in the same file
-        // This matches the logic used in Matches() method for consistency
-        return string.Equals(RuleId, other.RuleId, StringComparison.OrdinalIgnoreCase) &&
-               PathNormalizer.AreEquivalent(TargetFile ?? string.Empty, other.TargetFile ?? string.Empty);
+        return string.Equals(Id, other.Id, StringComparison.Ordinal) &&
+               string.Equals(RuleId, other.RuleId, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(TargetFile ?? string.Empty, other.TargetFile ?? string.Empty, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(TargetElement ?? string.Empty, other.TargetElement ?? string.Empty, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(Justification, other.Justification, StringComparison.Ordinal) &&
+               CreatedAt.Equals(other.CreatedAt) &&
+               Nullable.Equals(ExpiresAt, other.ExpiresAt) &&
+               string.Equals(Author, other.Author, StringComparison.Ordinal);
     }
 
     /// <summary>
@@ -119,14 +123,16 @@ public sealed class SuppressionRecord : IEquatable<SuppressionRecord>
     /// <returns>A hash code for this instance.</returns>
     public override int GetHashCode()
     {
-        // Use the same fields that are compared in Equals for consistency
-        // with hash-based collections
-        unchecked
-        {
-            var hashCode = StringComparer.OrdinalIgnoreCase.GetHashCode(RuleId);
-            hashCode = (hashCode * 397) ^ PathNormalizer.GetHashCode(TargetFile ?? string.Empty);
-            return hashCode;
-        }
+        // Use case‑insensitive hashing for string fields that are compared case‑insensitively
+        return HashCode.Combine(
+            Id,
+            RuleId?.ToUpperInvariant(),
+            (TargetFile ?? string.Empty).ToUpperInvariant(),
+            (TargetElement ?? string.Empty).ToUpperInvariant(),
+            Justification,
+            CreatedAt,
+            ExpiresAt,
+            Author);
     }
 
     /// <summary>
