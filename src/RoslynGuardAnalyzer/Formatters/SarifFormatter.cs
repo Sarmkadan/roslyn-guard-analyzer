@@ -21,7 +21,7 @@ namespace RoslynGuardAnalyzer.Formatters;
 /// Formats analysis results as SARIF 2.1.0 (Static Analysis Results Interchange Format).
 /// SARIF is a JSON-based standard format for the output of static analysis tools.
 /// </summary>
-public sealed class SarifFormatter : IOutputFormatter
+public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter>
 {
     private const string SarifVersion = "2.1.0";
     private const string SarifSchema = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json";
@@ -238,6 +238,37 @@ public sealed class SarifFormatter : IOutputFormatter
     {
         return $"https://github.com/sarmkadan/roslyn-guard-analyzer/wiki/Rules#{ruleId.ToLowerInvariant()}";
     }
+
+    #region IEquatable<SarifFormatter>
+    public bool Equals(SarifFormatter? other)
+    {
+        return other is SarifFormatter otherFormatter &&
+               Format == otherFormatter.Format;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is SarifFormatter other &&
+               Format == other.Format;
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Format);
+    }
+
+    public static bool operator ==(SarifFormatter? left, SarifFormatter? right)
+    {
+        if (ReferenceEquals(left, right)) return true;
+        if (ReferenceEquals(left, null) || ReferenceEquals(right, null)) return false;
+        return left.Format == right.Format;
+    }
+
+    public static bool operator !=(SarifFormatter? left, SarifFormatter? right)
+    {
+        return !(left == right);
+    }
+    #endregion
 }
 
 /// <summary>
