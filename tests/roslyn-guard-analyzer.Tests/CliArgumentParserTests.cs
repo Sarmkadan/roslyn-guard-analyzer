@@ -13,8 +13,14 @@ using Xunit;
 
 namespace RoslynGuardAnalyzer.Tests.Cli;
 
+/// <summary>
+/// Contains unit tests for the <see cref="CliArgumentParser"/> class.
+/// </summary>
 public class CliArgumentParserTests
 {
+    /// <summary>
+    /// Tests that parsing an empty argument list returns default options.
+    /// </summary>
     [Fact]
     public void Parse_EmptyArgs_ReturnsDefaultOptions()
     {
@@ -47,6 +53,9 @@ public class CliArgumentParserTests
         options.FailOnSeverity.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests that parsing the --help flag sets ShowHelp to true.
+    /// </summary>
     [Fact]
     public void Parse_HelpFlag_ShowsHelp()
     {
@@ -61,6 +70,9 @@ public class CliArgumentParserTests
         options.ShowVersion.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests that parsing the -h flag sets ShowHelp to true.
+    /// </summary>
     [Fact]
     public void Parse_HelpShortFlag_ShowsHelp()
     {
@@ -74,6 +86,9 @@ public class CliArgumentParserTests
         options.ShowHelp.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that parsing the --version flag sets ShowVersion to true.
+    /// </summary>
     [Fact]
     public void Parse_VersionFlag_ShowsVersion()
     {
@@ -88,6 +103,9 @@ public class CliArgumentParserTests
         options.ShowHelp.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests that parsing the -v flag sets ShowVersion to true.
+    /// </summary>
     [Fact]
     public void Parse_VersionShortFlag_ShowsVersion()
     {
@@ -101,6 +119,9 @@ public class CliArgumentParserTests
         options.ShowVersion.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that parsing the --verbose flag sets Verbose to true.
+    /// </summary>
     [Fact]
     public void Parse_VerboseFlag_SetsVerbose()
     {
@@ -114,6 +135,9 @@ public class CliArgumentParserTests
         options.Verbose.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that parsing the --skip-cache flag sets SkipCache to true.
+    /// </summary>
     [Fact]
     public void Parse_SkipCacheFlag_SetsSkipCache()
     {
@@ -127,6 +151,9 @@ public class CliArgumentParserTests
         options.SkipCache.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that parsing --project=<path> sets ProjectPath to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_ProjectPathWithEquals_SetsProjectPath()
     {
@@ -141,6 +168,9 @@ public class CliArgumentParserTests
         options.FilePath.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests that parsing --project <path> sets ProjectPath to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_ProjectPathWithSpace_SetsProjectPath()
     {
@@ -155,6 +185,9 @@ public class CliArgumentParserTests
         options.FilePath.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests that parsing --file=<path> sets FilePath to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_FilePathWithEquals_SetsFilePath()
     {
@@ -169,6 +202,9 @@ public class CliArgumentParserTests
         options.ProjectPath.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests that parsing --file <path> sets FilePath to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_FilePathWithSpace_SetsFilePath()
     {
@@ -183,6 +219,9 @@ public class CliArgumentParserTests
         options.ProjectPath.Should().BeNull();
     }
 
+    /// <summary>
+    /// Tests that parsing --output=<path> sets OutputFile to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_OutputFileWithEquals_SetsOutputFile()
     {
@@ -196,6 +235,9 @@ public class CliArgumentParserTests
         options.OutputFile.Should().Be("/path/to/output.txt");
     }
 
+    /// <summary>
+    /// Tests that parsing --output <path> sets OutputFile to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_OutputFileWithSpace_SetsOutputFile()
     {
@@ -209,6 +251,9 @@ public class CliArgumentParserTests
         options.OutputFile.Should().Be("/path/to/output.txt");
     }
 
+    /// <summary>
+    /// Tests that parsing --format=<format> sets OutputFormat to the specified format.
+    /// </summary>
     [Fact]
     public void Parse_OutputFormatWithEquals_SetsOutputFormat()
     {
@@ -222,6 +267,9 @@ public class CliArgumentParserTests
         options.OutputFormat.Should().Be("json");
     }
 
+    /// <summary>
+    /// Tests that parsing --format <format> sets OutputFormat to the specified format.
+    /// </summary>
     [Fact]
     public void Parse_OutputFormatWithSpace_SetsOutputFormat()
     {
@@ -235,6 +283,9 @@ public class CliArgumentParserTests
         options.OutputFormat.Should().Be("csv");
     }
 
+    /// <summary>
+    /// Tests that parsing --config=<path> sets ConfigFile to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_ConfigFileWithEquals_SetsConfigFile()
     {
@@ -248,6 +299,9 @@ public class CliArgumentParserTests
         options.ConfigFile.Should().Be("/path/to/config.json");
     }
 
+    /// <summary>
+    /// Tests that parsing --config <path> sets ConfigFile to the specified path.
+    /// </summary>
     [Fact]
     public void Parse_ConfigFileWithSpace_SetsConfigFile()
     {
@@ -261,6 +315,9 @@ public class CliArgumentParserTests
         options.ConfigFile.Should().Be("/path/to/config.json");
     }
 
+    /// <summary>
+    /// Tests that parsing --timeout=<seconds> sets AnalysisTimeoutSeconds to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_TimeoutWithEquals_SetsTimeout()
     {
@@ -274,6 +331,9 @@ public class CliArgumentParserTests
         options.AnalysisTimeoutSeconds.Should().Be(60);
     }
 
+    /// <summary>
+    /// Tests that parsing --timeout <seconds> sets AnalysisTimeoutSeconds to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_TimeoutWithSpace_SetsTimeout()
     {
@@ -287,6 +347,9 @@ public class CliArgumentParserTests
         options.AnalysisTimeoutSeconds.Should().Be(120);
     }
 
+    /// <summary>
+    /// Tests that parsing --timeout with an invalid value uses the default timeout (300 seconds).
+    /// </summary>
     [Fact]
     public void Parse_TimeoutInvalidValue_UsesDefault()
     {
@@ -300,6 +363,9 @@ public class CliArgumentParserTests
         options.AnalysisTimeoutSeconds.Should().Be(300); // default value
     }
 
+    /// <summary>
+    /// Tests that parsing --threads=<count> sets MaxParallelThreads to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_ThreadsWithEquals_SetsThreads()
     {
@@ -313,6 +379,9 @@ public class CliArgumentParserTests
         options.MaxParallelThreads.Should().Be(8);
     }
 
+    /// <summary>
+    /// Tests that parsing --threads <count> sets MaxParallelThreads to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_ThreadsWithSpace_SetsThreads()
     {
@@ -326,6 +395,9 @@ public class CliArgumentParserTests
         options.MaxParallelThreads.Should().Be(4);
     }
 
+    /// <summary>
+    /// Tests that parsing --threads with an invalid value uses the default (processor count).
+    /// </summary>
     [Fact]
     public void Parse_ThreadsInvalidValue_UsesDefault()
     {
@@ -339,6 +411,9 @@ public class CliArgumentParserTests
         options.MaxParallelThreads.Should().BeGreaterThan(0); // default value
     }
 
+    /// <summary>
+    /// Tests that parsing --log-level=<level> sets LogLevel to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_LogLevelWithEquals_SetsLogLevel()
     {
@@ -352,6 +427,9 @@ public class CliArgumentParserTests
         options.LogLevel.Should().Be(3);
     }
 
+    /// <summary>
+    /// Tests that parsing --log-level <level> sets LogLevel to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_LogLevelWithSpace_SetsLogLevel()
     {
@@ -365,6 +443,9 @@ public class CliArgumentParserTests
         options.LogLevel.Should().Be(1);
     }
 
+    /// <summary>
+    /// Tests that parsing --log-level with an invalid value uses the default level (2).
+    /// </summary>
     [Fact]
     public void Parse_LogLevelInvalidValue_UsesDefault()
     {
@@ -378,6 +459,9 @@ public class CliArgumentParserTests
         options.LogLevel.Should().Be(2); // default value
     }
 
+    /// <summary>
+    /// Tests that parsing --rule-filter=<list> sets RuleFilter to the parsed list of rules.
+    /// </summary>
     [Fact]
     public void Parse_RuleFilterWithEquals_SetsRuleFilter()
     {
@@ -394,6 +478,9 @@ public class CliArgumentParserTests
         options.RuleFilter.Should().Contain("Rule3");
     }
 
+    /// <summary>
+    /// Tests that parsing --rule-filter <list> sets RuleFilter to the parsed list of rules.
+    /// </summary>
     [Fact]
     public void Parse_RuleFilterWithSpace_SetsRuleFilter()
     {
@@ -409,6 +496,9 @@ public class CliArgumentParserTests
         options.RuleFilter.Should().Contain("RuleB");
     }
 
+    /// <summary>
+    /// Tests that parsing --rule-filter with extra spaces trims the rule names.
+    /// </summary>
     [Fact]
     public void Parse_RuleFilterWithSpaces_TrimsValues()
     {
@@ -424,6 +514,9 @@ public class CliArgumentParserTests
         options.RuleFilter.Should().Contain("Rule2");
     }
 
+    /// <summary>
+    /// Tests that parsing --no-fail-on-violations sets FailOnViolations to false.
+    /// </summary>
     [Fact]
     public void Parse_NoFailOnViolations_SetsFailOnViolationsToFalse()
     {
@@ -437,6 +530,9 @@ public class CliArgumentParserTests
         options.FailOnViolations.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests that parsing --no-report sets GenerateReport to false.
+    /// </summary>
     [Fact]
     public void Parse_NoReport_SetsGenerateReportToFalse()
     {
@@ -450,6 +546,9 @@ public class CliArgumentParserTests
         options.GenerateReport.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests that parsing --report-type=<type> sets ReportType to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_ReportTypeWithEquals_SetsReportType()
     {
@@ -463,6 +562,9 @@ public class CliArgumentParserTests
         options.ReportType.Should().Be("html");
     }
 
+    /// <summary>
+    /// Tests that parsing --report-type <type> sets ReportType to the specified value.
+    /// </summary>
     [Fact]
     public void Parse_ReportTypeWithSpace_SetsReportType()
     {
@@ -476,6 +578,9 @@ public class CliArgumentParserTests
         options.ReportType.Should().Be("xml");
     }
 
+    /// <summary>
+    /// Tests that parsing multiple flags together sets all corresponding options correctly.
+    /// </summary>
     [Fact]
     public void Parse_MixedFlags_AllFlagsParsedCorrectly()
     {
@@ -505,6 +610,9 @@ public class CliArgumentParserTests
         options.ShowVersion.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Tests that parsing a positional project path sets ProjectPath to that path.
+    /// </summary>
     [Fact]
     public void Parse_PositionalProjectPath_SetsProjectPath()
     {
@@ -518,6 +626,9 @@ public class CliArgumentParserTests
         options.ProjectPath.Should().Be("/path/to/project.csproj");
     }
 
+    /// <summary>
+    /// Tests that parsing a positional project path with other flags sets all options correctly.
+    /// </summary>
     [Fact]
     public void Parse_PositionalProjectPathWithOtherFlags_MixedCorrectly()
     {
@@ -537,6 +648,9 @@ public class CliArgumentParserTests
         options.OutputFormat.Should().Be("json");
     }
 
+    /// <summary>
+    /// Tests that parsing short flags (-v, --project=, --threads=) sets the corresponding options.
+    /// </summary>
     [Fact]
     public void Parse_ShortFlags_AllParsedCorrectly()
     {
@@ -556,6 +670,9 @@ public class CliArgumentParserTests
         options.MaxParallelThreads.Should().Be(4);
     }
 
+    /// <summary>
+    /// Tests that parsing an invalid option is ignored while valid options are still processed.
+    /// </summary>
     [Fact]
     public void Parse_InvalidOption_Ignored()
     {
@@ -572,6 +689,9 @@ public class CliArgumentParserTests
         options.ProjectPath.Should().Be("test.csproj");
     }
 
+    /// <summary>
+    /// Tests that parsing --project without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForProject_ThrowsArgumentException()
     {
@@ -582,6 +702,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --file without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForFile_ThrowsArgumentException()
     {
@@ -592,6 +715,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --output without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForOutput_ThrowsArgumentException()
     {
@@ -602,6 +728,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --format without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForFormat_ThrowsArgumentException()
     {
@@ -612,6 +741,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --config without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForConfig_ThrowsArgumentException()
     {
@@ -622,6 +754,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --timeout without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForTimeout_ThrowsArgumentException()
     {
@@ -632,6 +767,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --threads without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForThreads_ThrowsArgumentException()
     {
@@ -642,6 +780,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --log-level without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForLogLevel_ThrowsArgumentException()
     {
@@ -652,6 +793,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --rule-filter without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForRuleFilter_ThrowsArgumentException()
     {
@@ -662,6 +806,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that parsing --report-type without a value throws an ArgumentException.
+    /// </summary>
     [Fact]
     public void Parse_MissingValueForReportType_ThrowsArgumentException()
     {
@@ -672,6 +819,9 @@ public class CliArgumentParserTests
         Assert.Throws<ArgumentException>(() => parser.Parse());
     }
 
+    /// <summary>
+    /// Tests that ParseSafe returns parsed options for valid arguments.
+    /// </summary>
     [Fact]
     public void ParseSafe_WithValidArgs_ReturnsParsedOptions()
     {
@@ -687,6 +837,9 @@ public class CliArgumentParserTests
         options.Verbose.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Tests that all supported output formats (text, json, csv, html, xml, sarif) are correctly parsed.
+    /// </summary>
     [Fact]
     public void Parse_AllOutputFormats_Supported()
     {
@@ -704,6 +857,9 @@ public class CliArgumentParserTests
         }
     }
 
+    /// <summary>
+    /// Tests that a complex scenario with multiple options parses all values correctly.
+    /// </summary>
     [Fact]
     public void Parse_ComplexScenario_AllOptionsWorkTogether()
     {
