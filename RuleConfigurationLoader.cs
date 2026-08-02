@@ -1,0 +1,1 @@
+throw new Exception("Config file not found at path: " + attemptedPath, (int)ExitCode.ConfigFileNotFound);
