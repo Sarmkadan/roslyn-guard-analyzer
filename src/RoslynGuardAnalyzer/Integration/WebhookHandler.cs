@@ -132,6 +132,9 @@ public sealed class WebhookHandler
         {
             var client = _httpClientFactory.CreateClient(webhook.Url, $"webhook-{webhook.Id}");
 
+            // Set explicit timeout of 10 seconds
+            client.Timeout = TimeSpan.FromSeconds(10);
+
             // Add custom headers
             foreach (var header in webhook.Headers)
             {
@@ -149,6 +152,10 @@ public sealed class WebhookHandler
             {
                 Console.Error.WriteLine($"Webhook {webhook.Id} returned status {response.StatusCode}");
             }
+        }
+        catch (TaskCanceledException)
+        {
+            Console.Error.WriteLine($"Webhook {webhook.Id} timed out after 10s");
         }
         catch (Exception ex)
         {
