@@ -388,6 +388,36 @@ var directoryPath = myProject.GetDirectoryPath();
 directoryPath.Should().NotBeEmpty();
 ```
 
+## BaselineViolation
+
+The `BaselineViolation` class represents a persisted violation record accepted into a project's baseline, enabling the suppression of known issues in subsequent analysis runs. It tracks critical metadata—including Rule ID, file path, line number, and a content hash—to ensure accurate matching even if the code drifts slightly (e.g., due to unrelated insertions or deletions).
+
+### Usage Example
+
+```csharp
+using System;
+using RoslynGuardAnalyzer.Domain.Models;
+
+// Assuming 'violation' is a RuleViolation instance obtained from the analysis engine
+var baselineViolation = BaselineViolation.FromRuleViolation(violation);
+
+// Accessing core properties of the baseline violation
+Console.WriteLine($"Violation ID: {baselineViolation.Id}");
+Console.WriteLine($"Rule ID: {baselineViolation.RuleId}");
+Console.WriteLine($"File Path: {baselineViolation.FilePath}");
+Console.WriteLine($"Line Number: {baselineViolation.LineNumber}");
+Console.WriteLine($"Content Hash: {baselineViolation.ContentHash}");
+
+// Using Matches() to check if a new violation is covered by this baseline record
+// Matches() is resilient to minor line number drift (up to 5 lines)
+var isSuppressed = baselineViolation.Matches(currentViolation);
+Console.WriteLine($"Violation is suppressed: {isSuppressed}");
+
+// Checking if the baseline violation is still valid based on its age
+var isStillValid = baselineViolation.IsValid(TimeSpan.FromDays(30));
+Console.WriteLine($"Violation is still valid: {isStillValid}");
+```
+
 ## StringExtensionsTests
 
 The `StringExtensionsTests` class contains comprehensive unit tests for the `StringExtensions` utility methods, verifying correct behavior for string naming convention conversions, distance calculations, and substring counting. It tests methods that convert between different naming formats (PascalCase, camelCase, snake_case), calculate Levenshtein distance for fuzzy string matching, and count substring occurrences for pattern analysis.
