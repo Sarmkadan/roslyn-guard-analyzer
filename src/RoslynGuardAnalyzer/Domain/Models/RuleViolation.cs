@@ -4,14 +4,12 @@
 // CTO & Software Architect
 // =============================================================================
 
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System;
-
+using System.Collections.Generic;
+using System.IO;
 using RoslynGuardAnalyzer.Core;
 using PathNormalizer = RoslynGuardAnalyzer.Domain.Models.PathNormalizer;
+
 namespace RoslynGuardAnalyzer.Domain.Models;
 
 /// <summary>
@@ -25,7 +23,18 @@ public sealed class RuleViolation
     public string RuleName { get; set; }
     public string Message { get; set; }
     public SeverityLevel Severity { get; set; }
-    public string FilePath { get; set; }
+
+    private string _filePath = string.Empty;
+    /// <summary>
+    /// File path of the source file where the violation was detected.
+    /// The path is always stored as a repository‑relative path.
+    /// </summary>
+    public string FilePath
+    {
+        get => _filePath;
+        set => _filePath = NormalizePath(value);
+    }
+
     public int LineNumber { get; set; }
     public int ColumnNumber { get; set; }
     public string? CodeSnippet { get; set; }
@@ -56,11 +65,39 @@ public sealed class RuleViolation
         RuleId = ruleId;
         RuleName = ruleName;
         Message = message;
-        FilePath = filePath;
+        FilePath = filePath; // setter normalizes the path
     }
 
     /// <summary>
-    /// Gets a human-readable location string for the violation.
+    /// Normalizes a file path to be repository‑relative.
+    /// If the supplied path is absolute, it is converted to a path relative to the current working directory
+    /// (which, in CI, is the repository root). Relative paths are left unchanged.
+    /// </summary>
+    private static string NormalizePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return string.Empty;
+
+        // If the path is already relative, return it as‑is.
+        if (!Path.IsPathRooted(path))
+            return path;
+
+        try
+        {
+            // Convert to a path relative to the current directory (repo root).
+            var repoRoot = Directory.GetCurrentDirectory();
+            var relative = Path.GetRelativePath(repoRoot, path);
+            return relative;
+        }
+        catch
+        {
+            // If any exception occurs (e.g., invalid characters), fall back to the original path.
+            return path;
+        }
+    }
+
+    /// <summary>
+    /// Gets a human‑readable location string for the violation.
     /// </summary>
     /// <returns>Formatted location string (e.g., "file.cs(42, 15)").</returns>
     public string GetFormattedLocation()
@@ -117,7 +154,7 @@ public sealed class RuleViolation
             RuleId = RuleId,
             RuleName = RuleName,
             Message = Message,
-            FilePath = FilePath,
+            FilePath = FilePath, // already normalized
             LineNumber = LineNumber,
             ColumnNumber = ColumnNumber,
             CodeSnippet = CodeSnippet,
