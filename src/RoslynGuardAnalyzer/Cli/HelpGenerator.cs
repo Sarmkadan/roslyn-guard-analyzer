@@ -24,6 +24,7 @@ public sealed class HelpGenerator
     public static string GenerateFullHelp()
     {
         var sb = new StringBuilder();
+        var consoleWidth = Console.WindowWidth > 80 ? Console.WindowWidth : 80;
 
         sb.AppendLine($"{AppName} v{AppVersion}");
         sb.AppendLine("Roslyn-based code analyzer enforcing architectural rules");
@@ -43,35 +44,39 @@ public sealed class HelpGenerator
         sb.AppendLine("OPTIONS:");
         sb.AppendLine();
 
-        sb.AppendLine("Analysis Targets:");
-        sb.AppendLine("  --project PATH          Path to project file (.csproj) or directory");
-        sb.AppendLine("  --file PATH             Path to single C# file to analyze");
-        sb.AppendLine();
+        var options = new[]
+        {
+            new { Name = "--project", Description = "Path to project file (.csproj) or directory" },
+            new { Name = "--file", Description = "Path to single C# file to analyze" },
+            new { Name = "--format", Description = "Output format: text, json, csv, html, xml (default: text)" },
+            new { Name = "--output", Description = "Write output to file (default: stdout)" },
+            new { Name = "--report-type", Description = "Report type: summary, detailed, violations (default: summary)" },
+            new { Name = "--no-report", Description = "Skip report generation" },
+            new { Name = "--config", Description = "Path to configuration file" },
+            new { Name = "--rule-filter", Description = "Comma-separated rule names to apply" },
+            new { Name = "--timeout", Description = "Analysis timeout in seconds (default: 300)" },
+            new { Name = "--threads", Description = "Number of parallel threads (default: CPU count)" },
+            new { Name = "--skip-cache", Description = "Skip analysis result caching" },
+            new { Name = "--no-fail-on-violations", Description = "Exit with 0 even if violations found" },
+            new { Name = "--verbose", Description = "Verbose output" },
+            new { Name = "--log-level", Description = "Log level: 0=silent, 1=error, 2=warn, 3=info, 4=debug" },
+            new { Name = "-h", Description = "Show this help message" },
+            new { Name = "--help", Description = "Show this help message" },
+            new { Name = "-v", Description = "Show version information" },
+            new { Name = "--version", Description = "Show version information" },
+        };
 
-        sb.AppendLine("Output Options:");
-        sb.AppendLine("  --format FORMAT         Output format: text, json, csv, html, xml (default: text)");
-        sb.AppendLine("  --output FILE           Write output to file (default: stdout)");
-        sb.AppendLine("  --report-type TYPE      Report type: summary, detailed, violations (default: summary)");
-        sb.AppendLine("  --no-report             Skip report generation");
-        sb.AppendLine();
+        foreach (var option in options)
+        {
+            var maxLength = option.Name.Length;
+            if (option.Description.Length > maxLength)
+            {
+                maxLength = option.Description.Length;
+            }
 
-        sb.AppendLine("Analysis Options:");
-        sb.AppendLine("  --config FILE           Path to configuration file");
-        sb.AppendLine("  --rule-filter RULES     Comma-separated rule names to apply");
-        sb.AppendLine("  --timeout SECONDS       Analysis timeout in seconds (default: 300)");
-        sb.AppendLine("  --threads NUM           Number of parallel threads (default: CPU count)");
-        sb.AppendLine("  --skip-cache            Skip analysis result caching");
-        sb.AppendLine();
+            sb.AppendLine($"  {option.Name,-20} {option.Description.PadRight(maxLength)}");
+        }
 
-        sb.AppendLine("Behavior Options:");
-        sb.AppendLine("  --no-fail-on-violations Exit with 0 even if violations found");
-        sb.AppendLine("  --verbose               Verbose output");
-        sb.AppendLine("  --log-level LEVEL       Log level: 0=silent, 1=error, 2=warn, 3=info, 4=debug");
-        sb.AppendLine();
-
-        sb.AppendLine("Help & Information:");
-        sb.AppendLine("  -h, --help              Show this help message");
-        sb.AppendLine("  -v, --version           Show version information");
         sb.AppendLine();
 
         sb.AppendLine("SUPPORTED RULES:");
@@ -97,6 +102,7 @@ public sealed class HelpGenerator
     public static string GenerateBriefHelp()
     {
         var sb = new StringBuilder();
+        var consoleWidth = Console.WindowWidth > 80 ? Console.WindowWidth : 80;
 
         sb.AppendLine($"{AppName} - Architectural Rules Analyzer");
         sb.AppendLine();
