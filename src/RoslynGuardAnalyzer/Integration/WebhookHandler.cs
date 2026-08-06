@@ -77,6 +77,7 @@ public sealed class WebhookHandler
     /// </summary>
     public bool UnregisterWebhook(string webhookId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(webhookId);
         lock (_lockObject)
         {
             var webhook = _webhooks.FirstOrDefault(w => w.Id == webhookId);
@@ -89,6 +90,7 @@ public sealed class WebhookHandler
     /// </summary>
     public bool DeactivateWebhook(string webhookId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(webhookId);
         lock (_lockObject)
         {
             var webhook = _webhooks.FirstOrDefault(w => w.Id == webhookId);
@@ -107,6 +109,8 @@ public sealed class WebhookHandler
     /// </summary>
     public async Task TriggerWebhooksAsync(string eventType, string jsonPayload)
     {
+        ArgumentException.ThrowIfNullOrEmpty(eventType);
+        ArgumentException.ThrowIfNullOrEmpty(jsonPayload);
         List<WebhookRegistration> matchingWebhooks;
 
         lock (_lockObject)
@@ -179,6 +183,7 @@ public sealed class WebhookHandler
     /// </summary>
     public IReadOnlyList<WebhookRegistration> GetWebhooksForEvent(string eventType)
     {
+        ArgumentException.ThrowIfNullOrEmpty(eventType);
         lock (_lockObject)
         {
             return _webhooks
