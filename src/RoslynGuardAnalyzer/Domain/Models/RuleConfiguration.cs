@@ -53,6 +53,8 @@ public sealed class RuleConfiguration
     public RuleConfiguration(string name, string description)
         : this()
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(description);
         Name = name;
         Description = description;
     }
@@ -62,7 +64,8 @@ public sealed class RuleConfiguration
     /// </summary>
     public void AddRule(AnalysisRule rule)
     {
-        if (rule is not null && !EnabledRules.Any(r => r.Id == rule.Id))
+        ArgumentNullException.ThrowIfNull(rule);
+        if (!EnabledRules.Any(r => r.Id == rule.Id))
         {
             EnabledRules.Add(rule);
         }
@@ -73,6 +76,7 @@ public sealed class RuleConfiguration
     /// </summary>
     public bool RemoveRule(string ruleId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ruleId);
         var rule = EnabledRules.FirstOrDefault(r => r.Id == ruleId);
         if (rule is not null)
         {
@@ -88,6 +92,7 @@ public sealed class RuleConfiguration
     /// </summary>
     public AnalysisRule? GetRule(string ruleId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ruleId);
         return EnabledRules.FirstOrDefault(r => r.Id == ruleId);
     }
 
@@ -96,7 +101,8 @@ public sealed class RuleConfiguration
     /// </summary>
     public void ExcludeNamespace(string namespaceName)
     {
-        if (!string.IsNullOrWhiteSpace(namespaceName) && !ExcludedNamespaces.Contains(namespaceName))
+        ArgumentException.ThrowIfNullOrEmpty(namespaceName);
+        if (!ExcludedNamespaces.Contains(namespaceName))
         {
             ExcludedNamespaces.Add(namespaceName);
         }
@@ -107,7 +113,8 @@ public sealed class RuleConfiguration
     /// </summary>
     public void ExcludeFile(string filePattern)
     {
-        if (!string.IsNullOrWhiteSpace(filePattern) && !ExcludedFiles.Contains(filePattern))
+        ArgumentException.ThrowIfNullOrEmpty(filePattern);
+        if (!ExcludedFiles.Contains(filePattern))
         {
             ExcludedFiles.Add(filePattern);
         }
@@ -118,6 +125,7 @@ public sealed class RuleConfiguration
     /// </summary>
     public bool ShouldAnalyzeFile(string filePath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         if (string.IsNullOrWhiteSpace(filePath))
             return false;
 
@@ -135,6 +143,7 @@ public sealed class RuleConfiguration
     /// </summary>
     public bool ShouldAnalyzeNamespace(string namespaceName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(namespaceName);
         if (string.IsNullOrWhiteSpace(namespaceName))
             return true;
 
@@ -158,6 +167,7 @@ public sealed class RuleConfiguration
     /// </summary>
     public string? GetCustomSetting(string key, string? defaultValue = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
         return CustomSettings.TryGetValue(key, out var value) ? value : defaultValue;
     }
 
