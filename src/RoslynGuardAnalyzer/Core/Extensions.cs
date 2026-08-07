@@ -54,6 +54,7 @@ public static class DomainExtensions
     /// </summary>
     public static bool IsBlockingViolation(this RuleViolation violation)
     {
+        ArgumentNullException.ThrowIfNull(violation);
         return violation.Severity == SeverityLevel.Critical
             || violation.Severity == SeverityLevel.Error;
     }
