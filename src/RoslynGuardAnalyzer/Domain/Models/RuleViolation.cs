@@ -62,6 +62,10 @@ public sealed class RuleViolation
     public RuleViolation(string ruleId, string ruleName, string message, string filePath)
         : this()
     {
+        ArgumentException.ThrowIfNullOrEmpty(ruleId);
+        ArgumentException.ThrowIfNullOrEmpty(ruleName);
+        ArgumentException.ThrowIfNullOrEmpty(message);
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         RuleId = ruleId;
         RuleName = ruleName;
         Message = message;
@@ -122,6 +126,7 @@ public sealed class RuleViolation
     {
         if (string.IsNullOrWhiteSpace(key))
             throw new ArgumentException("Metadata key cannot be null or empty.", nameof(key));
+        ArgumentException.ThrowIfNullOrEmpty(value);
 
         Metadata[key] = value ?? string.Empty;
     }

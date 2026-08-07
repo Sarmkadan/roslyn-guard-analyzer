@@ -41,7 +41,7 @@ public sealed class WebhookHandler
     {
     }
 
-    public WebhookHandler(HttpClientFactory? httpClientFactory)
+    public WebhookHandler(HttpClientFactory? httpClientFactory = null)
     {
         _httpClientFactory = httpClientFactory ?? new HttpClientFactory();
     }
