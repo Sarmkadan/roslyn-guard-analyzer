@@ -136,6 +136,7 @@ public sealed class RuleViolation
     /// </summary>
     public string? GetMetadata(string key, string? defaultValue = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
         return Metadata.TryGetValue(key, out var value) ? value : defaultValue;
     }
 
