@@ -46,6 +46,8 @@ public sealed class ViolationReport
     public ViolationReport(string title, string projectName)
         : this()
     {
+        ArgumentException.ThrowIfNullOrEmpty(title);
+        ArgumentException.ThrowIfNullOrEmpty(projectName);
         Title = title;
         ProjectName = projectName;
     }
@@ -55,11 +57,9 @@ public sealed class ViolationReport
     /// </summary>
     public void AddViolationGroup(ViolationGroup group)
     {
-        if (group is not null)
-        {
-            ViolationGroups.Add(group);
-            UpdateStatistics();
-        }
+        ArgumentNullException.ThrowIfNull(group);
+        ViolationGroups.Add(group);
+        UpdateStatistics();
     }
 
     /// <summary>
@@ -96,6 +96,7 @@ public sealed class ViolationReport
     /// </summary>
     public List<RuleViolation> GetViolationsFromFile(string filePath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         var violations = new List<RuleViolation>();
 
         foreach (var group in ViolationGroups)
@@ -170,6 +171,8 @@ public sealed class ViolationGroup
     public ViolationGroup(string name, string description)
         : this()
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(description);
         Name = name;
         Description = description;
     }
@@ -179,7 +182,8 @@ public sealed class ViolationGroup
     /// </summary>
     public void AddViolation(RuleViolation violation)
     {
-        if (violation is not null && !Violations.Any(v => v.Id == violation.Id))
+        ArgumentNullException.ThrowIfNull(violation);
+        if (!Violations.Any(v => v.Id == violation.Id))
         {
             Violations.Add(violation);
         }
