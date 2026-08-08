@@ -166,7 +166,6 @@ public sealed class CodeElement
     /// <returns>Formatted description string.</returns>
     public string GetDescription()
     {
-        ArgumentNullException.ThrowIfNull(ElementType);
         var desc = $"{ElementType} {GetFullyQualifiedName()}";
         if (!string.IsNullOrWhiteSpace(ReturnType))
             desc += $" : {ReturnType}";
