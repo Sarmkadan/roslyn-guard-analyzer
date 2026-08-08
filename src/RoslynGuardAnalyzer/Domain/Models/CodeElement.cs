@@ -63,6 +63,8 @@ public sealed class CodeElement
     public CodeElement(string name, CodeElementType elementType, string filePath)
         : this()
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         Name = name;
         ElementType = elementType;
         FilePath = filePath;
@@ -95,6 +97,7 @@ public sealed class CodeElement
     /// </summary>
     public void AddDependency(string dependencyName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(dependencyName);
         if (!string.IsNullOrWhiteSpace(dependencyName) && !Dependencies.Contains(dependencyName))
         {
             Dependencies.Add(dependencyName);
@@ -106,6 +109,7 @@ public sealed class CodeElement
     /// </summary>
     public bool HasAttribute(string attributeName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(attributeName);
         return Attributes.Any(a => a.Contains(attributeName, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -114,6 +118,7 @@ public sealed class CodeElement
     /// </summary>
     public void AddAttribute(string attributeName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(attributeName);
         if (!string.IsNullOrWhiteSpace(attributeName) && !Attributes.Contains(attributeName))
         {
             Attributes.Add(attributeName);
@@ -136,6 +141,7 @@ public sealed class CodeElement
     /// <returns>True if the element's namespace starts with the given prefix.</returns>
     public bool IsInNamespace(string namespacePrefix)
     {
+        ArgumentException.ThrowIfNullOrEmpty(namespacePrefix);
         return !string.IsNullOrWhiteSpace(Namespace)
             && Namespace.StartsWith(namespacePrefix, StringComparison.Ordinal);
     }
@@ -160,6 +166,7 @@ public sealed class CodeElement
     /// <returns>Formatted description string.</returns>
     public string GetDescription()
     {
+        ArgumentNullException.ThrowIfNull(ElementType);
         var desc = $"{ElementType} {GetFullyQualifiedName()}";
         if (!string.IsNullOrWhiteSpace(ReturnType))
             desc += $" : {ReturnType}";
@@ -171,6 +178,7 @@ public sealed class CodeElement
     /// </summary>
     public bool IsValid()
     {
+        ArgumentException.ThrowIfNullOrEmpty(Name);
         return !string.IsNullOrWhiteSpace(Name)
             && !string.IsNullOrWhiteSpace(FilePath)
             && StartLineNumber > 0
