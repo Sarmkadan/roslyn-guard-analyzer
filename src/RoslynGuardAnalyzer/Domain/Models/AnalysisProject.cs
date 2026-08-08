@@ -44,6 +44,8 @@ public sealed class AnalysisProject
     public AnalysisProject(string name, string path)
         : this()
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(path);
         Name = name;
         Path = path;
     }
@@ -51,8 +53,9 @@ public sealed class AnalysisProject
     /// <summary>
     /// Adds a source file to the project's file list.
     /// </summary>
-    public void AddSourceFile(string filePath)
+    public void AddSourceFile(string? filePath)
     {
+        ArgumentNullException.ThrowIfNull(filePath);
         if (!string.IsNullOrWhiteSpace(filePath) && !SourceFiles.Contains(filePath))
         {
             SourceFiles.Add(filePath);
@@ -65,6 +68,7 @@ public sealed class AnalysisProject
     /// </summary>
     public void AddReferencedProject(string projectPath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(projectPath);
         if (!string.IsNullOrWhiteSpace(projectPath) && !ReferencedProjects.Contains(projectPath))
         {
             ReferencedProjects.Add(projectPath);
@@ -84,6 +88,7 @@ public sealed class AnalysisProject
     /// </summary>
     public string? GetProperty(string key, string? defaultValue = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
         return Properties.TryGetValue(key, out var value) ? value : defaultValue;
     }
 
@@ -92,8 +97,7 @@ public sealed class AnalysisProject
     /// </summary>
     public void SetProperty(string key, string value)
     {
-        if (string.IsNullOrWhiteSpace(key))
-            throw new ArgumentException("Property key cannot be null or empty.", nameof(key));
+        ArgumentException.ThrowIfNullOrEmpty(key);
 
         Properties[key] = value ?? string.Empty;
     }
@@ -131,6 +135,7 @@ public sealed class AnalysisProject
     /// </summary>
     public bool IsValid()
     {
+        ArgumentException.ThrowIfNullOrEmpty(Name);
         return !string.IsNullOrWhiteSpace(Name)
             && !string.IsNullOrWhiteSpace(Path)
             && Directory.Exists(Path);
@@ -141,6 +146,7 @@ public sealed class AnalysisProject
     /// </summary>
     public string GetDirectoryPath()
     {
+        ArgumentException.ThrowIfNullOrEmpty(Path);
         return Directory.Exists(Path) ? Path : System.IO.Path.GetDirectoryName(Path) ?? string.Empty;
     }
 }
