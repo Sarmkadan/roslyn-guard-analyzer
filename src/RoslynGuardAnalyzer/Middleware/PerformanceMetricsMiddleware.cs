@@ -34,6 +34,9 @@ public sealed class PerformanceMetricsMiddleware : IMiddleware
 
     public async Task InvokeAsync(PipelineContext context, MiddlewareDelegate next)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(next);
+
         var metrics = new PerformanceMetrics
         {
             StartTime = DateTime.UtcNow,
@@ -65,6 +68,9 @@ public sealed class PerformanceMetricsMiddleware : IMiddleware
     /// </summary>
     public static void RecordComponentTiming(PipelineContext context, string componentName, long milliseconds)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentException.ThrowIfNullOrEmpty(componentName);
+
         var metrics = context.GetItem<PerformanceMetrics>(MetricsKey);
         if (metrics is not null)
         {
@@ -80,6 +86,7 @@ public sealed class PerformanceMetricsMiddleware : IMiddleware
     /// </summary>
     public static PerformanceMetrics? GetMetrics(PipelineContext context)
     {
+        ArgumentNullException.ThrowIfNull(context);
         return context.GetItem<PerformanceMetrics>(MetricsKey);
     }
 
