@@ -38,6 +38,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
     /// </summary>
     public IReadOnlyList<AnalysisProject> GetByTargetFramework(string targetFramework)
     {
+        ArgumentException.ThrowIfNullOrEmpty(targetFramework);
         return Find(p => p.TargetFramework?.Equals(targetFramework, StringComparison.OrdinalIgnoreCase) == true);
     }
 
@@ -54,6 +55,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
     /// </summary>
     public IReadOnlyList<AnalysisProject> GetByLanguage(string language)
     {
+        ArgumentException.ThrowIfNullOrEmpty(language);
         return Find(p => p.Language?.Equals(language, StringComparison.OrdinalIgnoreCase) == true);
     }
 
@@ -70,6 +72,8 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
     /// </summary>
     public IReadOnlyList<AnalysisProject> GetAnalyzedAfter(DateTime date)
     {
+        if (date == DateTime.MinValue)
+            throw new ArgumentException("Date cannot be empty", nameof(date));
         return Find(p => p.AnalyzedAt > date);
     }
 
@@ -78,6 +82,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
     /// </summary>
     public IReadOnlyList<AnalysisProject> SearchByName(string pattern)
     {
+        ArgumentException.ThrowIfNullOrEmpty(pattern);
         return Find(p => p.Name.Contains(pattern, StringComparison.OrdinalIgnoreCase));
     }
 
@@ -86,6 +91,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
     /// </summary>
     public AnalysisProject? FindByPath(string path)
     {
+        ArgumentException.ThrowIfNullOrEmpty(path);
         return Find(p => p.Path.Equals(path, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
     }
 
@@ -155,6 +161,7 @@ public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
     /// </summary>
     public async Task ExportAsync(string filePath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         try
         {
             var projects = GetAll();
