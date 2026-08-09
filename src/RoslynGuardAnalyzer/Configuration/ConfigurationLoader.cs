@@ -48,6 +48,8 @@ public sealed class ConfigurationLoader
     /// </summary>
     public static async Task<AnalysisConfig?> TryLoadDefaultAsync(string projectPath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(projectPath, nameof(projectPath));
+
         var directory = new DirectoryInfo(projectPath);
 
         while (directory is not null)
