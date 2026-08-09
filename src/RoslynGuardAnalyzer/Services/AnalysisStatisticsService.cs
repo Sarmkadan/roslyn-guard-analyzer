@@ -40,7 +40,8 @@ public sealed class AnalysisStatisticsService
     /// </summary>
     public static ViolationStatistics CalculateStatistics(IEnumerable<RuleViolation>? violations)
     {
-        var violationList = violations?.ToList() ?? [];
+        ArgumentNullException.ThrowIfNull(violations);
+        var violationList = violations.ToList();
 
         var stats = new ViolationStatistics
         {
