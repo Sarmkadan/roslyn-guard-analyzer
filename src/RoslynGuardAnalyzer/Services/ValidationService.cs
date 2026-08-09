@@ -22,7 +22,7 @@ public sealed class ValidationService : IValidationService
     /// <summary>
     /// Validates a rule configuration for consistency and completeness.
     /// </summary>
-    public (bool IsValid, List<string> Errors) ValidateRuleConfiguration(RuleConfiguration config)
+    public (bool IsValid, List<string> Errors) ValidateRuleConfiguration(RuleConfiguration? config)
     {
         var errors = new List<string>();
 
