@@ -21,6 +21,8 @@ public static class PathNormalizer
     /// </summary>
     public static string Normalize(string path)
     {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
         if (string.IsNullOrWhiteSpace(path))
             return string.Empty;
 
@@ -33,6 +35,7 @@ public static class PathNormalizer
     /// </summary>
     public static string[] NormalizeMany(params string[] paths)
     {
+        ArgumentNullException.ThrowIfNull(paths);
         return paths.Select(Normalize).ToArray();
     }
 
@@ -41,6 +44,9 @@ public static class PathNormalizer
     /// </summary>
     public static bool ArePathsEqual(string path1, string path2)
     {
+        ArgumentException.ThrowIfNullOrEmpty(path1);
+        ArgumentException.ThrowIfNullOrEmpty(path2);
+
         var normalized1 = Normalize(path1);
         var normalized2 = Normalize(path2);
 
@@ -56,6 +62,9 @@ public static class PathNormalizer
     /// </summary>
     public static string GetRelativePath(string basePath, string targetPath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(basePath);
+        ArgumentException.ThrowIfNullOrEmpty(targetPath);
+
         var normalizedBase = Normalize(basePath);
         var normalizedTarget = Normalize(targetPath);
 
