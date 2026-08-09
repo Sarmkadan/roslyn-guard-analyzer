@@ -39,6 +39,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     /// </summary>
     public IReadOnlyList<AnalysisRule> GetByCategory(RuleCategory category)
     {
+        ArgumentNullException.ThrowIfNull(category);
         return Find(r => r.Category == category);
     }
 
@@ -71,6 +72,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     /// </summary>
     public bool DisableRule(string ruleId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ruleId);
         var rule = GetById(ruleId);
         if (rule is null)
             return false;
@@ -86,6 +88,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     /// </summary>
     public bool EnableRule(string ruleId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ruleId);
         var rule = GetById(ruleId);
         if (rule is null)
             return false;
@@ -154,6 +157,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     /// </summary>
     public async Task ExportAsync(string filePath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         try
         {
             var rules = GetAll();
@@ -174,6 +178,7 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     /// </summary>
     public async Task ImportAsync(string filePath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         if (!File.Exists(filePath))
             throw new FileNotFoundException($"Import file not found: {filePath}");
 
