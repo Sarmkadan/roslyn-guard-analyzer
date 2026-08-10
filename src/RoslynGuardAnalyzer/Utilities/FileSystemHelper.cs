@@ -29,6 +29,8 @@ public static class FileSystemHelper
     /// </summary>
     public static string[] FindCSharpFiles(string directory, string[]? additionalExclusions = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(directory);
+
         var exclusions = DefaultExclusionPatterns.Concat(additionalExclusions ?? []).ToHashSet();
 
         try
@@ -47,6 +49,8 @@ public static class FileSystemHelper
     /// </summary>
     public static string[] FindProjectFiles(string directory)
     {
+        ArgumentException.ThrowIfNullOrEmpty(directory);
+
         var exclusions = DefaultExclusionPatterns.ToHashSet();
 
         try
@@ -68,6 +72,8 @@ public static class FileSystemHelper
     /// </summary>
     public static async Task<string?> ReadFileAsync(string filePath)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
+
         try
         {
             return await File.ReadAllTextAsync(filePath);
@@ -87,6 +93,9 @@ public static class FileSystemHelper
     /// </summary>
     public static async Task<bool> WriteFileAsync(string filePath, string content)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
+        ArgumentException.ThrowIfNullOrEmpty(content);
+
         try
         {
             var directory = Path.GetDirectoryName(filePath);
@@ -113,6 +122,8 @@ public static class FileSystemHelper
     /// </summary>
     public static bool FileExists(string path)
     {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
         try
         {
             return File.Exists(path);
@@ -128,6 +139,8 @@ public static class FileSystemHelper
     /// </summary>
     public static bool DirectoryExists(string path)
     {
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
         try
         {
             return Directory.Exists(path);
