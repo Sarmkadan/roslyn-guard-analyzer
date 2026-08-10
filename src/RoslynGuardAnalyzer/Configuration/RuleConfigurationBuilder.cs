@@ -23,10 +23,9 @@ public sealed class RuleConfigurationBuilder
     private readonly Dictionary<string, object> _parameters = [];
     private string _description = string.Empty;
 
-    public RuleConfigurationBuilder(string ruleName)
+    public RuleConfigurationBuilder(string? ruleName)
     {
-        if (string.IsNullOrWhiteSpace(ruleName))
-            throw new ArgumentException("Rule name cannot be null or empty", nameof(ruleName));
+        ArgumentException.ThrowIfNullOrEmpty(ruleName);
 
         _ruleName = ruleName;
     }
@@ -45,6 +44,8 @@ public sealed class RuleConfigurationBuilder
     /// </summary>
     public RuleConfigurationBuilder WithSeverity(string severity)
     {
+        ArgumentException.ThrowIfNullOrEmpty(severity);
+
         var validSeverities = new[] { "Low", "Medium", "High", "Critical" };
         if (!validSeverities.Contains(severity, StringComparer.OrdinalIgnoreCase))
             throw new ArgumentException($"Invalid severity: {severity}", nameof(severity));
@@ -56,10 +57,9 @@ public sealed class RuleConfigurationBuilder
     /// <summary>
     /// Adds a configuration parameter.
     /// </summary>
-    public RuleConfigurationBuilder WithParameter(string key, object value)
+    public RuleConfigurationBuilder WithParameter(string? key, object? value)
     {
-        if (string.IsNullOrWhiteSpace(key))
-            throw new ArgumentException("Parameter key cannot be null or empty", nameof(key));
+        ArgumentException.ThrowIfNullOrEmpty(key);
 
         _parameters[key] = value;
         return this;
@@ -70,11 +70,10 @@ public sealed class RuleConfigurationBuilder
     /// </summary>
     public RuleConfigurationBuilder WithParameters(Dictionary<string, object> parameters)
     {
-        if (parameters is not null)
-        {
-            foreach (var (key, value) in parameters)
-                WithParameter(key, value);
-        }
+        ArgumentNullException.ThrowIfNull(parameters);
+
+        foreach (var (key, value) in parameters)
+            WithParameter(key, value);
 
         return this;
     }
@@ -84,7 +83,9 @@ public sealed class RuleConfigurationBuilder
     /// </summary>
     public RuleConfigurationBuilder WithDescription(string description)
     {
-        _description = description ?? string.Empty;
+        ArgumentException.ThrowIfNullOrEmpty(description);
+
+        _description = description;
         return this;
     }
 
