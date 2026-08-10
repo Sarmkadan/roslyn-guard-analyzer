@@ -23,7 +23,7 @@ public sealed class CsvFormatter : IOutputFormatter
 
     public bool CanFormat(string format)
     {
-        ArgumentException.ThrowIfNullOrEmpty(nameof(format));
+        ArgumentException.ThrowIfNullOrEmpty(format);
         return format.Equals(Format, StringComparison.OrdinalIgnoreCase);
     }
 
