@@ -23,11 +23,13 @@ public sealed class CsvFormatter : IOutputFormatter
 
     public bool CanFormat(string format)
     {
+        ArgumentException.ThrowIfNullOrEmpty(nameof(format));
         return format.Equals(Format, StringComparison.OrdinalIgnoreCase);
     }
 
     public string FormatResult(AnalysisResult result)
     {
+        ArgumentNullException.ThrowIfNull(nameof(result));
         return FormatViolations(result.Violations);
     }
 
