@@ -67,6 +67,7 @@ public sealed class ConfigurationValidator
     /// </summary>
     public static ValidationResult ValidateAnalysisConfig(AnalysisConfig config)
     {
+        ArgumentNullException.ThrowIfNull(config);
         var result = new ValidationResult { IsValid = true };
 
         if (config is null)
@@ -124,6 +125,7 @@ public sealed class ConfigurationValidator
     /// </summary>
     public static ValidationResult ValidateCliOptions(Cli.CliOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
         var result = new ValidationResult { IsValid = true };
 
         if (options is null)
@@ -171,6 +173,8 @@ public sealed class ConfigurationValidator
         IEnumerable<string> ruleNames,
         IEnumerable<string> supportedRules)
     {
+        ArgumentNullException.ThrowIfNull(ruleNames);
+        ArgumentNullException.ThrowIfNull(supportedRules);
         var result = new ValidationResult { IsValid = true };
 
         if (ruleNames is null || supportedRules is null)
