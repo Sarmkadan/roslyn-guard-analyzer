@@ -26,6 +26,7 @@ public static class CacheKeyGenerator
     /// </summary>
     public static string GenerateProjectAnalysisKey(string projectPath, string configHash = "")
     {
+        ArgumentException.ThrowIfNullOrEmpty(projectPath);
         var pathHash = ComputeHash(projectPath);
         var config = string.IsNullOrEmpty(configHash) ? "" : $"_{configHash}";
         return $"{AnalysisPrefix}_{ProjectPrefix}_{pathHash}{config}";
@@ -36,6 +37,7 @@ public static class CacheKeyGenerator
     /// </summary>
     public static string GenerateFileAnalysisKey(string filePath, string? fileContentHash = null)
     {
+        ArgumentException.ThrowIfNullOrEmpty(filePath);
         var pathHash = ComputeHash(filePath);
         var content = fileContentHash ?? "";
         return $"{AnalysisPrefix}_{FilePrefix}_{pathHash}_{content}";
@@ -46,6 +48,7 @@ public static class CacheKeyGenerator
     /// </summary>
     public static string GenerateResultKey(string analysisId)
     {
+        ArgumentException.ThrowIfNullOrEmpty(analysisId);
         return $"{ResultPrefix}_{analysisId}";
     }
 
@@ -54,6 +57,8 @@ public static class CacheKeyGenerator
     /// </summary>
     public static string GenerateRuleExecutionKey(string ruleName, string targetName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(ruleName);
+        ArgumentException.ThrowIfNullOrEmpty(targetName);
         var ruleHash = ComputeHash(ruleName);
         var targetHash = ComputeHash(targetName);
         return $"rule_exec_{ruleHash}_{targetHash}";
@@ -74,6 +79,7 @@ public static class CacheKeyGenerator
     /// </summary>
     public static string ComputeHash(string input)
     {
+        ArgumentException.ThrowIfNullOrEmpty(input);
         if (string.IsNullOrEmpty(input))
             return "empty";
 
