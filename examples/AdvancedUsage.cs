@@ -17,6 +17,10 @@ public class AdvancedUsage
         ISuppressionManager suppressionManager,
         IFixAllProvider fixAllProvider)
     {
+        ArgumentNullException.ThrowIfNull(analysisService);
+        ArgumentNullException.ThrowIfNull(ruleRegistry);
+        ArgumentNullException.ThrowIfNull(suppressionManager);
+        ArgumentNullException.ThrowIfNull(fixAllProvider);
         try
         {
             // 1. Define custom configuration
