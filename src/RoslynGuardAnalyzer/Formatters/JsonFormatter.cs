@@ -24,11 +24,13 @@ public sealed class JsonFormatter : IOutputFormatter
 
     public bool CanFormat(string format)
     {
+        ArgumentException.ThrowIfNullOrEmpty(format);
         return format.Equals(Format, StringComparison.OrdinalIgnoreCase);
     }
 
     public string FormatResult(AnalysisResult result)
     {
+        ArgumentNullException.ThrowIfNull(result);
         var violations = result.Violations.Select(v => new
         {
             v.RuleId,
@@ -59,6 +61,7 @@ public sealed class JsonFormatter : IOutputFormatter
 
     public string FormatViolations(IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         var violationList = violations.Select(v => new
         {
             v.RuleId,
