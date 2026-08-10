@@ -24,7 +24,7 @@ public static class CacheKeyGenerator
     /// <summary>
     /// Generates a cache key for a project analysis.
     /// </summary>
-    public static string GenerateProjectAnalysisKey(string projectPath, string configHash = "")
+    public static string GenerateProjectAnalysisKey(string? projectPath, string? configHash = null)
     {
         ArgumentException.ThrowIfNullOrEmpty(projectPath);
         var pathHash = ComputeHash(projectPath);
