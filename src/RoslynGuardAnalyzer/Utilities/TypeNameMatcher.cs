@@ -26,7 +26,7 @@ public sealed class TypeNameMatcher
     /// </summary>
     public string Pattern => _pattern;
 
-    public TypeNameMatcher(string pattern)
+    public TypeNameMatcher(string? pattern)
     {
         if (string.IsNullOrWhiteSpace(pattern))
             throw new ArgumentException("Pattern cannot be null or empty", nameof(pattern));
@@ -47,7 +47,7 @@ public sealed class TypeNameMatcher
     /// <summary>
     /// Checks if a type name matches the pattern.
     /// </summary>
-    public bool Matches(string typeName)
+    public bool Matches(string? typeName)
     {
         if (string.IsNullOrWhiteSpace(typeName))
             return false;
@@ -61,7 +61,7 @@ public sealed class TypeNameMatcher
     /// <summary>
     /// Checks if a fully qualified type name matches the pattern.
     /// </summary>
-    public bool MatchesFullyQualified(string @namespace, string typeName)
+    public bool MatchesFullyQualified(string? @namespace, string? typeName)
     {
         var fullName = string.IsNullOrEmpty(@namespace)
             ? typeName
