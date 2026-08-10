@@ -22,6 +22,7 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<MethodInfo> GetPublicMethods(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         return type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static)
             .Where(m => !m.IsSpecialName);
     }
@@ -31,6 +32,7 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<PropertyInfo> GetPublicProperties(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         return type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
     }
 
@@ -39,6 +41,7 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<FieldInfo> GetPublicFields(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         return type.GetFields(BindingFlags.Public | BindingFlags.Instance);
     }
 
@@ -47,6 +50,8 @@ public static class ReflectionHelper
     /// </summary>
     public static bool ImplementsInterface(Type type, Type interfaceType)
     {
+        ArgumentNullException.ThrowIfNull(type);
+        ArgumentNullException.ThrowIfNull(interfaceType);
         return type.GetInterfaces().Any(i =>
             i == interfaceType || (i.IsGenericType && i.GetGenericTypeDefinition() == interfaceType));
     }
@@ -56,6 +61,8 @@ public static class ReflectionHelper
     /// </summary>
     public static bool IsSubclassOf(Type type, Type baseType)
     {
+        ArgumentNullException.ThrowIfNull(type);
+        ArgumentNullException.ThrowIfNull(baseType);
         return type.IsSubclassOf(baseType);
     }
 
@@ -64,6 +71,7 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<T> GetAttributes<T>(MemberInfo member) where T : Attribute
     {
+        ArgumentNullException.ThrowIfNull(member);
         return member.GetCustomAttributes(typeof(T)).Cast<T>();
     }
 
@@ -72,6 +80,7 @@ public static class ReflectionHelper
     /// </summary>
     public static bool IsAsync(MethodInfo method)
     {
+        ArgumentNullException.ThrowIfNull(method);
         var returnType = method.ReturnType;
 
         if (returnType == typeof(Task))
@@ -88,6 +97,7 @@ public static class ReflectionHelper
     /// </summary>
     public static bool IsVirtual(MethodInfo method)
     {
+        ArgumentNullException.ThrowIfNull(method);
         return method.IsVirtual && !method.IsFinal;
     }
 
@@ -96,6 +106,7 @@ public static class ReflectionHelper
     /// </summary>
     public static int GetParameterCount(MethodBase method)
     {
+        ArgumentNullException.ThrowIfNull(method);
         return method.GetParameters().Length;
     }
 
@@ -104,6 +115,7 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<string> GetParameterNames(MethodBase method)
     {
+        ArgumentNullException.ThrowIfNull(method);
         return method.GetParameters().Select(p => p.Name ?? string.Empty);
     }
 
@@ -112,6 +124,8 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<Type> GetImplementationsOfInterface(Type interfaceType, Assembly assembly)
     {
+        ArgumentNullException.ThrowIfNull(interfaceType);
+        ArgumentNullException.ThrowIfNull(assembly);
         return assembly.GetTypes()
             .Where(t => !t.IsInterface && ImplementsInterface(t, interfaceType));
     }
@@ -121,6 +135,7 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly) where T : Attribute
     {
+        ArgumentNullException.ThrowIfNull(assembly);
         return assembly.GetTypes()
             .Where(t => t.GetCustomAttributes(typeof(T)).Any());
     }
@@ -130,6 +145,7 @@ public static class ReflectionHelper
     /// </summary>
     public static string GetFullName(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         return type.FullName ?? type.Name;
     }
 
@@ -138,6 +154,7 @@ public static class ReflectionHelper
     /// </summary>
     public static bool IsValueType(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         return type.IsValueType;
     }
 
@@ -146,6 +163,7 @@ public static class ReflectionHelper
     /// </summary>
     public static bool IsAbstract(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         return type.IsAbstract;
     }
 
@@ -154,6 +172,7 @@ public static class ReflectionHelper
     /// </summary>
     public static bool IsSealed(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         return type.IsSealed;
     }
 
@@ -162,6 +181,7 @@ public static class ReflectionHelper
     /// </summary>
     public static Type? GetBaseType(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         var baseType = type.BaseType;
         return baseType == typeof(object) ? null : baseType;
     }
@@ -171,6 +191,7 @@ public static class ReflectionHelper
     /// </summary>
     public static IEnumerable<Type> GetInheritanceHierarchy(Type type)
     {
+        ArgumentNullException.ThrowIfNull(type);
         var current = type;
         while (current is not null && current != typeof(object))
         {
