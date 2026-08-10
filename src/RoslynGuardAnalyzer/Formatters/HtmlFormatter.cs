@@ -22,21 +22,25 @@ public sealed class HtmlFormatter : IOutputFormatter
 
     public bool CanFormat(string format)
     {
+        ArgumentException.ThrowIfNullOrEmpty(format);
         return format.Equals(Format, StringComparison.OrdinalIgnoreCase);
     }
 
     public string FormatResult(AnalysisResult result)
     {
+        ArgumentNullException.ThrowIfNull(result);
         return BuildHtml(result.ProjectName, result.ProjectPath, result.Violations);
     }
 
     public string FormatViolations(IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return BuildHtml("Violations Report", string.Empty, violations.ToList());
     }
 
     public string FormatReport(ViolationReport report)
     {
+        ArgumentNullException.ThrowIfNull(report);
         return BuildHtml(report.Title, report.ProjectName, report.ViolationGroups.SelectMany(g => g.Violations).ToList());
     }
 
