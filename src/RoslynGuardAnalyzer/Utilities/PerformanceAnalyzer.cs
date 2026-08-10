@@ -38,10 +38,8 @@ public sealed class PerformanceAnalyzer
     {
         if (string.IsNullOrWhiteSpace(componentName))
             throw new ArgumentException("Component name cannot be null or empty", nameof(componentName));
-
         if (milliseconds < 0)
             throw new ArgumentException("Milliseconds cannot be negative", nameof(milliseconds));
-
         lock (_lockObject)
         {
             if (!_timings.ContainsKey(componentName))
@@ -56,6 +54,7 @@ public sealed class PerformanceAnalyzer
     /// </summary>
     public PerformanceMetrics? GetMetricsForComponent(string componentName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(componentName);
         lock (_lockObject)
         {
             if (!_timings.TryGetValue(componentName, out var measurements) || measurements.Count == 0)
@@ -197,6 +196,7 @@ public sealed class PerformanceAnalyzer
     /// </summary>
     public bool HasComponent(string componentName)
     {
+        ArgumentException.ThrowIfNullOrEmpty(componentName);
         lock (_lockObject)
         {
             return _timings.ContainsKey(componentName);

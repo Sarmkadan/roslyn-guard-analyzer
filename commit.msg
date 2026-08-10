@@ -1,0 +1,1 @@
+feat(utilities): add argument null guards to PerformanceAnalyzer public methods
