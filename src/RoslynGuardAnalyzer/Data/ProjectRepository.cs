@@ -20,6 +20,8 @@ namespace RoslynGuardAnalyzer.Data;
 /// </summary>
 public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
 {
+    public override string ToString() 
+        => $"ProjectRepository {{ TotalProjects = {GetStatistics().TotalProjects}, ModernDotNetProjects = {GetStatistics().ModernDotNetProjects}, AverageFileCount = {GetStatistics().AverageFileCount}, TotalFiles = {GetStatistics().TotalFiles}, ProjectsByFramework = {string.Join(", ", GetStatistics().ProjectsByFramework.Select(x => $"{x.Key} = {x.Value}"))}, UniqueLanguages = {GetStatistics().UniqueLanguages} }}";
     private const string ProjectsFileName = "projects.json";
     private readonly string _dataDirectory;
 
