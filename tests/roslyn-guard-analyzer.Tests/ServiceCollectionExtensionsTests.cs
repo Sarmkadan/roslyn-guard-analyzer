@@ -17,37 +17,65 @@ namespace RoslynGuardAnalyzer.Tests;
 /// </summary>
 public class ServiceCollectionExtensionsTests
 {
+    private readonly ILogger _logger;
+
+    public ServiceCollectionExtensionsTests()
+    {
+        _logger = LoggerFactory.Create(builder => { }).CreateLogger<ServiceCollectionExtensionsTests>();
+    }
     #region RegisterAnalyzerServices (parameterless overload)
 
     [Fact]
     public void RegisterAnalyzerServices_WithNullServiceCollection_ThrowsArgumentNullException()
     {
-        // Arrange
-        IServiceCollection? services = null;
+        _logger.LogInformation("Testing RegisterAnalyzerServices with null service collection");
+        try
+        {
+            // Arrange
+            IServiceCollection? services = null;
 
-        // Act & Assert
-        Assert.Throws<ArgumentNullException>(() => services!.RegisterAnalyzerServices());
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => services!.RegisterAnalyzerServices());
+
+            _logger.LogInformation("Test completed: RegisterAnalyzerServices correctly threw ArgumentNullException for null service collection");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in RegisterAnalyzerServices_WithNullServiceCollection_ThrowsArgumentNullException");
+            throw;
+        }
     }
 
     [Fact]
     public void RegisterAnalyzerServices_WithValidServiceCollection_RegistersAllServices()
     {
-        // Arrange
-        var services = new ServiceCollection();
+        _logger.LogInformation("Testing RegisterAnalyzerServices with valid service collection");
+        try
+        {
+            // Arrange
+            var services = new ServiceCollection();
 
-        // Act
-        services.RegisterAnalyzerServices();
+            // Act
+            services.RegisterAnalyzerServices();
 
-        // Assert
-        services.Should().NotBeNull();
-        services.Should().HaveCountGreaterThan(0);
+            // Assert
+            services.Should().NotBeNull();
+            services.Should().HaveCountGreaterThan(0);
 
-        // Verify all expected services are registered
-        services.Should().Contain(d => d.ServiceType == typeof(ILoggerFactory) && d.Lifetime == ServiceLifetime.Singleton);
-        services.Should().Contain(d => d.ServiceType == typeof(RuleRepository) && d.Lifetime == ServiceLifetime.Singleton);
-        services.Should().Contain(d => d.ServiceType == typeof(AnalysisResultRepository) && d.Lifetime == ServiceLifetime.Singleton);
-        services.Should().Contain(d => d.ServiceType == typeof(ProjectRepository) && d.Lifetime == ServiceLifetime.Singleton);
-        services.Should().Contain(d => d.ServiceType == typeof(AnalyzerConfiguration) && d.Lifetime == ServiceLifetime.Singleton);
+            // Verify all expected services are registered
+            services.Should().Contain(d => d.ServiceType == typeof(ILoggerFactory) && d.Lifetime == ServiceLifetime.Singleton);
+            services.Should().Contain(d => d.ServiceType == typeof(RuleRepository) && d.Lifetime == ServiceLifetime.Singleton);
+            services.Should().Contain(d => d.ServiceType == typeof(AnalysisResultRepository) && d.Lifetime == ServiceLifetime.Singleton);
+            services.Should().Contain(d => d.ServiceType == typeof(ProjectRepository) && d.Lifetime == ServiceLifetime.Singleton);
+            services.Should().Contain(d => d.ServiceType == typeof(AnalyzerConfiguration) && d.Lifetime == ServiceLifetime.Singleton);
+
+            _logger.LogInformation("Test completed: RegisterAnalyzerServices successfully registered all services");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in RegisterAnalyzerServices_WithValidServiceCollection_RegistersAllServices");
+            throw;
+        }
     }
 
     #endregion
@@ -138,31 +166,51 @@ public class ServiceCollectionExtensionsTests
     [Fact]
     public async Task InitializeAnalyzerAsync_WithValidServiceProvider_InitializesRepositories()
     {
-        // Arrange
-        var services = new ServiceCollection();
-        services.RegisterAnalyzerServices();
-        var serviceProvider = services.BuildServiceProvider();
+        _logger.LogInformation("Testing InitializeAnalyzerAsync with valid service provider");
+        try
+        {
+            // Arrange
+            var services = new ServiceCollection();
+            services.RegisterAnalyzerServices();
+            var serviceProvider = services.BuildServiceProvider();
 
-        // Act
-        await serviceProvider.InitializeAnalyzerAsync();
+            // Act
+            await serviceProvider.InitializeAnalyzerAsync();
 
-        // Assert - Should complete without throwing
-        true.Should().BeTrue();
+            // Assert - Should complete without throwing
+            _logger.LogInformation("Test completed: InitializeAnalyzerAsync successfully initialized repositories");
+            true.Should().BeTrue();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in InitializeAnalyzerAsync_WithValidServiceProvider_InitializesRepositories");
+            throw;
+        }
     }
 
     [Fact]
     public async Task InitializeAnalyzerAsync_WithNullLogger_StillInitializes()
     {
-        // Arrange
-        var services = new ServiceCollection();
-        services.RegisterAnalyzerServices();
-        var serviceProvider = services.BuildServiceProvider();
+        _logger.LogInformation("Testing InitializeAnalyzerAsync with null logger");
+        try
+        {
+            // Arrange
+            var services = new ServiceCollection();
+            services.RegisterAnalyzerServices();
+            var serviceProvider = services.BuildServiceProvider();
 
-        // Act
-        await serviceProvider.InitializeAnalyzerAsync(logger: null);
+            // Act
+            await serviceProvider.InitializeAnalyzerAsync(logger: null);
 
-        // Assert
-        true.Should().BeTrue();
+            // Assert
+            _logger.LogInformation("Test completed: InitializeAnalyzerAsync successfully initialized with null logger");
+            true.Should().BeTrue();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error in InitializeAnalyzerAsync_WithNullLogger_StillInitializes");
+            throw;
+        }
     }
 
     #endregion
