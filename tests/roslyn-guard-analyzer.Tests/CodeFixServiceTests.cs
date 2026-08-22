@@ -38,6 +38,7 @@ public sealed class CodeFixServiceTests
     [Fact]
     public async Task GetFixesAsync_WithKnownViolations_ReturnsExpectedFixes()
     {
+        _logger.LogInformation("Test {MethodName} started", nameof(GetFixesAsync_WithKnownViolations_ReturnsExpectedFixes));
         // Arrange
         var violations = new[]
         {
@@ -67,6 +68,7 @@ public sealed class CodeFixServiceTests
         fixes[1].Title.Should().Be("Add 'Async' suffix to method 'MyMethod'");
         fixes[1].OriginalCode.Should().Be("MyMethod(");
         fixes[1].ReplacementCode.Should().Be("MyMethodAsync(");
+        _logger.LogInformation("Test {MethodName} finished", nameof(GetFixesAsync_WithKnownViolations_ReturnsExpectedFixes));
     }
 
     /// <summary>
@@ -108,6 +110,7 @@ public sealed class CodeFixServiceTests
     [Fact]
     public async Task ApplyFixesAsync_WithValidFixes_AppliesChangesToSource()
     {
+        _logger.LogInformation("Test {MethodName} started", nameof(ApplyFixesAsync_WithValidFixes_AppliesChangesToSource));
         // Arrange
         var tempFile = Path.GetTempFileName();
         try
@@ -145,6 +148,7 @@ public sealed class CodeFixServiceTests
             if (File.Exists(tempFile))
                 File.Delete(tempFile);
         }
+        _logger.LogInformation("Test {MethodName} finished", nameof(ApplyFixesAsync_WithValidFixes_AppliesChangesToSource));
     }
 
     /// <summary>
@@ -153,6 +157,7 @@ public sealed class CodeFixServiceTests
     [Fact]
     public async Task ApplyFixesAsync_WithOverlappingFixes_HandlesOverlapsCorrectly()
     {
+        _logger.LogInformation("Test {MethodName} started", nameof(ApplyFixesAsync_WithOverlappingFixes_HandlesOverlapsCorrectly));
         // Arrange
         var tempFile = Path.GetTempFileName();
         try
@@ -207,6 +212,7 @@ public sealed class CodeFixServiceTests
             if (File.Exists(tempFile))
                 File.Delete(tempFile);
         }
+        _logger.LogInformation("Test {MethodName} finished", nameof(ApplyFixesAsync_WithOverlappingFixes_HandlesOverlapsCorrectly));
     }
 
     /// <summary>
@@ -245,6 +251,7 @@ public sealed class CodeFixServiceTests
     [Fact]
     public async Task ApplyFixesAsync_WithNonExistentFile_HandlesGracefully()
     {
+        _logger.LogInformation("Test {MethodName} started", nameof(ApplyFixesAsync_WithNonExistentFile_HandlesGracefully));
         // Arrange
         var fakeFilePath = Path.GetTempFileName();
         File.Delete(fakeFilePath); // Ensure file doesn't exist
@@ -272,6 +279,7 @@ public sealed class CodeFixServiceTests
         result.AppliedFixes.Should().BeEmpty();
         result.FailedFixes.Should().HaveCount(1);
         result.Messages.Should().ContainSingle(m => m.Contains("File not found"));
+        _logger.LogInformation("Test {MethodName} finished", nameof(ApplyFixesAsync_WithNonExistentFile_HandlesGracefully));
     }
 
     /// <summary>
@@ -308,6 +316,7 @@ public sealed class CodeFixServiceTests
     [Fact]
     public async Task ApplyFixesAsync_WithDryRunTrue_DoesNotWriteChangesToDisk()
     {
+        _logger.LogInformation("Test {MethodName} started", nameof(ApplyFixesAsync_WithDryRunTrue_DoesNotWriteChangesToDisk));
         // Arrange
         var tempFile = Path.GetTempFileName();
         try
@@ -347,5 +356,6 @@ public sealed class CodeFixServiceTests
             if (File.Exists(tempFile))
                 File.Delete(tempFile);
         }
+        _logger.LogInformation("Test {MethodName} finished", nameof(ApplyFixesAsync_WithDryRunTrue_DoesNotWriteChangesToDisk));
     }
 }
