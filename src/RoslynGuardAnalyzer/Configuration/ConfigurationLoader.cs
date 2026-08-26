@@ -236,9 +236,4 @@ public sealed class AnalysisConfig
 
         return errors.Count == 0;
     }
-
-    public override string ToString()
-    {
-        return $"AnalysisConfig {{ MinimumSeverity = {MinimumSeverity}, MaxViolationsToReport = {MaxViolationsToReport}, EnableCaching = {EnableCaching}, OutputFormat = {OutputFormat} }}";
-    }
 }
