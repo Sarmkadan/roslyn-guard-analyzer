@@ -196,6 +196,12 @@ public sealed class ConfigurationLoader
 
         return json.Substring(startIndex, endIndex - startIndex);
     }
+
+    public override string ToString()
+    {
+        var config = new AnalysisConfig();
+        return $"ConfigurationLoader {{ MinimumSeverity = {config.MinimumSeverity}, MaxViolationsToReport = {config.MaxViolationsToReport}, EnableCaching = {config.EnableCaching}, OutputFormat = {config.OutputFormat} }}";
+    }
 }
 
 /// <summary>
@@ -229,5 +235,10 @@ public sealed class AnalysisConfig
             errors.Add($"Invalid output format: {OutputFormat}");
 
         return errors.Count == 0;
+    }
+
+    public override string ToString()
+    {
+        return $"AnalysisConfig {{ MinimumSeverity = {MinimumSeverity}, MaxViolationsToReport = {MaxViolationsToReport}, EnableCaching = {EnableCaching}, OutputFormat = {OutputFormat} }}";
     }
 }
