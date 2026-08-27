@@ -9,8 +9,14 @@ using RoslynGuardAnalyzer.Services;
 using Xunit;
 using System.IO;
 
+/// <summary>
+/// Contains unit tests for the EmptyCatchRule, which detects empty catch blocks.
+/// </summary>
 public sealed class EmptyCatchRuleTests
 {
+    /// <summary>
+    /// Verifies that the EmptyCatchRule flags a catch block with no statements inside.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchRule_FlagsEmptyCatchBlock()
     {
@@ -19,7 +25,7 @@ public sealed class EmptyCatchRuleTests
         try
         {
             var content = @"
-try 
+try
 {
 }
 catch (Exception) {
@@ -32,7 +38,7 @@ catch (Exception) {
             };
 
             var rule = EmptyCatchRule.Create();
-            
+
             // Act
             var isViolation = rule.ViolationPredicate(element);
             var message = rule.MessageFactory(element);
@@ -47,6 +53,9 @@ catch (Exception) {
         }
     }
 
+    /// <summary>
+    /// Verifies that the EmptyCatchRule flags a catch block containing only comments.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchRule_FlagsCatchBlockWithCommentsOnly()
     {
@@ -55,7 +64,7 @@ catch (Exception) {
         try
         {
             var content = @"
-try 
+try
 {
 }
 catch (Exception) {
@@ -69,7 +78,7 @@ catch (Exception) {
             };
 
             var rule = EmptyCatchRule.Create();
-            
+
             // Act
             var isViolation = rule.ViolationPredicate(element);
 
