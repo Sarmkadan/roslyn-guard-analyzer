@@ -9,8 +9,14 @@ using RoslynGuardAnalyzer.Services;
 using Xunit;
 using System.IO;
 
+/// <summary>
+/// Contains unit tests for the <see cref="EmptyCatchBlockRule"/> class.
+/// </summary>
 public sealed class EmptyCatchBlockRuleTests
 {
+    /// <summary>
+    /// Tests that the rule flags a catch block with no statements and no throw statement.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchBlockRule_FlagsCatchBlockWithNoStatementsAndNoThrow()
     {
@@ -49,6 +55,9 @@ catch (Exception)
         }
     }
 
+    /// <summary>
+    /// Tests that the rule does not flag a catch block containing a throw statement.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchBlockRule_DoesNotFlagCatchBlockWithThrow()
     {
@@ -86,6 +95,9 @@ catch (Exception)
         }
     }
 
+    /// <summary>
+    /// Tests that the rule does not flag a catch block containing a throw new statement.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchBlockRule_DoesNotFlagCatchBlockWithThrowNew()
     {
@@ -123,6 +135,9 @@ catch (Exception ex)
         }
     }
 
+    /// <summary>
+    /// Tests that the rule does not flag a catch block containing a logging statement.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchBlockRule_DoesNotFlagCatchBlockWithLogging()
     {
@@ -160,6 +175,9 @@ catch (Exception ex)
         }
     }
 
+    /// <summary>
+    /// Tests that the rule does not flag a catch block containing only comments.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchBlockRule_DoesNotFlagCatchBlockWithCommentOnly()
     {
@@ -198,6 +216,9 @@ catch (Exception ex)
         }
     }
 
+    /// <summary>
+    /// Tests that the rule's message contains fix suggestions for an empty catch block.
+    /// </summary>
     [Fact]
     public async Task EmptyCatchBlockRule_MessageContainsFixSuggestions()
     {
