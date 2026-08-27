@@ -189,6 +189,54 @@ public sealed class RuleConfiguration
     }
 
     /// <summary>
+    /// Validates the configuration and returns a list of validation errors.
+    /// </summary>
+    /// <returns>List of error messages, empty if valid.</returns>
+    public List<string> Validate()
+    {
+        var errors = new List<string>();
+
+        // Check for duplicate rule IDs
+        var duplicateRuleIds = EnabledRules
+            .GroupBy(r => r.Id)
+            .Where(g => g.Count() > 1)
+            .Select(g => g.Key)
+            .ToList();
+
+        foreach (var id in duplicateRuleIds)
+        {
+            errors.Add($"Duplicate rule ID: {id}");
+        }
+
+        // Check for invalid glob patterns in excluded files and namespaces
+        foreach (var pattern in ExcludedFiles)
+        {
+            if (string.IsNullOrWhiteSpace(pattern))
+            {
+                errors.Add("Excluded file pattern cannot be null, empty, or whitespace.");
+            }
+            // Additional glob pattern validation could be added here if needed
+        }
+
+        foreach (var pattern in ExcludedNamespaces)
+        {
+            if (string.IsNullOrWhiteSpace(pattern))
+            {
+                errors.Add("Excluded namespace pattern cannot be null, empty, or whitespace.");
+            }
+            // Additional glob pattern validation could be added here if needed
+        }
+
+        // Validate severity level (though it's an enum, ensure it's defined)
+        if (!Enum.IsDefined(typeof(SeverityLevel), MinimumReportedSeverity))
+        {
+            errors.Add($"Invalid severity level: {MinimumReportedSeverity}");
+        }
+
+        return errors;
+    }
+
+    /// <summary>
     /// Gets the count of enabled rules.
     /// </summary>
     public int GetEnabledRuleCount()
