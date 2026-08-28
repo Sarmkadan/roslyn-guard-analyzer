@@ -46,3 +46,18 @@ tests.Validate_WithValidConfiguration_ReturnsEmptyList();
 ```
 
 This test class verifies validation logic for analyzer configuration settings such as data directory paths, violation limits, timeouts, log levels, parallel threads, and report formats.
+
+## RoslynGuardExceptionTests
+
+The RoslynGuardExceptionTests class contains unit tests for the RoslynGuardException base class and its derived exception classes (RuleNotFoundException, AnalysisException, ConfigurationException, etc.). These tests verify the behavior of custom exceptions used throughout the Roslyn Guard analyzer, including error code setting, message formatting, and ToString overrides.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+
+var tests = new RoslynGuardExceptionTests();
+tests.RoslynGuardException_DefaultConstructor_SetsDefaultErrorCodeAndOccurredAt();
+```
+
+This test class ensures that custom exceptions correctly initialize properties, handle inner exceptions, and produce formatted string representations as expected.
