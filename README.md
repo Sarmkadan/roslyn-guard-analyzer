@@ -61,3 +61,15 @@ tests.RoslynGuardException_DefaultConstructor_SetsDefaultErrorCodeAndOccurredAt(
 ```
 
 This test class ensures that custom exceptions correctly initialize properties, handle inner exceptions, and produce formatted string representations as expected.
+
+## FormatterOutputTests
+The FormatterOutputTests class contains unit tests for the output formatters (CSV, JSON, HTML) to ensure they produce valid output. It verifies that the formatters correctly handle various inputs, including special characters, and produce the expected output format.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests.Formatters;
+
+var tests = new FormatterOutputTests();
+tests.CsvFormatter_Format_ReturnsNonEmptyString();
+```
