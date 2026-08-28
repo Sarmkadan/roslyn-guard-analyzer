@@ -31,3 +31,18 @@ var fileResult = await service.AnalyzeFileAsync("Program.cs");
 ```
 
 These members enable fine-grained control over parallel analysis tasks in a .NET application.
+
+## ServiceCollectionExtensionsValidationTests
+
+The ServiceCollectionExtensionsValidationTests class contains unit tests for the AnalyzerConfiguration validation extension methods in the ServiceCollectionExtensionsValidation class.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+
+var tests = new ServiceCollectionExtensionsValidationTests();
+tests.Validate_WithValidConfiguration_ReturnsEmptyList();
+```
+
+This test class verifies validation logic for analyzer configuration settings such as data directory paths, violation limits, timeouts, log levels, parallel threads, and report formats.
