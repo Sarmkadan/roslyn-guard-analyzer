@@ -73,3 +73,15 @@ using RoslynGuardAnalyzer.Tests.Formatters;
 var tests = new FormatterOutputTests();
 tests.CsvFormatter_Format_ReturnsNonEmptyString();
 ```
+
+## CliArgumentParserTests
+The CliArgumentParserTests class contains unit tests for the CliArgumentParser class, verifying that command-line arguments are correctly parsed into configuration options.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests.Cli;
+
+var tests = new CliArgumentParserTests();
+tests.Parse_EmptyArgs_ReturnsDefaultOptions();
+```
