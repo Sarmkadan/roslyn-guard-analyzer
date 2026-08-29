@@ -17,12 +17,26 @@ namespace RoslynGuardAnalyzer.Rules;
 /// </summary>
 public static class AsyncVoidRule
 {
+    public const string RuleId = "AV001";
+    public const string RuleTitle = "Async Void Methods Must Be Event Handlers";
+
+    private const string VoidReturnType = "void";
+
+    private static readonly string[] EventHandlerNamePatterns =
+    {
+        "EventHandler",
+        "EventArgs",
+        "IEventHandler",
+        "Handler",
+        "Callback"
+    };
+
     /// <summary>
     /// Creates and returns the AsyncVoidRule instance.
     /// </summary>
     public static CustomAnalysisRule Create()
     {
-        return CustomRuleBuilder.Create("AV001", "Async Void Methods Must Be Event Handlers")
+        return CustomRuleBuilder.Create(RuleId, RuleTitle)
             .For(RuleCategory.AsyncPattern)
             .WithSeverity(SeverityLevel.Error)
             .WithDescription("Detects async void methods that are not event handlers. Async void methods without proper exception handling can cause unobserved exceptions.")
@@ -42,7 +56,7 @@ public static class AsyncVoidRule
             return false;
 
         // Check if return type is void
-        if (string.IsNullOrWhiteSpace(element.ReturnType) || !element.ReturnType.Equals("void", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(element.ReturnType) || !element.ReturnType.Equals(VoidReturnType, StringComparison.Ordinal))
             return false;
 
         // Check if it's an event handler (has EventHandler-related attributes)
@@ -54,17 +68,7 @@ public static class AsyncVoidRule
 
     private static bool IsEventHandlerMethod(CodeElement element)
     {
-        // Common event handler attribute patterns
-        var eventHandlerPatterns = new[]
-        {
-            "EventHandler",
-            "EventArgs",
-            "IEventHandler",
-            "Handler",
-            "Callback"
-        };
-
-        foreach (var pattern in eventHandlerPatterns)
+        foreach (var pattern in EventHandlerNamePatterns)
         {
             if (element.HasAttribute(pattern))
                 return true;
