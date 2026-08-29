@@ -127,3 +127,16 @@ using RoslynGuardAnalyzer.Tests;
 var tests = new AnalysisStartedEventTests();
 tests.Constructor_WithRequiredProperties_InitializesCorrectly();
 ```
+
+## CustomRuleBuilderEdgeTests
+
+The CustomRuleBuilderEdgeTests class contains unit tests for edge cases in the CustomRuleBuilder class. It verifies the behavior of the builder when dealing with invalid inputs, duplicate configurations, and default values.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+
+var tests = new CustomRuleBuilderEdgeTests();
+tests.Build_WithoutPredicate_ThrowsInvalidOperationException();
+```
