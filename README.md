@@ -85,3 +85,18 @@ using RoslynGuardAnalyzer.Tests.Cli;
 var tests = new CliArgumentParserTests();
 tests.Parse_EmptyArgs_ReturnsDefaultOptions();
 ```
+
+## ServiceCollectionExtensionsTests
+
+The ServiceCollectionExtensionsTests class contains unit tests for the ServiceCollectionExtensions class, which provides extension methods for registering analyzer services in the dependency injection container. It tests various registration scenarios including null checks, validation, and configuration of analyzer services.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+using Microsoft.Extensions.DependencyInjection;
+
+var tests = new ServiceCollectionExtensionsTests();
+var services = new ServiceCollection();
+tests.RegisterAnalyzerServices_WithValidServiceCollection_RegistersAllServices(services);
+```
