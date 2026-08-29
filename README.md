@@ -100,3 +100,17 @@ var tests = new ServiceCollectionExtensionsTests();
 var services = new ServiceCollection();
 tests.RegisterAnalyzerServices_WithValidServiceCollection_RegistersAllServices(services);
 ```
+
+## CodeFixServiceTests
+
+The CodeFixServiceTests class contains unit tests for the CodeFixService class, which provides code fix functionality for known violations in the Roslyn Guard analyzer.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+using System.Threading.Tasks;
+
+var tests = new CodeFixServiceTests();
+await tests.GetFixesAsync_WithKnownViolations_ReturnsExpectedFixes();
+```
