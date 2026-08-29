@@ -114,3 +114,16 @@ using System.Threading.Tasks;
 var tests = new CodeFixServiceTests();
 await tests.GetFixesAsync_WithKnownViolations_ReturnsExpectedFixes();
 ```
+
+## AnalysisStartedEventTests
+
+The AnalysisStartedEventTests class contains unit tests for the AnalysisStartedEvent class, which represents the event that fires when analysis starts for a project. It verifies the event's properties, inheritance, and behavior under various input conditions.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+
+var tests = new AnalysisStartedEventTests();
+tests.Constructor_WithRequiredProperties_InitializesCorrectly();
+```
