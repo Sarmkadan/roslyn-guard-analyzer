@@ -140,3 +140,16 @@ using RoslynGuardAnalyzer.Tests;
 var tests = new CustomRuleBuilderEdgeTests();
 tests.Build_WithoutPredicate_ThrowsInvalidOperationException();
 ```
+
+## EventBusTests
+
+The EventBusTests class contains unit tests for the EventBus class, which manages publish-subscribe messaging within the analyzer. It verifies subscription handling, event publishing, inheritance behavior, and error conditions.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+
+var tests = new EventBusTests();
+await tests.PublishAsync_WithSingleSubscriber_InvokesHandler();
+```
