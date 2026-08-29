@@ -153,3 +153,16 @@ using RoslynGuardAnalyzer.Tests;
 var tests = new EventBusTests();
 await tests.PublishAsync_WithSingleSubscriber_InvokesHandler();
 ```
+
+## RoslynGuardExceptionExtensionsTests
+
+The RoslynGuardExceptionExtensionsTests class contains unit tests for the RoslynGuardExceptionExtensions class, which provides extension methods for formatting error reports, generating error summaries, checking criticality, and converting exceptions to property dictionaries.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests;
+
+var tests = new RoslynGuardExceptionExtensionsTests();
+tests.FormatErrorReport_RuleNotFoundException_ReturnsFormattedReport();
+```
