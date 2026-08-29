@@ -166,3 +166,17 @@ using RoslynGuardAnalyzer.Tests;
 var tests = new RoslynGuardExceptionExtensionsTests();
 tests.FormatErrorReport_RuleNotFoundException_ReturnsFormattedReport();
 ```
+
+## SuppressRoslynGuardAttributeTests
+
+The SuppressRoslynGuardAttributeTests class contains unit tests for the SuppressRoslynGuard attribute, which is used to exclude code elements from analysis by rule ID.
+The tests verify that the attribute correctly filters elements when the rule ID matches, respects case-insensitivity, handles multiple attributes, and respects member-level scope.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Tests.Core;
+
+var tests = new SuppressRoslynGuardAttributeTests();
+tests.FilterElements_ClassWithMatchingSuppressAttribute_ElementFiltered();
+```
