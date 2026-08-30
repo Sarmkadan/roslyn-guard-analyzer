@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+using Microsoft.Extensions.Logging;
 using RoslynGuardAnalyzer.Core;
 using RoslynGuardAnalyzer.Domain.Models;
 using RoslynGuardAnalyzer.Exceptions;
@@ -20,12 +21,15 @@ namespace RoslynGuardAnalyzer.Services;
 public sealed class RuleRegistry : IRuleRegistry
 {
     private readonly Dictionary<string, AnalysisRule> _rules = new();
+    private readonly ILogger<RuleRegistry>? _logger;
 
     /// <summary>
     /// Initializes a new instance of the RuleRegistry with default rules.
     /// </summary>
-    public RuleRegistry()
+    /// <param name="logger">The optional logger for registry operations.</param>
+    public RuleRegistry(ILogger<RuleRegistry>? logger = null)
     {
+        _logger = logger;
         InitializeDefaultRules();
     }
 
@@ -38,15 +42,25 @@ public sealed class RuleRegistry : IRuleRegistry
     public void RegisterRule(AnalysisRule rule)
     {
         if (rule is null)
+        {
+            _logger?.LogWarning("Cannot register invalid rule with ID {RuleId}", (object?)null);
             throw new ArgumentNullException(nameof(rule));
+        }
 
         if (!rule.IsValid())
+        {
+            _logger?.LogWarning("Cannot register invalid rule with ID {RuleId}", rule.Id);
             throw new ConfigurationException($"Rule {rule.Id} is not valid.");
+        }
 
         if (_rules.ContainsKey(rule.Id))
+        {
+            _logger?.LogWarning("Rule with ID {RuleId} is already registered", rule.Id);
             throw new ConfigurationException($"Rule with ID '{rule.Id}' is already registered.");
+        }
 
         _rules[rule.Id] = rule;
+        _logger?.LogDebug("Registered rule with ID {RuleId}", rule.Id);
     }
 
     /// <summary>
@@ -55,9 +69,16 @@ public sealed class RuleRegistry : IRuleRegistry
     public AnalysisRule? GetRule(string ruleId)
     {
         if (string.IsNullOrWhiteSpace(ruleId))
+        {
+            _logger?.LogDebug("Rule lookup missed for ID {RuleId}", ruleId);
             return null;
+        }
 
         _rules.TryGetValue(ruleId, out var rule);
+
+        if (rule is null)
+            _logger?.LogDebug("Rule lookup missed for ID {RuleId}", ruleId);
+
         return rule;
     }
 
@@ -86,9 +107,17 @@ public sealed class RuleRegistry : IRuleRegistry
     public bool RemoveRule(string ruleId)
     {
         if (string.IsNullOrWhiteSpace(ruleId))
+        {
+            _logger?.LogDebug("Rule removal missed for ID {RuleId}", ruleId);
             return false;
+        }
 
-        return _rules.Remove(ruleId);
+        var removed = _rules.Remove(ruleId);
+
+        if (!removed)
+            _logger?.LogDebug("Rule removal missed for ID {RuleId}", ruleId);
+
+        return removed;
     }
 
     /// <summary>
@@ -171,5 +200,7 @@ public sealed class RuleRegistry : IRuleRegistry
         RegisterRule(namingRule);
         RegisterRule(asyncRule);
         RegisterRule(nullSafetyRule);
+
+        _logger?.LogInformation("Initialized registry with {RuleCount} default rules", _rules.Count);
     }
 }
