@@ -6,6 +6,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using RoslynGuardAnalyzer.Core;
@@ -51,22 +52,25 @@ public sealed class CsvFormatter : IOutputFormatter
 
         sb.AppendLine("SUMMARY");
         sb.AppendLine($"Title,{CsvEscape(report.Title)}");
-        sb.AppendLine($"Generated,{report.GeneratedAt:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine($"Total Violations,{violations.Count}");
+        sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Generated,{report.GeneratedAt:yyyy-MM-dd HH:mm:ss}"));
+        sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Total Violations,{violations.Count}"));
         sb.AppendLine();
 
         sb.AppendLine("SEVERITY SUMMARY");
         sb.AppendLine("Severity,Count");
-        sb.AppendLine($"Critical,{violations.Count(v => v.Severity == SeverityLevel.Critical)}");
-        sb.AppendLine($"High,{violations.Count(v => v.Severity == SeverityLevel.Error)}");
-        sb.AppendLine($"Medium,{violations.Count(v => v.Severity == SeverityLevel.Warning)}");
-        sb.AppendLine($"Low,{violations.Count(v => v.Severity == SeverityLevel.Info)}");
+        sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Critical,{violations.Count(v => v.Severity == SeverityLevel.Critical)}"));
+        sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"High,{violations.Count(v => v.Severity == SeverityLevel.Error)}"));
+        sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Medium,{violations.Count(v => v.Severity == SeverityLevel.Warning)}"));
+        sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"Low,{violations.Count(v => v.Severity == SeverityLevel.Info)}"));
         sb.AppendLine();
 
         sb.AppendLine("VIOLATIONS BY RULE");
         sb.AppendLine("Rule,Count,Severity");
-        foreach (var group in violations.GroupBy(v => v.RuleName))
-            sb.AppendLine($"{CsvEscape(group.Key)},{group.Count()},{group.Max(v => v.Severity)}");
+        foreach (var group in violations
+                     .GroupBy(v => v.RuleName)
+                     .OrderByDescending(g => g.Count())
+                     .ThenBy(g => g.Key, StringComparer.Ordinal))
+            sb.AppendLine(string.Create(CultureInfo.InvariantCulture, $"{CsvEscape(group.Key)},{group.Count()},{group.Max(v => v.Severity)}"));
 
         sb.AppendLine();
         sb.AppendLine("DETAILED VIOLATIONS");
@@ -82,10 +86,9 @@ public sealed class CsvFormatter : IOutputFormatter
     /// </summary>
     private static string FormatViolationAsCsv(RuleViolation violation)
     {
-        return $"{CsvEscape(violation.RuleName)},{violation.Severity}," +
-               $"{CsvEscape(violation.Message)},{CsvEscape(violation.FilePath)}," +
-               $"{violation.LineNumber},{violation.ColumnNumber}," +
-               $"{CsvEscape(violation.CodeSnippet ?? "N/A")}";
+        return string.Create(
+            CultureInfo.InvariantCulture,
+            $"{CsvEscape(violation.RuleName)},{violation.Severity},{CsvEscape(violation.Message)},{CsvEscape(violation.FilePath)},{violation.LineNumber},{violation.ColumnNumber},{CsvEscape(violation.CodeSnippet ?? "N/A")}");
     }
 
     /// <summary>
