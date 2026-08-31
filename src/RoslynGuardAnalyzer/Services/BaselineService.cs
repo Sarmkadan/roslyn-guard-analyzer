@@ -28,7 +28,7 @@ public sealed class BaselineService : IBaselineService
     }
 
     /// <summary>
-    /// Validates that a file path is safe and stays within the expected directory.
+    /// Validates that a file path contains no traversal segments or invalid path characters.
     /// </summary>
     /// <param name="filePath">The file path to validate.</param>
     /// <exception cref="ArgumentException">Thrown when the path is invalid.</exception>
@@ -37,19 +37,22 @@ public sealed class BaselineService : IBaselineService
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
 
-        var fullPath = Path.GetFullPath(filePath);
-
-        // Normalize path separators for consistent comparison
-        fullPath = fullPath.Replace('\\', Path.DirectorySeparatorChar);
-
-        // Check for directory traversal attempts
-        if (fullPath.Contains("..") && !fullPath.StartsWith(".."))
+        if (filePath.Split('/', '\\').Any(segment => segment == ".."))
         {
             throw new ArgumentException(
                 $"File path '{filePath}' contains directory traversal sequence '..'. " +
                 "Paths must stay within the expected directory structure.",
                 nameof(filePath));
         }
+
+        if (filePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
+        {
+            throw new ArgumentException(
+                $"File path '{filePath}' contains invalid path characters.",
+                nameof(filePath));
+        }
+
+        _ = Path.GetFullPath(filePath);
     }
 
     /// <summary>
