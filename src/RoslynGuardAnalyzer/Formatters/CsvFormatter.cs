@@ -30,12 +30,13 @@ public sealed class CsvFormatter : IOutputFormatter
 
     public string FormatResult(AnalysisResult result)
     {
-        ArgumentNullException.ThrowIfNull(nameof(result));
+        ArgumentNullException.ThrowIfNull(result);
         return FormatViolations(result.Violations);
     }
 
     public string FormatViolations(IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         var sb = new StringBuilder();
         sb.AppendLine("Rule,Severity,Message,File,Line,Column,Code");
 
@@ -47,6 +48,7 @@ public sealed class CsvFormatter : IOutputFormatter
 
     public string FormatReport(ViolationReport report)
     {
+        ArgumentNullException.ThrowIfNull(report);
         var violations = report.ViolationGroups.SelectMany(g => g.Violations).ToList();
         var sb = new StringBuilder();
 
@@ -99,7 +101,7 @@ public sealed class CsvFormatter : IOutputFormatter
         if (string.IsNullOrEmpty(text))
             return "\"\"";
 
-        if (text.Contains(',') || text.Contains('"') || text.Contains('\n'))
+        if (text.Contains(',') || text.Contains('"') || text.Contains('\n') || text.Contains('\r'))
             return "\"" + text.Replace("\"", "\"\"") + "\"";
 
         return text;
