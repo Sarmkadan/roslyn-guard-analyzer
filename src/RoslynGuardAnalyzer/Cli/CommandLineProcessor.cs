@@ -39,7 +39,8 @@ public sealed class CommandLineProcessor
 
     public CommandLineProcessor(string[] args)
     {
-        _args = args ?? [];
+        ArgumentNullException.ThrowIfNull(args);
+        _args = args;
     }
 
     /// <summary>
