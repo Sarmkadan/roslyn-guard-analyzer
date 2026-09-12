@@ -29,6 +29,9 @@ namespace RoslynGuardAnalyzer;
 /// </summary>
 internal sealed class Program
 {
+    /// <summary>
+    /// Application entry point. Parses arguments, configures services, and runs the analysis workflow.
+    /// </summary>
     public static async Task<int> Main(string[] args)
     {
         try
@@ -193,6 +196,9 @@ internal sealed class Program
     /// <summary>
     /// Parses command-line arguments into CliOptions structure.
     /// </summary>
+    /// <summary>
+    /// Parses command-line arguments into CliOptions structure.
+    /// </summary>
     private static Cli.CliOptions ParseCliOptions(string[] args)
     {
         var options = new Cli.CliOptions();
@@ -272,6 +278,9 @@ internal sealed class Program
     /// <summary>
     /// Displays help information.
     /// </summary>
+    /// <summary>
+    /// Displays help information.
+    /// </summary>
     private static void ShowHelp()
     {
         Console.WriteLine("Roslyn Guard Analyzer - Usage:");
@@ -304,6 +313,9 @@ internal sealed class Program
         Console.WriteLine(" roslyn-guard-analyzer ./src -r LYR001,NAM001 --strict");
     }
 
+    /// <summary>
+    /// Displays version information.
+    /// </summary>
     /// <summary>
     /// Displays version information.
     /// </summary>
