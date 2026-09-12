@@ -180,3 +180,47 @@ using RoslynGuardAnalyzer.Tests.Core;
 var tests = new SuppressRoslynGuardAttributeTests();
 tests.FilterElements_ClassWithMatchingSuppressAttribute_ElementFiltered();
 ```
+
+## CacheKeyGenerator
+
+The `CacheKeyGenerator` static class (in `RoslynGuardAnalyzer.Caching`) generates cache keys for analysis results based on project/file characteristics. It uses content hashing to detect changes and invalidate stale cache entries, so that cached analysis results are only reused when the underlying inputs are unchanged.
+
+### Public methods:
+
+```csharp
+public static string GenerateProjectAnalysisKey(string? projectPath, string? configHash = null)
+public static string GenerateFileAnalysisKey(string filePath, string? fileContentHash = null)
+public static string GenerateResultKey(string analysisId)
+public static string GenerateRuleExecutionKey(string ruleName, string targetName)
+public static string GenerateCodeElementKey(string fullTypeName, string memberName = "")
+public static string ComputeHash(string input)
+public static string ComputeFileHash(string filePath)
+public static string CreateCompositeKey(params string[] components)
+public static string GeneratePatternKey(string prefix)
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Caching;
+
+// Key for a whole-project analysis (path is hashed, config hash is optional)
+var projectKey = CacheKeyGenerator.GenerateProjectAnalysisKey(@"C:\src\MyProject.csproj", "config-v1");
+
+// Key for a single file analysis (content hash detects edits)
+var fileKey = CacheKeyGenerator.GenerateFileAnalysisKey(@"C:\src\Program.cs", CacheKeyGenerator.ComputeFileHash(@"C:\src\Program.cs"));
+
+// Key for a stored analysis result
+var resultKey = CacheKeyGenerator.GenerateResultKey(projectKey);
+
+// Key for a specific rule run against a target
+var ruleKey = CacheKeyGenerator.GenerateRuleExecutionKey("AvoidMagicNumbers", "MyClass.MyMethod");
+
+// Composite key from multiple components
+var compositeKey = CacheKeyGenerator.CreateCompositeKey("analysis", projectKey, fileKey);
+
+// Prefix pattern for bulk cache invalidation
+var pattern = CacheKeyGenerator.GeneratePatternKey("analysis");
+```
+
+These methods enable deterministic, content-addressed cache keys for analysis results in a .NET application, allowing stale entries to be invalidated automatically when project or file contents change.
