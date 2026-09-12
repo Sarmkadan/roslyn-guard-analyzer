@@ -224,3 +224,58 @@ var pattern = CacheKeyGenerator.GeneratePatternKey("analysis");
 ```
 
 These methods enable deterministic, content-addressed cache keys for analysis results in a .NET application, allowing stale entries to be invalidated automatically when project or file contents change.
+
+## CacheService
+
+The `CacheService` class (in `RoslynGuardAnalyzer.Caching`) is an in-memory caching service for analysis results and derived data. It supports per-entry expiration policies, cache invalidation by key or prefix pattern, and async compute-on-miss caching. Entries are stored with a UTC expiration timestamp and are lazily evicted when accessed or when `RemoveExpired`/`GetKeys` runs.
+
+### Public API:
+
+```csharp
+public sealed class CacheService
+public CacheService(TimeSpan? defaultExpiration = null)   // default: 1 hour
+public int Count
+public void Set<T>(string key, T value)
+public void Set<T>(string key, T value, TimeSpan expiration)
+public bool TryGet<T>(string key, out T? value)
+public T Get<T>(string key)
+public T? GetOrDefault<T>(string key, T? defaultValue = default)
+public Task<T> GetOrComputeAsync<T>(string key, Func<Task<T>> computeAsync)
+public bool Remove(string key)
+public void Clear()
+public int RemoveExpired()
+public bool Contains(string key)
+public IEnumerable<string> GetKeys()
+public int InvalidateByPattern(string pattern)
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Caching;
+
+var cache = new CacheService(TimeSpan.FromMinutes(30));
+
+// Set with the default expiration
+cache.Set("analysis:project:MyProject", result);
+
+// Set with a custom expiration
+cache.Set("analysis:file:Program.cs", fileResult, TimeSpan.FromMinutes(5));
+
+// Try to read a value (returns false if missing or expired)
+if (cache.TryGet("analysis:project:MyProject", out AnalysisResult? cached))
+{
+    // use cached result
+}
+
+// Compute and cache on miss
+var result = await cache.GetOrComputeAsync("analysis:project:MyProject", async () =>
+{
+    return await analyzer.AnalyzeProjectAsync("MyProject.csproj");
+});
+
+// Invalidate all entries under a prefix
+cache.InvalidateByPattern("analysis:project:");
+```
+
+This service provides a simple, thread-unsafe in-memory cache for analysis results in a .NET application, letting callers avoid recomputing expensive analysis when the underlying inputs are unchanged.
