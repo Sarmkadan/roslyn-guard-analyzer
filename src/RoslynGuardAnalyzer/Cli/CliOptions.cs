@@ -19,18 +19,45 @@ public sealed class CliOptions
 {
     public string? ProjectPath { get; set; }
     public string? FilePath { get; set; }
-    public string OutputFormat { get; set; } = "text";
+    public string OutputFormat
+    {
+        get => _outputFormat;
+        set
+        {
+            if (value == null) throw new ArgumentNullException(nameof(OutputFormat));
+            _outputFormat = value;
+        }
+    }
+    private string _outputFormat = "text";
     public string? OutputFile { get; set; }
     public bool Verbose { get; set; }
     public bool ShowHelp { get; set; }
     public bool ShowVersion { get; set; }
     public int MaxParallelThreads { get; set; } = Environment.ProcessorCount;
     public int AnalysisTimeoutSeconds { get; set; } = 300;
-    public List<string> RuleFilter { get; set; } = [];
+    public List<string> RuleFilter
+    {
+        get => _ruleFilter;
+        set
+        {
+            if (value == null) throw new ArgumentNullException(nameof(RuleFilter));
+            _ruleFilter = value;
+        }
+    }
+    private List<string> _ruleFilter = [];
     public bool FailOnViolations { get; set; } = true;
     public string? ConfigFile { get; set; }
     public bool GenerateReport { get; set; } = true;
-    public string ReportType { get; set; } = "summary";
+    public string ReportType
+    {
+        get => _reportType;
+        set
+        {
+            if (value == null) throw new ArgumentNullException(nameof(ReportType));
+            _reportType = value;
+        }
+    }
+    private string _reportType = "summary";
     public bool SkipCache { get; set; }
     public int LogLevel { get; set; } = 2;
     public string? BaselineFile { get; set; }
