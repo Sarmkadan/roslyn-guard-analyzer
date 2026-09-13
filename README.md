@@ -424,6 +424,43 @@ var pattern = CacheKeyGenerator.GeneratePatternKey("analysis");
 
 These methods enable deterministic, content-addressed cache keys for analysis results in a .NET application, allowing stale entries to be invalidated automatically when project or file contents change.
 
+## AsyncVoidRule
+
+The `AsyncVoidRule` static class (in `RoslynGuardAnalyzer.Rules`) creates the built-in rule that detects `async void` methods that are not event handlers. Such methods cannot be awaited by their callers and can make exceptions difficult to observe, so the rule reports them as errors and recommends returning `Task` or marking the method as an event handler. Methods with EventHandler-, EventArgs-, IEventHandler-, Handler-, or Callback-related attributes are treated as event handlers and are not reported.
+
+### Public API:
+
+```csharp
+public static class AsyncVoidRule
+public const string RuleId = "AV001"
+public const string RuleTitle = "Async Void Methods Must Be Event Handlers"
+public static CustomAnalysisRule Create()
+```
+
+`Create` returns a `CustomAnalysisRule` in the `AsyncPattern` category with `Error` severity. Its predicate only matches method elements whose `IsAsync` property is `true` and whose `ReturnType` is exactly `"void"`.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
+
+var rule = AsyncVoidRule.Create();
+var method = new CodeElement("SaveChanges", CodeElementType.Method, "OrderService.cs")
+{
+    IsAsync = true,
+    ReturnType = "void",
+    StartLineNumber = 24,
+    EndLineNumber = 31
+};
+
+if (rule.ViolationPredicate(method))
+{
+    Console.WriteLine($"{rule.Id}: {rule.MessageFactory(method)}");
+}
+```
+
 ## CacheService
 
 The `CacheService` class (in `RoslynGuardAnalyzer.Caching`) is an in-memory caching service for analysis results and derived data. It supports per-entry expiration policies, cache invalidation by key or prefix pattern, and async compute-on-miss caching. Entries are stored with a UTC expiration timestamp and are lazily evicted when accessed or when `RemoveExpired`/`GetKeys` runs.
