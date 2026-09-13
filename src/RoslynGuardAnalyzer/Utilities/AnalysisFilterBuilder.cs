@@ -25,6 +25,8 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder MinimumSeverity(string severity)
     {
+        ArgumentNullException.ThrowIfNull(severity);
+
         var severityOrder = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
         {
             ["Low"] = 1,
@@ -53,6 +55,8 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder BySeverity(string severity)
     {
+        ArgumentNullException.ThrowIfNull(severity);
+
         _predicates.Add(v => v.Severity.ToString().Equals(severity, StringComparison.OrdinalIgnoreCase));
         return this;
     }
@@ -71,6 +75,8 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder ByRule(string ruleName)
     {
+        ArgumentNullException.ThrowIfNull(ruleName);
+
         _predicates.Add(v => v.RuleName.Equals(ruleName, StringComparison.OrdinalIgnoreCase));
         return this;
     }
@@ -80,6 +86,8 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder ByAnyRule(params string[] ruleNames)
     {
+        ArgumentNullException.ThrowIfNull(ruleNames);
+
         var rules = new HashSet<string>(ruleNames, StringComparer.OrdinalIgnoreCase);
         _predicates.Add(v => rules.Contains(v.RuleName));
         return this;
@@ -90,6 +98,8 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder ByFile(string filePath)
     {
+        ArgumentNullException.ThrowIfNull(filePath);
+
         _predicates.Add(v => v.FilePath.Contains(filePath, StringComparison.OrdinalIgnoreCase));
         return this;
     }
@@ -117,6 +127,8 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder ContainsMessage(string text)
     {
+        ArgumentNullException.ThrowIfNull(text);
+
         _predicates.Add(v => v.Message.Contains(text, StringComparison.OrdinalIgnoreCase));
         return this;
     }
@@ -126,8 +138,7 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public AnalysisFilterBuilder Where(Func<RuleViolation, bool> predicate)
     {
-        if (predicate is null)
-            throw new ArgumentNullException(nameof(predicate));
+        ArgumentNullException.ThrowIfNull(predicate);
 
         _predicates.Add(predicate);
         return this;
@@ -149,6 +160,8 @@ public sealed class AnalysisFilterBuilder
     /// </summary>
     public IEnumerable<RuleViolation> Apply(IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
+
         var filter = Build();
         return violations.Where(filter);
     }
