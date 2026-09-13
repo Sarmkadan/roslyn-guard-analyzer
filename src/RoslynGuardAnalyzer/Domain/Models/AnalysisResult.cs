@@ -49,6 +49,11 @@ public sealed class AnalysisResult
     public AnalysisResult(string projectName, string projectPath)
         : this()
     {
+        if (projectName is null)
+            throw new ArgumentNullException(nameof(projectName));
+        if (projectPath is null)
+            throw new ArgumentNullException(nameof(projectPath));
+
         ProjectName = projectName;
         ProjectPath = projectPath;
     }
@@ -70,7 +75,10 @@ public sealed class AnalysisResult
     /// </summary>
     public void AddViolations(IEnumerable<RuleViolation> violations)
     {
-        foreach (var violation in violations ?? Enumerable.Empty<RuleViolation>())
+        if (violations is null)
+            throw new ArgumentNullException(nameof(violations));
+
+        foreach (var violation in violations)
         {
             AddViolation(violation);
         }
@@ -81,11 +89,11 @@ public sealed class AnalysisResult
     /// </summary>
     public void AddAnalyzedElement(CodeElement element)
     {
-        if (element is not null)
-        {
-            AnalyzedElements.Add(element);
-            TotalElementsAnalyzed = AnalyzedElements.Count;
-        }
+        if (element is null)
+            throw new ArgumentNullException(nameof(element));
+
+        AnalyzedElements.Add(element);
+        TotalElementsAnalyzed = AnalyzedElements.Count;
     }
 
     /// <summary>
