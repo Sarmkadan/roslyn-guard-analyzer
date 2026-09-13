@@ -21,6 +21,39 @@ namespace RoslynGuardAnalyzer.Cli;
 /// </summary>
 public sealed class CliArgumentParser
 {
+    private const string HelpShortOption = "-h";
+    private const string HelpOption = "--help";
+    private const string VersionShortOption = "-v";
+    private const string VersionOption = "--version";
+    private const string VerboseOption = "--verbose";
+    private const string SkipCacheOption = "--skip-cache";
+    private const string ProjectOption = "--project";
+    private const string FileOption = "--file";
+    private const string OutputOption = "--output";
+    private const string FormatOption = "--format";
+    private const string ConfigOption = "--config";
+    private const string TimeoutOption = "--timeout";
+    private const string ThreadsOption = "--threads";
+    private const string LogLevelOption = "--log-level";
+    private const string RuleFilterOption = "--rule-filter";
+    private const string NoFailOnViolationsOption = "--no-fail-on-violations";
+    private const string NoReportOption = "--no-report";
+    private const string ReportTypeOption = "--report-type";
+    private const string OptionValueSeparator = "=";
+    private const string OptionPrefix = "-";
+    private const string ResponseFilePrefix = "@";
+    private const string ResponseFileCommentPrefix = "#";
+    private const string ResponseFileAlternativeCommentPrefix = "//";
+
+    private const string TotalArgumentLengthExceededMessage = "Total argument length exceeds maximum allowed ({0} bytes). Actual: {1} bytes. This may indicate malicious input.";
+    private const string TooManyArgumentsMessage = "Too many arguments after expansion ({0} > {1}). This may indicate malicious input or excessive glob expansion.";
+    private const string ResponseFileRecursionDepthExceededMessage = "Response file expansion recursion depth exceeded maximum of {0}. This may indicate a circular reference in response files.";
+    private const string EmptyResponseFilePathMessage = "Response file path cannot be empty. Use @filename to reference a response file.";
+    private const string ResponseFileNotFoundMessage = "Response file not found: {0}";
+    private const string ResponseFileSizeExceededMessage = "Response file exceeds maximum size of {0} bytes. File: {1}, Size: {2} bytes. This may indicate malicious input.";
+    private const string MissingOptionValueMessage = "Option {0} requires a value";
+    private const string ArgumentParsingErrorMessage = "Error parsing arguments: {0}";
+
     private readonly string[] _args;
     private int _index;
 
@@ -71,17 +104,21 @@ public sealed class CliArgumentParser
         var totalLength = expandedArgs.Sum(arg => arg?.Length ?? 0);
         if (totalLength > MaxTotalArgumentLength)
         {
-            throw new ArgumentException(
-                $"Total argument length exceeds maximum allowed ({MaxTotalArgumentLength} bytes). " +
-                $"Actual: {totalLength} bytes. This may indicate malicious input.");
+            throw new ArgumentException(string.Format(
+                CultureInfo.CurrentCulture,
+                TotalArgumentLengthExceededMessage,
+                MaxTotalArgumentLength,
+                totalLength));
         }
 
         // Validate number of arguments to prevent excessive processing
         if (expandedArgs.Count > MaxExpandedArguments)
         {
-            throw new ArgumentException(
-                $"Too many arguments after expansion ({expandedArgs.Count} > {MaxExpandedArguments}). " +
-                "This may indicate malicious input or excessive glob expansion.");
+            throw new ArgumentException(string.Format(
+                CultureInfo.CurrentCulture,
+                TooManyArgumentsMessage,
+                expandedArgs.Count,
+                MaxExpandedArguments));
         }
 
         var options = new CliOptions();
@@ -91,152 +128,152 @@ public sealed class CliArgumentParser
         {
             var arg = expandedArgs[_index];
 
-            if (arg == "-h" || arg == "--help")
+            if (arg == HelpShortOption || arg == HelpOption)
             {
                 options.ShowHelp = true;
                 _index++;
             }
-            else if (arg == "-v" || arg == "--version")
+            else if (arg == VersionShortOption || arg == VersionOption)
             {
                 options.ShowVersion = true;
                 _index++;
             }
-            else if (arg == "--verbose")
+            else if (arg == VerboseOption)
             {
                 options.Verbose = true;
                 _index++;
             }
-            else if (arg == "--skip-cache")
+            else if (arg == SkipCacheOption)
             {
                 options.SkipCache = true;
                 _index++;
             }
-            else if (arg.StartsWith("--project="))
+            else if (arg.StartsWith(ProjectOption + OptionValueSeparator))
             {
-                options.ProjectPath = arg.Substring(10);
+                options.ProjectPath = arg.Substring(ProjectOption.Length + OptionValueSeparator.Length);
                 _index++;
             }
-            else if (arg == "--project")
+            else if (arg == ProjectOption)
             {
-                options.ProjectPath = GetNextValue(expandedArgs, "--project");
+                options.ProjectPath = GetNextValue(expandedArgs, ProjectOption);
                 _index++;
             }
-            else if (arg.StartsWith("--file="))
+            else if (arg.StartsWith(FileOption + OptionValueSeparator))
             {
-                options.FilePath = arg.Substring(7);
+                options.FilePath = arg.Substring(FileOption.Length + OptionValueSeparator.Length);
                 _index++;
             }
-            else if (arg == "--file")
+            else if (arg == FileOption)
             {
-                options.FilePath = GetNextValue(expandedArgs, "--file");
+                options.FilePath = GetNextValue(expandedArgs, FileOption);
                 _index++;
             }
-            else if (arg.StartsWith("--output="))
+            else if (arg.StartsWith(OutputOption + OptionValueSeparator))
             {
-                options.OutputFile = arg.Substring(9);
+                options.OutputFile = arg.Substring(OutputOption.Length + OptionValueSeparator.Length);
                 _index++;
             }
-            else if (arg == "--output")
+            else if (arg == OutputOption)
             {
-                options.OutputFile = GetNextValue(expandedArgs, "--output");
+                options.OutputFile = GetNextValue(expandedArgs, OutputOption);
                 _index++;
             }
-            else if (arg.StartsWith("--format="))
+            else if (arg.StartsWith(FormatOption + OptionValueSeparator))
             {
-                options.OutputFormat = arg.Substring(9);
+                options.OutputFormat = arg.Substring(FormatOption.Length + OptionValueSeparator.Length);
                 _index++;
             }
-            else if (arg == "--format")
+            else if (arg == FormatOption)
             {
-                options.OutputFormat = GetNextValue(expandedArgs, "--format");
+                options.OutputFormat = GetNextValue(expandedArgs, FormatOption);
                 _index++;
             }
-            else if (arg.StartsWith("--config="))
+            else if (arg.StartsWith(ConfigOption + OptionValueSeparator))
             {
-                options.ConfigFile = arg.Substring(9);
+                options.ConfigFile = arg.Substring(ConfigOption.Length + OptionValueSeparator.Length);
                 _index++;
             }
-            else if (arg == "--config")
+            else if (arg == ConfigOption)
             {
-                options.ConfigFile = GetNextValue(expandedArgs, "--config");
+                options.ConfigFile = GetNextValue(expandedArgs, ConfigOption);
                 _index++;
             }
-            else if (arg.StartsWith("--timeout="))
+            else if (arg.StartsWith(TimeoutOption + OptionValueSeparator))
             {
-                if (int.TryParse(arg.Substring(10), NumberStyles.Integer, CultureInfo.InvariantCulture, out var timeout))
+                if (int.TryParse(arg.Substring(TimeoutOption.Length + OptionValueSeparator.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out var timeout))
                     options.AnalysisTimeoutSeconds = timeout;
                 _index++;
             }
-            else if (arg == "--timeout")
+            else if (arg == TimeoutOption)
             {
-                var value = GetNextValue(expandedArgs, "--timeout");
+                var value = GetNextValue(expandedArgs, TimeoutOption);
                 if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var timeout))
                     options.AnalysisTimeoutSeconds = timeout;
                 _index++;
             }
-            else if (arg.StartsWith("--threads="))
+            else if (arg.StartsWith(ThreadsOption + OptionValueSeparator))
             {
-                if (int.TryParse(arg.Substring(10), NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
+                if (int.TryParse(arg.Substring(ThreadsOption.Length + OptionValueSeparator.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
                     options.MaxParallelThreads = threads;
                 _index++;
             }
-            else if (arg == "--threads")
+            else if (arg == ThreadsOption)
             {
-                var value = GetNextValue(expandedArgs, "--threads");
+                var value = GetNextValue(expandedArgs, ThreadsOption);
                 if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var threads))
                     options.MaxParallelThreads = threads;
                 _index++;
             }
-            else if (arg.StartsWith("--log-level="))
+            else if (arg.StartsWith(LogLevelOption + OptionValueSeparator))
             {
-                if (int.TryParse(arg.Substring(12), NumberStyles.Integer, CultureInfo.InvariantCulture, out var level))
+                if (int.TryParse(arg.Substring(LogLevelOption.Length + OptionValueSeparator.Length), NumberStyles.Integer, CultureInfo.InvariantCulture, out var level))
                     options.LogLevel = level;
                 _index++;
             }
-            else if (arg == "--log-level")
+            else if (arg == LogLevelOption)
             {
-                var value = GetNextValue(expandedArgs, "--log-level");
+                var value = GetNextValue(expandedArgs, LogLevelOption);
                 if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var level))
                     options.LogLevel = level;
                 _index++;
             }
-            else if (arg.StartsWith("--rule-filter="))
+            else if (arg.StartsWith(RuleFilterOption + OptionValueSeparator))
             {
-                var filters = arg.Substring(14).Split(',');
+                var filters = arg.Substring(RuleFilterOption.Length + OptionValueSeparator.Length).Split(',');
                 options.RuleFilter.AddRange(filters.Select(f => f.Trim()));
                 _index++;
             }
-            else if (arg == "--rule-filter")
+            else if (arg == RuleFilterOption)
             {
-                var value = GetNextValue(expandedArgs, "--rule-filter");
+                var value = GetNextValue(expandedArgs, RuleFilterOption);
                 var filters = value.Split(',');
                 options.RuleFilter.AddRange(filters.Select(f => f.Trim()));
                 _index++;
             }
-            else if (arg == "--no-fail-on-violations")
+            else if (arg == NoFailOnViolationsOption)
             {
                 options.FailOnViolations = false;
                 _index++;
             }
-            else if (arg == "--no-report")
+            else if (arg == NoReportOption)
             {
                 options.GenerateReport = false;
                 _index++;
             }
-            else if (arg.StartsWith("--report-type="))
+            else if (arg.StartsWith(ReportTypeOption + OptionValueSeparator))
             {
-                options.ReportType = arg.Substring(14);
+                options.ReportType = arg.Substring(ReportTypeOption.Length + OptionValueSeparator.Length);
                 _index++;
             }
-            else if (arg == "--report-type")
+            else if (arg == ReportTypeOption)
             {
-                options.ReportType = GetNextValue(expandedArgs, "--report-type");
+                options.ReportType = GetNextValue(expandedArgs, ReportTypeOption);
                 _index++;
             }
             else
             {
                 // Try to treat as positional argument
-                if (!arg.StartsWith("-") && string.IsNullOrWhiteSpace(options.ProjectPath))
+                if (!arg.StartsWith(OptionPrefix) && string.IsNullOrWhiteSpace(options.ProjectPath))
                 {
                     options.ProjectPath = arg;
                 }
@@ -261,9 +298,10 @@ public sealed class CliArgumentParser
 
         if (recursionDepth >= MaxResponseFileRecursionDepth)
         {
-            throw new ArgumentException(
-                $"Response file expansion recursion depth exceeded maximum of {MaxResponseFileRecursionDepth}. " +
-                "This may indicate a circular reference in response files.");
+            throw new ArgumentException(string.Format(
+                CultureInfo.CurrentCulture,
+                ResponseFileRecursionDepthExceededMessage,
+                MaxResponseFileRecursionDepth));
         }
 
         var result = new List<string>();
@@ -272,14 +310,14 @@ public sealed class CliArgumentParser
         foreach (var arg in args)
         {
             // Check for response file pattern (@filename)
-            if (arg.StartsWith("@", StringComparison.Ordinal))
+            if (arg.StartsWith(ResponseFilePrefix, StringComparison.Ordinal))
             {
-                var filePath = arg.Substring(1);
+                var filePath = arg.Substring(ResponseFilePrefix.Length);
 
                 // Validate file path is not empty
                 if (string.IsNullOrWhiteSpace(filePath))
                 {
-                    throw new ArgumentException("Response file path cannot be empty. Use @filename to reference a response file.");
+                    throw new ArgumentException(EmptyResponseFilePathMessage);
                 }
 
                 // Prevent duplicate file processing
@@ -319,17 +357,19 @@ public sealed class CliArgumentParser
         // Check if file exists
         if (!File.Exists(filePath))
         {
-            throw new ArgumentException($"Response file not found: {filePath}");
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, ResponseFileNotFoundMessage, filePath));
         }
 
         // Check file size to prevent memory exhaustion
         var fileInfo = new FileInfo(filePath);
         if (fileInfo.Length > MaxResponseFileSizeBytes)
         {
-            throw new ArgumentException(
-                $"Response file exceeds maximum size of {MaxResponseFileSizeBytes} bytes. " +
-                $"File: {filePath}, Size: {fileInfo.Length} bytes. " +
-                "This may indicate malicious input.");
+            throw new ArgumentException(string.Format(
+                CultureInfo.CurrentCulture,
+                ResponseFileSizeExceededMessage,
+                MaxResponseFileSizeBytes,
+                filePath,
+                fileInfo.Length));
         }
 
         // Read file contents
@@ -345,7 +385,7 @@ public sealed class CliArgumentParser
             var trimmedLine = line.Trim();
 
             // Skip empty lines and comments
-            if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith("#") || trimmedLine.StartsWith("//"))
+            if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith(ResponseFileCommentPrefix) || trimmedLine.StartsWith(ResponseFileAlternativeCommentPrefix))
             {
                 continue;
             }
@@ -367,7 +407,7 @@ public sealed class CliArgumentParser
     {
         _index++;
         if (_index >= args.Count)
-            throw new ArgumentException($"Option {optionName} requires a value");
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, MissingOptionValueMessage, optionName));
 
         return args[_index];
     }
@@ -386,7 +426,7 @@ public sealed class CliArgumentParser
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error parsing arguments: {ex.Message}");
+            Console.Error.WriteLine(ArgumentParsingErrorMessage, ex.Message);
             return new CliOptions { ShowHelp = true };
         }
     }
