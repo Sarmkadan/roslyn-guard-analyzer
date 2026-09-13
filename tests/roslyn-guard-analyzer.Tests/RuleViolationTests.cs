@@ -75,6 +75,23 @@ public sealed class RuleViolationTests
         description.Should().Be("[R001] Error: Violation message at file.cs(5, 10)");
     }
 
+    [Fact]
+    public void ToString_ReturnsRuleIdLocationAndMessage()
+    {
+        // Arrange
+        var violation = new RuleViolation("R001", "RuleName", "Violation message", "/path/to/file.cs")
+        {
+            LineNumber = 5,
+            ColumnNumber = 10
+        };
+
+        // Act
+        var result = violation.ToString();
+
+        // Assert
+        result.Should().Be("[R001] file.cs(5, 10): Violation message");
+    }
+
     [Theory]
     [InlineData(SeverityLevel.Critical, true)]
     [InlineData(SeverityLevel.Error, true)]
