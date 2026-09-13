@@ -86,6 +86,45 @@ var tests = new CliArgumentParserTests();
 tests.Parse_EmptyArgs_ReturnsDefaultOptions();
 ```
 
+## CliArgumentParser
+
+The `CliArgumentParser` class (in `RoslynGuardAnalyzer.Cli`) converts command-line arguments into a `CliOptions` instance. It supports flags, positional project paths, options written as either `--option=value` or `--option value`, and nested response files referenced with `@filename`. Response-file expansion is protected by recursion, file-size, total-length, and argument-count limits.
+
+### Public API:
+
+```csharp
+public sealed class CliArgumentParser
+public CliArgumentParser(string[] args)
+public CliOptions Parse()
+public static CliOptions ParseSafe(string[] args)
+```
+
+`Parse` returns the parsed options and throws `ArgumentException` when a required option value is missing or response-file processing exceeds its limits. `ParseSafe` is intended for CLI entry points: it writes parsing errors to standard error and returns default options with `ShowHelp` enabled.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Cli;
+
+var arguments = new[]
+{
+    "--project", "src/MyProject.csproj",
+    "--format=json",
+    "--threads", "4",
+    "--verbose"
+};
+
+var options = new CliArgumentParser(arguments).Parse();
+
+Console.WriteLine(options.ProjectPath);        // src/MyProject.csproj
+Console.WriteLine(options.OutputFormat);       // json
+Console.WriteLine(options.MaxParallelThreads); // 4
+Console.WriteLine(options.Verbose);             // True
+
+// For a CLI entry point that should show help instead of throwing on invalid input:
+var safeOptions = CliArgumentParser.ParseSafe(args);
+```
+
 ## ServiceCollectionExtensionsTests
 
 The ServiceCollectionExtensionsTests class contains unit tests for the ServiceCollectionExtensions class, which provides extension methods for registering analyzer services in the dependency injection container. It tests various registration scenarios including null checks, validation, and configuration of analyzer services.
