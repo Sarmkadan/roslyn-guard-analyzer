@@ -24,13 +24,8 @@ public sealed class ValidationService : IValidationService
     /// </summary>
     public (bool IsValid, List<string> Errors) ValidateRuleConfiguration(RuleConfiguration? config)
     {
+        ArgumentNullException.ThrowIfNull(config);
         var errors = new List<string>();
-
-        if (config is null)
-        {
-            errors.Add("Configuration cannot be null");
-            return (false, errors);
-        }
 
         if (string.IsNullOrWhiteSpace(config.Name))
             errors.Add("Configuration name is required");
@@ -65,13 +60,8 @@ public sealed class ValidationService : IValidationService
     /// </summary>
     public (bool IsValid, List<string> Errors) ValidateRule(AnalysisRule rule)
     {
+        ArgumentNullException.ThrowIfNull(rule);
         var errors = new List<string>();
-
-        if (rule is null)
-        {
-            errors.Add("Rule cannot be null");
-            return (false, errors);
-        }
 
         if (string.IsNullOrWhiteSpace(rule.Id))
             errors.Add("Rule ID is required");
@@ -102,6 +92,8 @@ public sealed class ValidationService : IValidationService
     /// </summary>
     public (bool IsValid, string? Error) ValidateProjectPath(string projectPath)
     {
+        ArgumentNullException.ThrowIfNull(projectPath);
+
         if (string.IsNullOrWhiteSpace(projectPath))
             return (false, "Project path cannot be null or empty");
 
@@ -148,13 +140,8 @@ public sealed class ValidationService : IValidationService
     /// </summary>
     public (bool IsValid, List<string> Errors) ValidateCodeElement(CodeElement element)
     {
+        ArgumentNullException.ThrowIfNull(element);
         var errors = new List<string>();
-
-        if (element is null)
-        {
-            errors.Add("Code element cannot be null");
-            return (false, errors);
-        }
 
         if (string.IsNullOrWhiteSpace(element.Name))
             errors.Add("Element name is required");
@@ -207,13 +194,8 @@ public sealed class ValidationService : IValidationService
     /// </summary>
     public (bool IsValid, List<string> Errors) ValidateAnalysisResult(AnalysisResult result)
     {
+        ArgumentNullException.ThrowIfNull(result);
         var errors = new List<string>();
-
-        if (result is null)
-        {
-            errors.Add("Analysis result cannot be null");
-            return (false, errors);
-        }
 
         if (string.IsNullOrWhiteSpace(result.ProjectName))
             errors.Add("Project name is required");
