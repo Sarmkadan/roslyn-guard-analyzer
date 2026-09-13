@@ -33,53 +33,6 @@ public sealed class SuppressionManager : ISuppressionManager
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Validates that a file path is safe and stays within the expected directory.
-    /// </summary>
-    /// <param name="filePath">The file path to validate.</param>
-    /// <param name="expectedBaseDirectory">The expected base directory (optional).</param>
-    /// <exception cref="ArgumentException">Thrown when the path is invalid.</exception>
-    private void ValidateFilePath(string filePath, string? expectedBaseDirectory = null)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
-
-        var fullPath = Path.GetFullPath(filePath);
-
-        // Normalize path separators for consistent comparison
-        fullPath = fullPath.Replace('\\', Path.DirectorySeparatorChar);
-
-        // Check for directory traversal attempts
-        if (fullPath.Contains("..") && !fullPath.StartsWith(".."))
-        {
-            throw new ArgumentException(
-                $"File path '{filePath}' contains directory traversal sequence '..'. " +
-                "Paths must stay within the expected directory structure.",
-                nameof(filePath));
-        }
-
-        // If an expected base directory is provided, verify the path stays within it
-        if (!string.IsNullOrWhiteSpace(expectedBaseDirectory))
-        {
-            var expectedFullPath = Path.GetFullPath(expectedBaseDirectory);
-            expectedFullPath = expectedFullPath.Replace('\\', Path.DirectorySeparatorChar);
-
-            // Ensure both paths end with directory separator for proper comparison
-            if (!expectedFullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
-                expectedFullPath += Path.DirectorySeparatorChar;
-            if (!fullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
-                fullPath += Path.DirectorySeparatorChar;
-
-            if (!fullPath.StartsWith(expectedFullPath, StringComparison.OrdinalIgnoreCase))
-            {
-                throw new ArgumentException(
-                    $"File path '{filePath}' resolves to '{Path.GetFullPath(filePath)}' which " +
-                    $"is outside the expected directory '{expectedBaseDirectory}'.",
-                    nameof(filePath));
-            }
-        }
-    }
-
     /// <inheritdoc/>
     public void AddSuppression(SuppressionRecord record)
     {
@@ -97,6 +50,9 @@ public sealed class SuppressionManager : ISuppressionManager
     /// <inheritdoc/>
     public bool RemoveSuppression(string suppressionId)
     {
+        if (suppressionId is null)
+            throw new ArgumentNullException(nameof(suppressionId));
+
         if (string.IsNullOrWhiteSpace(suppressionId))
             return false;
 
@@ -149,6 +105,8 @@ public sealed class SuppressionManager : ISuppressionManager
     /// <inheritdoc/>
     public async Task SaveAsync(string filePath, CancellationToken cancellationToken = default)
     {
+        if (filePath is null)
+            throw new ArgumentNullException(nameof(filePath));
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
@@ -182,6 +140,8 @@ public sealed class SuppressionManager : ISuppressionManager
     /// <inheritdoc/>
     public async Task LoadAsync(string filePath, CancellationToken cancellationToken = default)
     {
+        if (filePath is null)
+            throw new ArgumentNullException(nameof(filePath));
         if (string.IsNullOrWhiteSpace(filePath))
             throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
 
@@ -217,6 +177,53 @@ public sealed class SuppressionManager : ISuppressionManager
             // Swallow the exception - file loading failures should not crash the application
             // If the file is corrupted or unreadable, we continue with an empty suppression list
             // This maintains consistency with the event bus pattern where failures are handled gracefully
+        }
+    }
+
+    /// <summary>
+    /// Validates that a file path is safe and stays within the expected directory.
+    /// </summary>
+    /// <param name="filePath">The file path to validate.</param>
+    /// <param name="expectedBaseDirectory">The expected base directory (optional).</param>
+    /// <exception cref="ArgumentException">Thrown when the path is invalid.</exception>
+    private void ValidateFilePath(string filePath, string? expectedBaseDirectory = null)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+            throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+
+        var fullPath = Path.GetFullPath(filePath);
+
+        // Normalize path separators for consistent comparison
+        fullPath = fullPath.Replace('\\', Path.DirectorySeparatorChar);
+
+        // Check for directory traversal attempts
+        if (fullPath.Contains("..") && !fullPath.StartsWith(".."))
+        {
+            throw new ArgumentException(
+                $"File path '{filePath}' contains directory traversal sequence '..'. " +
+                "Paths must stay within the expected directory structure.",
+                nameof(filePath));
+        }
+
+        // If an expected base directory is provided, verify the path stays within it
+        if (!string.IsNullOrWhiteSpace(expectedBaseDirectory))
+        {
+            var expectedFullPath = Path.GetFullPath(expectedBaseDirectory);
+            expectedFullPath = expectedFullPath.Replace('\\', Path.DirectorySeparatorChar);
+
+            // Ensure both paths end with directory separator for proper comparison
+            if (!expectedFullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                expectedFullPath += Path.DirectorySeparatorChar;
+            if (!fullPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                fullPath += Path.DirectorySeparatorChar;
+
+            if (!fullPath.StartsWith(expectedFullPath, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException(
+                    $"File path '{filePath}' resolves to '{Path.GetFullPath(filePath)}' which " +
+                    $"is outside the expected directory '{expectedBaseDirectory}'.",
+                    nameof(filePath));
+            }
         }
     }
 }
