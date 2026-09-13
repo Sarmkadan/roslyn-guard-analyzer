@@ -20,6 +20,13 @@ public sealed class ResultAggregator
     private readonly List<AnalysisResult> _results = [];
 
     /// <summary>
+    /// Initializes a new instance of the <see cref="ResultAggregator"/> class.
+    /// </summary>
+    public ResultAggregator()
+    {
+    }
+
+    /// <summary>
     /// Adds an analysis result to the aggregation.
     /// </summary>
     public void Add(AnalysisResult result)
