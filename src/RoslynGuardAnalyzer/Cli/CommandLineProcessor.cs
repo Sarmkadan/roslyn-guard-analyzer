@@ -37,6 +37,9 @@ public sealed class CommandLineProcessor
     private readonly string[] _args;
     private CliOptions? _parsedOptions;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CommandLineProcessor"/> class.
+    /// </summary>
     public CommandLineProcessor(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
