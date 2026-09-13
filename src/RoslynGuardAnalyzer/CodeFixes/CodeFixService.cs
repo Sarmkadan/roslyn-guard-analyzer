@@ -76,7 +76,15 @@ public sealed class CodeFixService : ICodeFixService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Generates the available <see cref="CodeFix"/> actions for the supplied violations.
+    /// </summary>
+    /// <param name="violations">The violations to generate fixes for.</param>
+    /// <param name="cancellationToken">Token to observe for cancellation requests.</param>
+    /// <returns>A task that resolves to the read-only collection of generated code fixes.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="violations"/> is <see langword="null"/>.
+    /// </exception>
     public async Task<IReadOnlyList<CodeFix>> GetFixesAsync(
         IEnumerable<RuleViolation> violations,
         CancellationToken cancellationToken = default)
@@ -122,7 +130,18 @@ public sealed class CodeFixService : ICodeFixService
         }, cancellationToken);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Applies the specified <see cref="CodeFix"/> actions to their target source files.
+    /// </summary>
+    /// <param name="fixes">The fixes to apply.</param>
+    /// <param name="dryRun">
+    /// When <see langword="true"/> the operation is simulated without persisting any file changes.
+    /// </param>
+    /// <param name="cancellationToken">Token to observe for cancellation requests.</param>
+    /// <returns>A task that resolves to the result of the fix operation.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="fixes"/> is <see langword="null"/>.
+    /// </exception>
     public async Task<CodeFixResult> ApplyFixesAsync(
         IEnumerable<CodeFix> fixes,
         bool dryRun = false,
