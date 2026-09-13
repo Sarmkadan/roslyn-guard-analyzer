@@ -72,6 +72,50 @@ var fileResult = await service.AnalyzeFileAsync("Program.cs");
 
 These members enable fine-grained control over parallel analysis tasks in a .NET application.
 
+## AnalysisService
+
+The `AnalysisService` class (in `RoslynGuardAnalyzer.Services`) orchestrates analysis for either a project or a single C# source file. For projects, it validates the project path, discovers `.cs` files recursively while excluding `bin`, `obj`, and `.git` directories, extracts code elements, and runs all enabled rules through `IRuleEngine`. Both operations return an `AnalysisResult` containing the analyzed elements, violations, file and element counts, and completion status.
+
+### Public API:
+
+```csharp
+public interface IAnalysisService
+public Task<AnalysisResult> AnalyzeProjectAsync(string projectPath)
+public Task<AnalysisResult> AnalyzeFileAsync(string filePath)
+
+public sealed class AnalysisService : IAnalysisService
+public AnalysisService(IRuleEngine ruleEngine, IValidationService validationService)
+```
+
+`AnalyzeProjectAsync` accepts a project-file path and throws `ConfigurationException` when project-path validation fails. `AnalyzeFileAsync` accepts only an existing `.cs` file and throws `FileAccessException` for a missing or unsupported file. Failures that occur during either analysis operation are wrapped in `AnalysisException`.
+
+### Example usage:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using RoslynGuardAnalyzer.Infrastructure;
+using RoslynGuardAnalyzer.Services;
+
+var services = new ServiceCollection();
+services.RegisterAnalyzerServices();
+
+using var provider = services.BuildServiceProvider();
+var analysisService = provider.GetRequiredService<IAnalysisService>();
+
+var projectResult = await analysisService.AnalyzeProjectAsync(
+    "src/MyProject/MyProject.csproj");
+
+Console.WriteLine($"Files analyzed: {projectResult.TotalFilesAnalyzed}");
+Console.WriteLine($"Elements analyzed: {projectResult.TotalElementsAnalyzed}");
+Console.WriteLine($"Violations: {projectResult.ViolationCount}");
+
+var fileResult = await analysisService.AnalyzeFileAsync(
+    "src/MyProject/Program.cs");
+
+foreach (var violation in fileResult.Violations)
+    Console.WriteLine($"{violation.RuleId}: {violation.Message}");
+```
+
 ## ServiceCollectionExtensionsValidationTests
 
 The ServiceCollectionExtensionsValidationTests class contains unit tests for the AnalyzerConfiguration validation extension methods in the ServiceCollectionExtensionsValidation class.
