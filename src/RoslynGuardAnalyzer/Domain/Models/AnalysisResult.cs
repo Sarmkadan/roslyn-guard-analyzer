@@ -167,6 +167,8 @@ public sealed class AnalysisResult
         AnalysisEndTime = DateTime.UtcNow;
     }
 
+    public override string ToString() => $"{ProjectName}: {ViolationCount} violations";
+
     /// <summary>
     /// Updates internal statistics after adding a violation.
     /// </summary>

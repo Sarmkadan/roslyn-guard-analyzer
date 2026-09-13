@@ -112,4 +112,19 @@ public class AnalysisResultTests
         // Assert
         Assert.True(duration.TotalMinutes >= 5);
     }
+
+    [Fact]
+    public void ToString_ReturnsProjectNameAndViolationCount()
+    {
+        // Arrange
+        var result = new AnalysisResult("TestProject", "C:\\TestPath");
+        result.AddViolation(new RuleViolation());
+        result.AddViolation(new RuleViolation());
+
+        // Act
+        var description = result.ToString();
+
+        // Assert
+        Assert.Equal("TestProject: 2 violations", description);
+    }
 }
