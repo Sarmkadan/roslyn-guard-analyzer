@@ -34,6 +34,21 @@ public enum ExitCode : int
 /// </summary>
 public sealed class CommandLineProcessor
 {
+    private const string UnexpectedErrorPrefix = "Unexpected error: ";
+    private const string ErrorsHeader = "Errors:";
+    private const string ErrorItemPrefix = " - ";
+    private const string OptionsNotProcessedError = "Options not processed yet";
+    private const string PathNotFoundPrefix = "Path not found: ";
+    private const string ConfigFileNotFoundPrefix = "Config file not found: ";
+    private const string ConfigurationHeader = "Configuration:";
+    private const string TargetLabel = " Target: ";
+    private const string FormatLabel = " Format: ";
+    private const string TimeoutLabel = " Timeout: ";
+    private const string SecondsSuffix = "s";
+    private const string ThreadsLabel = " Threads: ";
+    private const string FilteredRulesLabel = " Filtered Rules: ";
+    private const string RuleSeparator = ", ";
+
     private readonly string[] _args;
     private CliOptions? _parsedOptions;
 
@@ -82,7 +97,7 @@ public sealed class CommandLineProcessor
         }
         catch (Exception ex)
         {
-            errors.Add($"Unexpected error: {ex.Message}");
+            errors.Add(UnexpectedErrorPrefix + ex.Message);
             PrintErrors(errors);
             return (false, ExitCode.InternalError, _parsedOptions ?? new CliOptions(), errors);
         }
@@ -101,10 +116,10 @@ public sealed class CommandLineProcessor
         if (errors.Count == 0)
             return;
 
-        Console.Error.WriteLine("Errors:");
+        Console.Error.WriteLine(ErrorsHeader);
         foreach (var error in errors)
         {
-            Console.Error.WriteLine($" - {error}");
+            Console.Error.WriteLine(ErrorItemPrefix + error);
         }
 
         Console.Error.WriteLine();
@@ -120,7 +135,7 @@ public sealed class CommandLineProcessor
 
         if (_parsedOptions is null)
         {
-            errors.Add("Options not processed yet");
+            errors.Add(OptionsNotProcessedError);
             return (false, errors);
         }
 
@@ -129,7 +144,7 @@ public sealed class CommandLineProcessor
         {
             if (!System.IO.File.Exists(targetPath) && !System.IO.Directory.Exists(targetPath))
             {
-                errors.Add($"Path not found: {targetPath}");
+                errors.Add(PathNotFoundPrefix + targetPath);
             }
         }
 
@@ -137,7 +152,7 @@ public sealed class CommandLineProcessor
         {
             if (!System.IO.File.Exists(_parsedOptions.ConfigFile))
             {
-                errors.Add($"Config file not found: {_parsedOptions.ConfigFile}");
+                errors.Add(ConfigFileNotFoundPrefix + _parsedOptions.ConfigFile);
             }
         }
 
@@ -152,15 +167,15 @@ public sealed class CommandLineProcessor
         if (_parsedOptions is null)
             return;
 
-        Console.WriteLine("Configuration:");
-        Console.WriteLine($" Target: {_parsedOptions.GetTargetPath()}");
-        Console.WriteLine($" Format: {_parsedOptions.OutputFormat}");
-        Console.WriteLine($" Timeout: {_parsedOptions.AnalysisTimeoutSeconds}s");
-        Console.WriteLine($" Threads: {_parsedOptions.MaxParallelThreads}");
+        Console.WriteLine(ConfigurationHeader);
+        Console.WriteLine(TargetLabel + _parsedOptions.GetTargetPath());
+        Console.WriteLine(FormatLabel + _parsedOptions.OutputFormat);
+        Console.WriteLine(TimeoutLabel + _parsedOptions.AnalysisTimeoutSeconds + SecondsSuffix);
+        Console.WriteLine(ThreadsLabel + _parsedOptions.MaxParallelThreads);
 
         if (_parsedOptions.RuleFilter.Count > 0)
         {
-            Console.WriteLine($" Filtered Rules: {string.Join(", ", _parsedOptions.RuleFilter)}");
+            Console.WriteLine(FilteredRulesLabel + string.Join(RuleSeparator, _parsedOptions.RuleFilter));
         }
 
         Console.WriteLine();
