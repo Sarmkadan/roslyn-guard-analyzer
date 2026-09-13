@@ -66,8 +66,15 @@ public sealed class RuleRegistry : IRuleRegistry
     /// <summary>
     /// Retrieves a rule by its ID.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown if ruleId is null.</exception>
     public AnalysisRule? GetRule(string ruleId)
     {
+        if (ruleId is null)
+        {
+            _logger?.LogWarning("Cannot lookup rule with null ruleId");
+            throw new ArgumentNullException(nameof(ruleId));
+        }
+
         if (string.IsNullOrWhiteSpace(ruleId))
         {
             _logger?.LogDebug("Rule lookup missed for ID {RuleId}", ruleId);
@@ -93,8 +100,15 @@ public sealed class RuleRegistry : IRuleRegistry
     /// <summary>
     /// Retrieves rules filtered by category.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown if category is null.</exception>
     public IReadOnlyList<AnalysisRule> GetRulesByCategory(string category)
     {
+        if (category is null)
+        {
+            _logger?.LogWarning("Cannot filter rules by null category");
+            throw new ArgumentNullException(nameof(category));
+        }
+
         return _rules.Values
             .Where(r => r.Category.ToString() == category)
             .ToList()
@@ -104,8 +118,15 @@ public sealed class RuleRegistry : IRuleRegistry
     /// <summary>
     /// Removes a rule from the registry.
     /// </summary>
+    /// <exception cref="ArgumentNullException">Thrown if ruleId is null.</exception>
     public bool RemoveRule(string ruleId)
     {
+        if (ruleId is null)
+        {
+            _logger?.LogWarning("Cannot remove rule with null ruleId");
+            throw new ArgumentNullException(nameof(ruleId));
+        }
+
         if (string.IsNullOrWhiteSpace(ruleId))
         {
             _logger?.LogDebug("Rule removal missed for ID {RuleId}", ruleId);
