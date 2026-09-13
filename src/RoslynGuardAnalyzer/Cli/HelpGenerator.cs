@@ -135,6 +135,8 @@ public sealed class HelpGenerator
     /// </summary>
     public static string GenerateErrorMessage(string error)
     {
+        ArgumentNullException.ThrowIfNull(error);
+
         var sb = new StringBuilder();
         sb.AppendLine($"Error: {error}");
         sb.AppendLine($"Use '{AppName} --help' for more information.");
