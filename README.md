@@ -461,6 +461,44 @@ if (rule.ViolationPredicate(method))
 }
 ```
 
+## EmptyCatchBlockRule
+
+The `EmptyCatchBlockRule` static class (in `RoslynGuardAnalyzer.Rules`) creates the built-in rule that reports catch blocks with no exception-handling statements. An empty catch silently swallows an exception, so rule `ECB001` reports it as an `Error` in the `CodeStructure` category and recommends removing the catch block, rethrowing, logging, or wrapping the exception. Catch blocks containing a `throw` statement or other executable content are not reported.
+
+### Public API:
+
+```csharp
+public static class EmptyCatchBlockRule
+public static CustomAnalysisRule Create()
+```
+
+`Create` returns the configured `CustomAnalysisRule`. The rule evaluates only `CodeElementType.CatchBlock` elements and reads the source file identified by `CodeElement.FilePath`; it does not report a violation when the path is missing, the file does not exist, or the file cannot be read. `CustomRuleRegistry` includes this rule in its built-in rules, so normal registry-based analysis does not require manual registration.
+
+### Example usage:
+
+```csharp
+using System.IO;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
+
+var sourcePath = Path.GetFullPath("OrderService.cs");
+var catchBlock = new CodeElement(
+    "SaveOrderCatch",
+    CodeElementType.CatchBlock,
+    sourcePath)
+{
+    StartLineNumber = 18,
+    EndLineNumber = 20
+};
+
+var rule = EmptyCatchBlockRule.Create();
+if (rule.ViolationPredicate(catchBlock))
+{
+    Console.WriteLine($"{rule.Id}: {rule.MessageFactory(catchBlock)}");
+}
+```
+
 ## CacheService
 
 The `CacheService` class (in `RoslynGuardAnalyzer.Caching`) is an in-memory caching service for analysis results and derived data. It supports per-entry expiration policies, cache invalidation by key or prefix pattern, and async compute-on-miss caching. Entries are stored with a UTC expiration timestamp and are lazily evicted when accessed or when `RemoveExpired`/`GetKeys` runs.
