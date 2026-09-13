@@ -116,6 +116,61 @@ foreach (var violation in fileResult.Violations)
     Console.WriteLine($"{violation.RuleId}: {violation.Message}");
 ```
 
+## RuleEngine
+
+The `RuleEngine` class (in `RoslynGuardAnalyzer.Services`) executes architectural analysis rules against extracted `CodeElement` instances and returns the resulting `RuleViolation` objects. It supports the built-in layer-dependency, naming-convention, async-pattern, and null-safety categories as well as `CustomAnalysisRule` instances. Disabled rules and suppressed elements are skipped; when all registered rules are executed, rule evaluation is parallelized and the results are returned in deterministic file, line, and rule-ID order.
+
+### Public API:
+
+```csharp
+public sealed class RuleEngine : IRuleEngine
+public RuleEngine(IRuleRegistry ruleRegistry)
+public Task<List<RuleViolation>> ExecuteRuleAsync(
+    AnalysisRule rule,
+    List<CodeElement> elements)
+public Task<List<RuleViolation>> ExecuteAllRulesAsync(
+    List<CodeElement> elements)
+```
+
+`ExecuteRuleAsync` evaluates one rule and returns an empty list when the rule is disabled or there are no elements to inspect. `ExecuteAllRulesAsync` obtains every enabled rule from the supplied registry and evaluates them with the configured `ParallelAnalysisConfig.MaxRuleParallelism`. Rule failures are reported as warnings while successful results from the remaining rules are preserved.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Services;
+
+var registry = new RuleRegistry();
+var engine = new RuleEngine(registry);
+
+var elements = new List<CodeElement>
+{
+    new("OrderRepository", CodeElementType.Class, "src/OrderRepository.cs")
+    {
+        Namespace = "MyApp.Data",
+        StartLineNumber = 8
+    }
+};
+
+var violations = await engine.ExecuteAllRulesAsync(elements);
+
+foreach (var violation in violations)
+{
+    Console.WriteLine(
+        $"{violation.FilePath}:{violation.LineNumber} " +
+        $"{violation.RuleId} {violation.Message}");
+}
+
+// A specific registered rule can also be executed independently.
+var namingRule = registry.GetRule(AnalyzerConstants.DefaultRules.NamingConventionRule);
+if (namingRule is not null)
+{
+    var namingViolations = await engine.ExecuteRuleAsync(namingRule, elements);
+    Console.WriteLine($"Naming violations: {namingViolations.Count}");
+}
+```
+
 ## ServiceCollectionExtensionsValidationTests
 
 The ServiceCollectionExtensionsValidationTests class contains unit tests for the AnalyzerConfiguration validation extension methods in the ServiceCollectionExtensionsValidation class.
