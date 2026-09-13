@@ -125,6 +125,63 @@ Console.WriteLine(options.Verbose);             // True
 var safeOptions = CliArgumentParser.ParseSafe(args);
 ```
 
+## CommandLineProcessor
+
+The `CommandLineProcessor` class (in `RoslynGuardAnalyzer.Cli`) is the high-level facade for processing analyzer command-line arguments. It parses arguments into `CliOptions`, prints help or version information when requested, validates the parsed options, reports errors to standard error, and can separately verify that configured project and configuration-file paths exist.
+
+### Public API:
+
+```csharp
+public enum ExitCode : int
+{
+    Success = 0,
+    ViolationsFound = 1,
+    BadArguments = 2,
+    InternalError = 3
+}
+
+public sealed class CommandLineProcessor
+public CommandLineProcessor(string[] args)
+public (bool Success, ExitCode ExitCode, CliOptions Options, List<string> Errors) Process()
+public CliOptions GetOptions()
+public (bool Valid, List<string> Errors) ValidatePaths()
+public void PrintOptionsSummary()
+```
+
+Call `Process` before `GetOptions`, `ValidatePaths`, or `PrintOptionsSummary`. `Process` returns `BadArguments` for option-validation failures and `InternalError` for unexpected exceptions; help and version requests are printed and returned as successful processing. `ValidatePaths` performs the separate filesystem existence checks after processing.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Cli;
+
+var processor = new CommandLineProcessor(new[]
+{
+    "--project", "src/MyProject.csproj",
+    "--format", "json"
+});
+
+var result = processor.Process();
+if (!result.Success)
+{
+    Environment.ExitCode = (int)result.ExitCode;
+    return;
+}
+
+var pathValidation = processor.ValidatePaths();
+if (!pathValidation.Valid)
+{
+    foreach (var error in pathValidation.Errors)
+        Console.Error.WriteLine(error);
+
+    Environment.ExitCode = (int)ExitCode.BadArguments;
+    return;
+}
+
+processor.PrintOptionsSummary();
+var options = processor.GetOptions();
+```
+
 ## ServiceCollectionExtensionsTests
 
 The ServiceCollectionExtensionsTests class contains unit tests for the ServiceCollectionExtensions class, which provides extension methods for registering analyzer services in the dependency injection container. It tests various registration scenarios including null checks, validation, and configuration of analyzer services.
