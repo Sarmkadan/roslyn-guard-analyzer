@@ -121,7 +121,9 @@ public sealed class FixAllProvider : IFixAllProvider
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Returns the eligible fixes that would be applied for the supplied violations.
+    /// </summary>
     public async Task<IReadOnlyList<CodeFix>> PreviewAllAsync(IEnumerable<RuleViolation> violations, FixAllOptions options, CancellationToken ct = default)
     {
         var filteredViolations = FilterViolations(violations, options).ToList();
@@ -134,7 +136,9 @@ public sealed class FixAllProvider : IFixAllProvider
         return filteredFixes;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Applies all eligible fixes for the supplied violations.
+    /// </summary>
     public async Task<FixAllResult> ApplyAllAsync(IEnumerable<RuleViolation> violations, FixAllOptions options, CancellationToken ct = default)
     {
         if (violations is null)
