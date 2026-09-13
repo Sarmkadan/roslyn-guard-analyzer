@@ -17,6 +17,12 @@ namespace RoslynGuardAnalyzer.Caching;
 /// </summary>
 public sealed class CacheService
 {
+    private const int DefaultExpirationHours = 1;
+    private const string CacheKeyRequiredMessage = "Cache key cannot be null or empty";
+    private const string CacheKeyNotFoundMessageFormat = "Cache key '{0}' not found or expired";
+    private const string CacheEntryTypeName = "CacheEntry";
+    private const string ExpiresAtPropertyName = "ExpiresAt";
+
     private class CacheEntry<T>
     {
         public required T Value { get; init; }
@@ -29,7 +35,7 @@ public sealed class CacheService
 
     public CacheService(TimeSpan? defaultExpiration = null)
     {
-        _defaultExpiration = defaultExpiration ?? TimeSpan.FromHours(1);
+        _defaultExpiration = defaultExpiration ?? TimeSpan.FromHours(DefaultExpirationHours);
     }
 
     /// <summary>
@@ -61,7 +67,7 @@ public sealed class CacheService
     public void Set<T>(string key, T value, TimeSpan expiration)
     {
         if (string.IsNullOrWhiteSpace(key))
-            throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
+            throw new ArgumentException(CacheKeyRequiredMessage, nameof(key));
 
         if (value is null)
             throw new ArgumentNullException(nameof(value));
@@ -106,7 +112,7 @@ public sealed class CacheService
     public T Get<T>(string key)
     {
         if (!TryGet(key, out T? value))
-            throw new KeyNotFoundException($"Cache key '{key}' not found or expired");
+            throw new KeyNotFoundException(string.Format(CacheKeyNotFoundMessageFormat, key));
 
         return value!;
     }
@@ -203,9 +209,9 @@ public sealed class CacheService
     private static bool IsExpired(object entry)
     {
         var type = entry.GetType();
-        if (type.IsGenericType && type.GetGenericTypeDefinition().Name.Contains("CacheEntry"))
+        if (type.IsGenericType && type.GetGenericTypeDefinition().Name.Contains(CacheEntryTypeName))
         {
-            var expiresAtProperty = type.GetProperty("ExpiresAt");
+            var expiresAtProperty = type.GetProperty(ExpiresAtPropertyName);
             if (expiresAtProperty is not null)
             {
                 var expiresAt = (DateTime)expiresAtProperty.GetValue(entry)!;
