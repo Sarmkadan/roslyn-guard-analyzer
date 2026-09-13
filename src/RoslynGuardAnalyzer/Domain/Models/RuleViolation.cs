@@ -119,6 +119,8 @@ public sealed class RuleViolation
         return $"[{RuleId}] {Severity}: {Message} at {GetFormattedLocation()}";
     }
 
+    public override string ToString() => $"[{RuleId}] {GetFormattedLocation()}: {Message}";
+
     /// <summary>
     /// Adds or updates metadata associated with this violation.
     /// </summary>
