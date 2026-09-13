@@ -48,9 +48,9 @@ public class AnalysisRule
     public AnalysisRule(string id, string name, string description, RuleCategory category)
         : this()
     {
-        Id = id;
-        Name = name;
-        Description = description;
+        Id = id ?? throw new ArgumentNullException(nameof(id));
+        Name = name ?? throw new ArgumentNullException(nameof(name));
+        Description = description ?? throw new ArgumentNullException(nameof(description));
         Category = category;
     }
 
@@ -77,6 +77,9 @@ public class AnalysisRule
     /// </summary>
     public T? GetConfigurationValue<T>(string key, T? defaultValue = default)
     {
+        if (string.IsNullOrWhiteSpace(key))
+            throw new ArgumentException("Configuration key cannot be null or empty.", nameof(key));
+
         if (Configuration.TryGetValue(key, out var value))
         {
             return value is T typedValue ? typedValue : defaultValue;
