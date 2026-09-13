@@ -74,6 +74,9 @@ public sealed class CustomRuleBuilder
     /// </summary>
     public static CustomRuleBuilder Create(string id, string name)
     {
+        ArgumentNullException.ThrowIfNull(id);
+        ArgumentNullException.ThrowIfNull(name);
+
         return new CustomRuleBuilder(id, name);
     }
 
@@ -100,7 +103,9 @@ public sealed class CustomRuleBuilder
     /// </summary>
     public CustomRuleBuilder WithDescription(string description)
     {
-        _description = description ?? string.Empty;
+        ArgumentNullException.ThrowIfNull(description);
+
+        _description = description;
         return this;
     }
 
@@ -118,6 +123,8 @@ public sealed class CustomRuleBuilder
     /// </summary>
     public CustomRuleBuilder WithMessage(string message)
     {
+        ArgumentNullException.ThrowIfNull(message);
+
         if (string.IsNullOrWhiteSpace(message))
             throw new ArgumentException("Message cannot be null or empty.", nameof(message));
 
