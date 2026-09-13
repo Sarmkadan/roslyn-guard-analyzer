@@ -197,6 +197,69 @@ var services = new ServiceCollection();
 tests.RegisterAnalyzerServices_WithValidServiceCollection_RegistersAllServices(services);
 ```
 
+## CodeFixService
+
+The `CodeFixService` class (in `RoslynGuardAnalyzer.CodeFixes`) generates and applies source-code fixes for violations reported by the analyzer. It currently provides fixes for interface naming (`RG-N001`), async method naming (`RG-N002`), missing `ConfigureAwait(false)` (`RG-A001`), and `async void` methods (`RG-A002`). Fixes are grouped by file and applied in reverse line order to avoid shifting later edits; unsupported rules are skipped.
+
+### Public API:
+
+```csharp
+public interface ICodeFixService
+public Task<IReadOnlyList<CodeFix>> GetFixesAsync(
+    IEnumerable<RuleViolation> violations,
+    CancellationToken cancellationToken = default)
+public Task<CodeFixResult> ApplyFixesAsync(
+    IEnumerable<CodeFix> fixes,
+    bool dryRun = false,
+    CancellationToken cancellationToken = default)
+
+public sealed class CodeFixService : ICodeFixService
+public CodeFixService(ILogger<CodeFixService> logger)
+```
+
+`GetFixesAsync` converts supported violations into `CodeFix` instances. `ApplyFixesAsync` returns a `CodeFixResult` containing the applied and failed fixes plus diagnostic messages. Set `dryRun` to `true` to validate and report the changes without writing them to disk. Both operations accept a cancellation token.
+
+### Example usage:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using RoslynGuardAnalyzer.CodeFixes;
+using RoslynGuardAnalyzer.Domain.Models;
+
+var services = new ServiceCollection();
+services.AddLogging();
+services.AddCodeFixServices();
+
+await using var provider = services.BuildServiceProvider();
+var codeFixService = provider.GetRequiredService<ICodeFixService>();
+
+var violations = new[]
+{
+    new RuleViolation(
+        "RG-N001",
+        "Interface naming",
+        "Interface names should start with 'I'.",
+        "Example.cs")
+    {
+        LineNumber = 1,
+        CodeSnippet = "public interface Example"
+    }
+};
+
+var fixes = await codeFixService.GetFixesAsync(violations);
+
+// Preview the outcome without changing Example.cs.
+var preview = await codeFixService.ApplyFixesAsync(fixes, dryRun: true);
+
+if (preview.IsSuccess)
+{
+    var result = await codeFixService.ApplyFixesAsync(fixes);
+    Console.WriteLine($"Applied {result.AppliedFixes.Count} fix(es).");
+}
+```
+
+`ApplyFixesAsync` only replaces the expected source text on the reported line. A missing file, an out-of-range line, or source text that no longer matches is reported as a failed fix instead of being written.
+
 ## CodeFixServiceTests
 
 The CodeFixServiceTests class contains unit tests for the CodeFixService class, which provides code fix functionality for known violations in the Roslyn Guard analyzer.
