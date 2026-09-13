@@ -136,5 +136,5 @@ public class AnalysisRule
         ModifiedAt = DateTime.UtcNow;
     }
 
-    public override string ToString() => $"AnalysisRule {{ Id = {Id}, Name = {Name}, Description = {Description}, Category = {Category}, DefaultSeverity = {DefaultSeverity}, IsEnabled = {IsEnabled} }}";
+    public override string ToString() => $"{Id}: {Name}";
 }

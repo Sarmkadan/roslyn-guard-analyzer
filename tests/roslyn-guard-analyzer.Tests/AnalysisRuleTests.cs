@@ -108,4 +108,17 @@ public class AnalysisRuleTests
         Assert.NotNull(rule.ModifiedAt);
         Assert.True(rule.ModifiedAt <= DateTime.UtcNow);
     }
+
+    [Fact]
+    public void ToString_ReturnsIdAndName()
+    {
+        // Arrange
+        var rule = new AnalysisRule("R001", "Valid Rule Name", "Description", RuleCategory.CodeStructure);
+
+        // Act
+        var result = rule.ToString();
+
+        // Assert
+        Assert.Equal("R001: Valid Rule Name", result);
+    }
 }
