@@ -42,6 +42,9 @@ public sealed class ResultAggregator
     /// </summary>
     public void AddRange(IEnumerable<AnalysisResult> results)
     {
+        if (results is null)
+            throw new ArgumentNullException(nameof(results));
+
         foreach (var result in results)
             Add(result);
     }
