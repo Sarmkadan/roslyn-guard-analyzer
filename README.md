@@ -499,6 +499,40 @@ if (rule.ViolationPredicate(catchBlock))
 }
 ```
 
+## MeaningfulTypeNameRule
+
+The `MeaningfulTypeNameRule` static class (in `RoslynGuardAnalyzer.Rules`) creates the built-in rule that flags public classes, structs, interfaces, and enums whose names appear to be placeholders or are too generic to communicate their purpose. Rule `MTN001` reports these names as an `Error` in the `NamingConvention` category. It detects configured terms such as `Temp`, `Placeholder`, `Foo`, `Helper`, and `Service` case-insensitively, as well as `Result` names with a letter or number suffix, names ending in a digit, and single-letter names other than `T`, `K`, or `V`. Non-public types and non-type code elements are ignored.
+
+### Public API:
+
+```csharp
+public static class MeaningfulTypeNameRule
+public static CustomAnalysisRule Create()
+```
+
+`Create` returns the configured `CustomAnalysisRule`. `CustomRuleRegistry` includes this rule in its built-in rules, so normal registry-based analysis does not require manual registration.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
+
+var rule = MeaningfulTypeNameRule.Create();
+var type = new CodeElement("TemporaryService", CodeElementType.Class, "Orders.cs")
+{
+    IsPublic = true,
+    StartLineNumber = 8,
+    EndLineNumber = 14
+};
+
+if (rule.ViolationPredicate(type))
+{
+    Console.WriteLine($"{rule.Id}: {rule.MessageFactory(type)}");
+}
+```
+
 ## CacheService
 
 The `CacheService` class (in `RoslynGuardAnalyzer.Caching`) is an in-memory caching service for analysis results and derived data. It supports per-entry expiration policies, cache invalidation by key or prefix pattern, and async compute-on-miss caching. Entries are stored with a UTC expiration timestamp and are lazily evicted when accessed or when `RemoveExpired`/`GetKeys` runs.
