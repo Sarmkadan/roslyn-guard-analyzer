@@ -14,6 +14,46 @@ public Baseline CreateBaseline(string projectName, List<RuleViolation> violation
 
 These methods can be used to manage baselines and filter new violations in a .NET application.
 
+## ConfigurationLoader
+
+The `ConfigurationLoader` class (in `RoslynGuardAnalyzer.Configuration`) loads analyzer settings from JSON configuration files into an `AnalysisConfig`. It can load a specific file or search a project directory and each of its parent directories for the default `.roslyn-guard.json` file.
+
+### Public API:
+
+```csharp
+public sealed class ConfigurationLoader
+public static Task<AnalysisConfig> LoadFromFileAsync(string filePath)
+public static Task<AnalysisConfig?> TryLoadDefaultAsync(string projectPath)
+```
+
+`LoadFromFileAsync` throws when the path is empty, the file does not exist, or the file cannot be read or parsed. `TryLoadDefaultAsync` treats `projectPath` as a directory, searches upward for the first default configuration file, and returns `null` when none is found. If a discovered file cannot be loaded, it writes a warning to standard error and returns `null`.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Configuration;
+
+var config = await ConfigurationLoader.TryLoadDefaultAsync(projectDirectory);
+
+// Fall back to the built-in AnalysisConfig defaults when no file is available.
+config ??= new AnalysisConfig();
+
+if (!config.Validate(out var errors))
+{
+    foreach (var error in errors)
+        Console.Error.WriteLine(error);
+
+    return;
+}
+
+Console.WriteLine($"Minimum severity: {config.MinimumSeverity}");
+Console.WriteLine($"Output format: {config.OutputFormat}");
+
+// Load a known configuration file directly when discovery is not needed.
+var explicitConfig = await ConfigurationLoader.LoadFromFileAsync(
+    Path.Combine(projectDirectory, "analyzer-settings.json"));
+```
+
 ## ParallelAnalysisConfig
 
 The `ParallelAnalysisConfig` class provides configuration options for controlling parallel execution during code analysis. It allows developers to tune concurrency levels for both project-level and rule-level operations to optimize performance based on available system resources.
