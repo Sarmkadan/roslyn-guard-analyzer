@@ -64,6 +64,7 @@ public static class DomainExtensions
     /// </summary>
     public static Dictionary<string, List<RuleViolation>> GroupByFileAndSort(this IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return violations
             .GroupBy(v => v.FilePath)
             .ToDictionary(
@@ -78,6 +79,7 @@ public static class DomainExtensions
         this IEnumerable<RuleViolation> violations,
         SeverityLevel minimumSeverity)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return violations.Where(v => v.Severity >= minimumSeverity).ToList();
     }
 
@@ -86,6 +88,7 @@ public static class DomainExtensions
     /// </summary>
     public static Dictionary<RuleCategory, int> SummarizeByCategory(this IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return violations
             .GroupBy(v => v.Category)
             .ToDictionary(g => g.Key, g => g.Count());
@@ -96,6 +99,7 @@ public static class DomainExtensions
     /// </summary>
     public static Dictionary<SeverityLevel, double> CalculateSeverityPercentages(this IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         var violationList = violations.ToList();
         var total = violationList.Count;
 
@@ -112,6 +116,7 @@ public static class DomainExtensions
     /// </summary>
     public static string? GetMostCommonRule(this IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return violations
             .GroupBy(v => v.RuleId)
             .OrderByDescending(g => g.Count())
@@ -124,6 +129,7 @@ public static class DomainExtensions
     /// </summary>
     public static string? GetMostProblematicFile(this IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return violations
             .GroupBy(v => v.FilePath)
             .OrderByDescending(g => g.Count())
@@ -136,6 +142,7 @@ public static class DomainExtensions
     /// </summary>
     public static string ExportToText(this IEnumerable<RuleViolation> violations, string title = "Violations Export")
     {
+        ArgumentNullException.ThrowIfNull(violations);
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"═══ {title} ═══");
         sb.AppendLine($"Exported: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
@@ -166,6 +173,7 @@ public static class AnalysisResultExtensions
         this AnalysisResult result,
         SeverityLevel minimumSeverity)
     {
+        ArgumentNullException.ThrowIfNull(result);
         return result.Violations.FilterBySeverity(minimumSeverity);
     }
 
@@ -174,6 +182,7 @@ public static class AnalysisResultExtensions
     /// </summary>
     public static List<RuleViolation> GetViolationsForRule(this AnalysisResult result, string ruleId)
     {
+        ArgumentNullException.ThrowIfNull(result);
         return result.Violations.Where(v => v.RuleId == ruleId).ToList();
     }
 
@@ -182,6 +191,7 @@ public static class AnalysisResultExtensions
     /// </summary>
     public static string GetSummary(this AnalysisResult result)
     {
+        ArgumentNullException.ThrowIfNull(result);
         var sb = new System.Text.StringBuilder();
         sb.AppendLine($"Project: {result.ProjectName}");
         sb.AppendLine($"Status: {(result.AnalysisSucceeded ? "✓ Success" : "✗ Failed")}");
@@ -197,6 +207,7 @@ public static class AnalysisResultExtensions
     /// </summary>
     public static bool IsAcceptable(this AnalysisResult result, int maxAllowedErrors = 0, int maxAllowedWarnings = 10)
     {
+        ArgumentNullException.ThrowIfNull(result);
         var errors = result.GetViolationCountBySeverity(SeverityLevel.Error)
             + result.GetViolationCountBySeverity(SeverityLevel.Critical);
 
@@ -216,6 +227,7 @@ public static class CollectionExtensions
     /// </summary>
     public static IEnumerable<(int Index, T Item)> WithIndex<T>(this IEnumerable<T> source)
     {
+        ArgumentNullException.ThrowIfNull(source);
         return source.Select((item, index) => (index, item));
     }
 
@@ -224,6 +236,7 @@ public static class CollectionExtensions
     /// </summary>
     public static IEnumerable<List<T>> Batch<T>(this IEnumerable<T> source, int batchSize)
     {
+        ArgumentNullException.ThrowIfNull(source);
         var batch = new List<T>(batchSize);
 
         foreach (var item in source)
