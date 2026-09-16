@@ -90,7 +90,9 @@ public sealed class CodeFixService : ICodeFixService
         CancellationToken cancellationToken = default)
     {
         if (violations is null)
+        {
             throw new ArgumentNullException(nameof(violations));
+        }
 
         var violationList = violations.ToList();
 
@@ -112,13 +114,17 @@ public sealed class CodeFixService : ICodeFixService
                 {
                     var fix = provider(violation);
                     if (fix is not null)
+                    {
                         fixes.Add(fix);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex,
+                    _logger.LogWarning(
+                        ex,
                         "Fix provider for rule {RuleId} failed on violation {ViolationId}.",
-                        violation.RuleId, violation.Id);
+                        violation.RuleId,
+                        violation.Id);
                 }
             }
 
@@ -148,7 +154,9 @@ public sealed class CodeFixService : ICodeFixService
         CancellationToken cancellationToken = default)
     {
         if (fixes is null)
+        {
             throw new ArgumentNullException(nameof(fixes));
+        }
 
         var fixList = fixes.ToList();
         var result = new CodeFixResult();
@@ -203,8 +211,12 @@ public sealed class CodeFixService : ICodeFixService
             var originalText = await File.ReadAllTextAsync(filePath, cancellationToken);
             var newline = originalText.Contains("\r\n", StringComparison.Ordinal) ? "\r\n" : "\n";
             var lines = originalText.Split('\n');
+
             for (var li = 0; li < lines.Length; li++)
+            {
                 lines[li] = lines[li].TrimEnd('\r');
+            }
+
             var appliedCountBefore = result.AppliedFixes.Count;
 
             // Process in reverse line order to avoid index drift when replacements
@@ -287,15 +299,21 @@ public sealed class CodeFixService : ICodeFixService
     private static CodeFix? BuildInterfacePrefixFix(RuleViolation violation)
     {
         if (string.IsNullOrWhiteSpace(violation.CodeSnippet))
+        {
             return null;
+        }
 
         var match = Regex.Match(violation.CodeSnippet, @"interface\s+(?<name>\w+)");
         if (!match.Success)
+        {
             return null;
+        }
 
         var name = match.Groups["name"].Value;
         if (name.StartsWith('I'))
+        {
             return null;
+        }
 
         var fixedName = "I" + name;
 
@@ -318,7 +336,9 @@ public sealed class CodeFixService : ICodeFixService
     private static CodeFix? BuildAsyncSuffixFix(RuleViolation violation)
     {
         if (string.IsNullOrWhiteSpace(violation.CodeSnippet))
+        {
             return null;
+        }
 
         // Allow optional modifiers (async, static, etc.) between the access
         // modifier and the return type, e.g. "public async Task MyMethod()".
@@ -327,11 +347,15 @@ public sealed class CodeFixService : ICodeFixService
             @"(?:public|private|protected|internal)(?:\s+(?:static|async|virtual|override|sealed|new|unsafe|extern))*\s+\S+\s+(?<name>\w+)\s*\(");
 
         if (!match.Success)
+        {
             return null;
+        }
 
         var name = match.Groups["name"].Value;
         if (name.EndsWith("Async", StringComparison.OrdinalIgnoreCase))
+        {
             return null;
+        }
 
         var fixedName = name + "Async";
 
@@ -354,15 +378,21 @@ public sealed class CodeFixService : ICodeFixService
     private static CodeFix? BuildConfigureAwaitFix(RuleViolation violation)
     {
         if (string.IsNullOrWhiteSpace(violation.CodeSnippet))
+        {
             return null;
+        }
 
         var match = Regex.Match(violation.CodeSnippet, @"await\s+(?<expr>[^;]+);");
         if (!match.Success)
+        {
             return null;
+        }
 
         var expr = match.Groups["expr"].Value.Trim();
         if (expr.Contains(".ConfigureAwait", StringComparison.OrdinalIgnoreCase))
+        {
             return null;
+        }
 
         return new CodeFix
         {
@@ -383,10 +413,14 @@ public sealed class CodeFixService : ICodeFixService
     private static CodeFix? BuildAsyncVoidFix(RuleViolation violation)
     {
         if (string.IsNullOrWhiteSpace(violation.CodeSnippet))
+        {
             return null;
+        }
 
         if (!violation.CodeSnippet.Contains("async void", StringComparison.Ordinal))
+        {
             return null;
+        }
 
         return new CodeFix
         {
