@@ -20,7 +20,28 @@ namespace RoslynGuardAnalyzer.Formatters;
 /// </summary>
 public sealed class JsonFormatter : IOutputFormatter
 {
-    public string Format => "json";
+    private const string JsonFormatValue = "json";
+    private const string RoundTripDateTimeFormat = "O";
+    private const string NoCodeSnippetPlaceholder = "N/A";
+    private const string JsonNullLiteral = "null";
+    private const string JsonTrueLiteral = "true";
+    private const string JsonFalseLiteral = "false";
+    private const string JsonArrayOpen = "[";
+    private const string JsonArrayClose = "]";
+    private const string JsonObjectOpen = "{";
+    private const string JsonObjectClose = "}";
+    private const string JsonItemSeparator = ",";
+    private const string JsonKeyValueSeparator = ":";
+    private const string JsonStringQuote = "\"";
+    private const string JsonEscapedQuote = "\\\"";
+    private const string JsonEscapedBackslash = "\\\\";
+    private const string JsonEscapedBackspace = "\\b";
+    private const string JsonEscapedFormFeed = "\\f";
+    private const string JsonEscapedNewline = "\\n";
+    private const string JsonEscapedCarriageReturn = "\\r";
+    private const string JsonEscapedTab = "\\t";
+
+    public string Format => JsonFormatValue;
 
     public bool CanFormat(string format)
     {
@@ -53,7 +74,7 @@ public sealed class JsonFormatter : IOutputFormatter
             result.TotalElementsAnalyzed,
             ViolationCount = result.ViolationCount,
             Violations = violations,
-            TimestampUtc = DateTime.UtcNow.ToString("O")
+            TimestampUtc = DateTime.UtcNow.ToString(RoundTripDateTimeFormat)
         };
 
         return JsonSerialize(output);
@@ -71,7 +92,7 @@ public sealed class JsonFormatter : IOutputFormatter
             v.FilePath,
             v.LineNumber,
             v.ColumnNumber,
-            Code = v.CodeSnippet ?? "N/A"
+            Code = v.CodeSnippet ?? NoCodeSnippetPlaceholder
         }).ToList();
 
         return JsonSerialize(new
@@ -119,7 +140,7 @@ public sealed class JsonFormatter : IOutputFormatter
     private static string JsonSerialize(object? obj)
     {
         if (obj is null)
-            return "null";
+            return JsonNullLiteral;
 
         var type = obj.GetType();
 
@@ -130,10 +151,10 @@ public sealed class JsonFormatter : IOutputFormatter
             return obj.ToString()!;
 
         if (type == typeof(bool))
-            return (bool)obj ? "true" : "false";
+            return (bool)obj ? JsonTrueLiteral : JsonFalseLiteral;
 
         if (type == typeof(DateTime))
-            return JsonEscape(((DateTime)obj).ToString("O"));
+            return JsonEscape(((DateTime)obj).ToString(RoundTripDateTimeFormat));
 
         if (type.IsEnum)
             return JsonEscape(obj.ToString() ?? string.Empty);
@@ -143,7 +164,7 @@ public sealed class JsonFormatter : IOutputFormatter
             var items = new List<string>();
             foreach (var item in (IEnumerable)obj)
                 items.Add(JsonSerialize(item));
-            return "[" + string.Join(",", items) + "]";
+            return JsonArrayOpen + string.Join(JsonItemSeparator, items) + JsonArrayClose;
         }
 
         var pairs = new List<string>();
@@ -151,14 +172,14 @@ public sealed class JsonFormatter : IOutputFormatter
         {
             try
             {
-                pairs.Add($"{JsonEscape(prop.Name)}:{JsonSerialize(prop.GetValue(obj))}");
+                pairs.Add($"{JsonEscape(prop.Name)}{JsonKeyValueSeparator}{JsonSerialize(prop.GetValue(obj))}");
             }
             catch
             {
             }
         }
 
-        return "{" + string.Join(",", pairs) + "}";
+        return JsonObjectOpen + string.Join(JsonItemSeparator, pairs) + JsonObjectClose;
     }
 
     /// <summary>
@@ -166,24 +187,24 @@ public sealed class JsonFormatter : IOutputFormatter
     /// </summary>
     private static string JsonEscape(string text)
     {
-        var sb = new StringBuilder("\"");
+        var sb = new StringBuilder(JsonStringQuote);
 
         foreach (var c in text)
         {
             switch (c)
             {
-                case '"': sb.Append("\\\""); break;
-                case '\\': sb.Append("\\\\"); break;
-                case '\b': sb.Append("\\b"); break;
-                case '\f': sb.Append("\\f"); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\r': sb.Append("\\r"); break;
-                case '\t': sb.Append("\\t"); break;
+                case '"': sb.Append(JsonEscapedQuote); break;
+                case '\\': sb.Append(JsonEscapedBackslash); break;
+                case '\b': sb.Append(JsonEscapedBackspace); break;
+                case '\f': sb.Append(JsonEscapedFormFeed); break;
+                case '\n': sb.Append(JsonEscapedNewline); break;
+                case '\r': sb.Append(JsonEscapedCarriageReturn); break;
+                case '\t': sb.Append(JsonEscapedTab); break;
                 default: sb.Append(c); break;
             }
         }
 
-        sb.Append('"');
+        sb.Append(JsonStringQuote);
         return sb.ToString();
     }
 }
