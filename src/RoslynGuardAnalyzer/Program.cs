@@ -67,6 +67,7 @@ internal sealed class Program
                 {
                     Console.Error.WriteLine($" - {error}");
                 }
+
                 return (int)Cli.ExitCode.BadArguments;
             }
 
@@ -103,6 +104,7 @@ internal sealed class Program
                 {
                     Console.Error.WriteLine($" - {error}");
                 }
+
                 return (int)Cli.ExitCode.BadArguments;
             }
 
@@ -125,6 +127,7 @@ internal sealed class Program
             {
                 Console.WriteLine($"Output file: {options.OutputFile}");
             }
+
             Console.WriteLine();
 
             var result = await analysisService.AnalyzeProjectAsync(options.ProjectPath);
@@ -137,6 +140,7 @@ internal sealed class Program
                     Console.WriteLine($"Loaded baseline with {baseline.ViolationCount} violations from {options.BaselineFile}");
                 }
             }
+
             if (baseline != null)
             {
                 result.Violations = baselineService.FilterNewViolations(result.Violations, baseline);
@@ -151,6 +155,7 @@ internal sealed class Program
                 Console.WriteLine($"Created baseline with {newBaseline.ViolationCount} violations at {options.OutputFile}");
                 return (int)Cli.ExitCode.Success;
             }
+
             var report = reportingService.GenerateReport(result);
 
             if (!string.IsNullOrWhiteSpace(options.OutputFile))
@@ -180,6 +185,7 @@ internal sealed class Program
             {
                 Console.Error.WriteLine($" - {failure}");
             }
+
             return (int)Cli.ExitCode.BadArguments;
         }
         catch (Exception ex)
@@ -189,13 +195,11 @@ internal sealed class Program
             {
                 Console.Error.WriteLine(ex.StackTrace);
             }
+
             return (int)Cli.ExitCode.InternalError;
         }
     }
 
-    /// <summary>
-    /// Parses command-line arguments into CliOptions structure.
-    /// </summary>
     /// <summary>
     /// Parses command-line arguments into CliOptions structure.
     /// </summary>
@@ -214,19 +218,39 @@ internal sealed class Program
                     options.ShowVersion = true;
                     return options;
                 case "--project":
-                    if (i + 1 < args.Length) options.ProjectPath = args[++i];
+                    if (i + 1 < args.Length)
+                    {
+                        options.ProjectPath = args[++i];
+                    }
+
                     break;
                 case "--file":
-                    if (i + 1 < args.Length) options.FilePath = args[++i];
+                    if (i + 1 < args.Length)
+                    {
+                        options.FilePath = args[++i];
+                    }
+
                     break;
                 case "--format" or "-f":
-                    if (i + 1 < args.Length) options.OutputFormat = args[++i];
+                    if (i + 1 < args.Length)
+                    {
+                        options.OutputFormat = args[++i];
+                    }
+
                     break;
                 case "--output" or "-o":
-                    if (i + 1 < args.Length) options.OutputFile = args[++i];
+                    if (i + 1 < args.Length)
+                    {
+                        options.OutputFile = args[++i];
+                    }
+
                     break;
                 case "--config" or "-c":
-                    if (i + 1 < args.Length) options.ConfigFile = args[++i];
+                    if (i + 1 < args.Length)
+                    {
+                        options.ConfigFile = args[++i];
+                    }
+
                     break;
                 case "--rules" or "-r":
                     if (i + 1 < args.Length)
@@ -234,6 +258,7 @@ internal sealed class Program
                         var rules = args[++i].Split(',', StringSplitOptions.RemoveEmptyEntries);
                         options.RuleFilter.AddRange(rules);
                     }
+
                     break;
                 case "--strict" or "-s":
                     options.FailOnViolations = true;
@@ -245,7 +270,11 @@ internal sealed class Program
                     options.LogLevel = 0;
                     break;
                 case "--baseline":
-                    if (i + 1 < args.Length) options.BaselineFile = args[++i];
+                    if (i + 1 < args.Length)
+                    {
+                        options.BaselineFile = args[++i];
+                    }
+
                     break;
                 case "--create-baseline":
                     options.CreateBaseline = true;
@@ -255,12 +284,14 @@ internal sealed class Program
                     {
                         options.MaxParallelThreads = threads;
                     }
+
                     break;
                 case var arg when arg.StartsWith("--timeout="):
                     if (int.TryParse(arg["--timeout=".Length..], NumberStyles.Integer, CultureInfo.InvariantCulture, out var timeout))
                     {
                         options.AnalysisTimeoutSeconds = timeout;
                     }
+
                     break;
                 case var arg when !arg.StartsWith("-"):
                     // Positional argument - treat as project path
@@ -268,6 +299,7 @@ internal sealed class Program
                     {
                         options.ProjectPath = arg;
                     }
+
                     break;
             }
         }
@@ -275,9 +307,6 @@ internal sealed class Program
         return options;
     }
 
-    /// <summary>
-    /// Displays help information.
-    /// </summary>
     /// <summary>
     /// Displays help information.
     /// </summary>
@@ -313,9 +342,6 @@ internal sealed class Program
         Console.WriteLine(" roslyn-guard-analyzer ./src -r LYR001,NAM001 --strict");
     }
 
-    /// <summary>
-    /// Displays version information.
-    /// </summary>
     /// <summary>
     /// Displays version information.
     /// </summary>
