@@ -50,6 +50,66 @@ if (!await FileSystemHelper.WriteFileAsync(reportPath, report))
     Console.Error.WriteLine($"Could not write {reportPath}");
 ```
 
+## ReflectionHelper
+
+The `ReflectionHelper` static class (in `RoslynGuardAnalyzer.Utilities`) provides a focused set of helpers for inspecting .NET types and members. It can enumerate public members, inspect inheritance and interface implementation, retrieve attributes and parameter metadata, identify asynchronous or overridable methods, and discover matching types in an assembly. All required arguments are validated and throw `ArgumentNullException` when null.
+
+### Public API:
+
+```csharp
+public static class ReflectionHelper
+public static IEnumerable<MethodInfo> GetPublicMethods(Type type)
+public static IEnumerable<PropertyInfo> GetPublicProperties(Type type)
+public static IEnumerable<FieldInfo> GetPublicFields(Type type)
+public static bool ImplementsInterface(Type type, Type interfaceType)
+public static bool IsSubclassOf(Type type, Type baseType)
+public static IEnumerable<T> GetAttributes<T>(MemberInfo member)
+    where T : Attribute
+public static bool IsAsync(MethodInfo method)
+public static bool IsVirtual(MethodInfo method)
+public static int GetParameterCount(MethodBase method)
+public static IEnumerable<string> GetParameterNames(MethodBase method)
+public static IEnumerable<Type> GetImplementationsOfInterface(
+    Type interfaceType,
+    Assembly assembly)
+public static IEnumerable<Type> GetTypesWithAttribute<T>(Assembly assembly)
+    where T : Attribute
+public static string GetFullName(Type type)
+public static bool IsValueType(Type type)
+public static bool IsAbstract(Type type)
+public static bool IsSealed(Type type)
+public static Type? GetBaseType(Type type)
+public static IEnumerable<Type> GetInheritanceHierarchy(Type type)
+```
+
+`GetPublicMethods` returns public instance and static methods, excluding special-name members such as property accessors. Public property and field discovery is limited to instance members. `ImplementsInterface` supports both exact interface types and open generic interface definitions. `IsAsync` recognizes methods returning `Task` or `Task<T>`, and `IsVirtual` excludes sealed overrides. The inheritance hierarchy starts with the supplied type and stops before `object`; `GetBaseType` likewise returns `null` when the immediate base type is `object`.
+
+### Example usage:
+
+```csharp
+using System.Reflection;
+using RoslynGuardAnalyzer.Utilities;
+
+var handlerType = typeof(OrderHandler);
+
+foreach (var method in ReflectionHelper.GetPublicMethods(handlerType))
+{
+    var parameters = string.Join(", ",
+        ReflectionHelper.GetParameterNames(method));
+
+    Console.WriteLine(
+        $"{method.Name}({parameters}), async: " +
+        ReflectionHelper.IsAsync(method));
+}
+
+var handlerTypes = ReflectionHelper.GetImplementationsOfInterface(
+    typeof(IHandler<>),
+    Assembly.GetExecutingAssembly());
+
+foreach (var type in handlerTypes)
+    Console.WriteLine(ReflectionHelper.GetFullName(type));
+```
+
 ## ValidationService
 
 The `ValidationService` class (in `RoslynGuardAnalyzer.Services`) validates rule configurations, individual analysis rules, project paths, code elements, and completed analysis results. It returns validation failures as error messages instead of throwing for invalid values; null arguments are rejected. Project-path validation expands environment variables, accepts directories or `.csproj`, `.cs`, and `.sln` files, and verifies that the target is accessible. The same source file also provides naming extensions for checking C# identifiers, PascalCase, and camelCase text.
