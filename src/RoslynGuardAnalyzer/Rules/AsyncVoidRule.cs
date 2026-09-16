@@ -17,7 +17,14 @@ namespace RoslynGuardAnalyzer.Rules;
 /// </summary>
 public static class AsyncVoidRule
 {
+    /// <summary>
+    /// The unique identifier for this rule.
+    /// </summary>
     public const string RuleId = "AV001";
+
+    /// <summary>
+    /// The human-readable title for this rule.
+    /// </summary>
     public const string RuleTitle = "Async Void Methods Must Be Event Handlers";
 
     private const string VoidReturnType = "void";
