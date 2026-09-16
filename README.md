@@ -799,6 +799,85 @@ cache.InvalidateByPattern("analysis:project:");
 
 This service provides a simple, thread-unsafe in-memory cache for analysis results in a .NET application, letting callers avoid recomputing expensive analysis when the underlying inputs are unchanged.
 
+## AnalysisResultRepository
+
+The `AnalysisResultRepository` class (in `RoslynGuardAnalyzer.Data`) manages persistence of analysis results to disk storage. It inherits from `RepositoryBase<AnalysisResult>` and provides specialized methods for querying and managing analysis results stored as JSON files in the application data directory.
+
+### Public API:
+
+```csharp
+public sealed class AnalysisResultRepository : RepositoryBase<AnalysisResult>
+public AnalysisResultRepository(string? dataDirectory = null)
+public IReadOnlyList<AnalysisResult> GetByProject(string projectPath)
+public IReadOnlyList<AnalysisResult> GetAnalyzedAfter(DateTime date)
+public IReadOnlyList<AnalysisResult> GetFailedAnalyses()
+public IReadOnlyList<AnalysisResult> GetSuccessfulAnalyses()
+public IReadOnlyList<AnalysisResult> GetWithViolationsInCategory(string category)
+public AnalysisResult? GetLatestForProject(string projectPath)
+public IReadOnlyList<AnalysisResult> GetWithViolationCountGreaterThan(int violationCount)
+public Task SaveAsync(AnalysisResult result)
+public Task LoadAllAsync()
+public Task ExportToCsvAsync(string filePath)
+public AnalysisResultStatistics GetStatistics()
+public Task ClearOldResultsAsync(int daysOld)
+```
+
+### Inherited from RepositoryBase<AnalysisResult>:
+
+- `void Add(string id, AnalysisResult entity)` - Adds an entity to the repository
+- `AnalysisResult? GetById(string id)` - Retrieves an entity by ID
+- `IReadOnlyList<AnalysisResult> GetAll()` - Gets all entities in the repository
+- `void Update(string id, AnalysisResult entity)` - Updates an existing entity
+- `bool Remove(string id)` - Removes an entity by ID
+- `bool Exists(string id)` - Checks if an entity exists
+- `int Count()` - Gets the count of entities in the repository
+- `void Clear()` - Clears all entities from the repository
+- `void AddRange(Dictionary<string, AnalysisResult> entities)` - Adds multiple entities at once
+- `IReadOnlyList<AnalysisResult> Find(Func<AnalysisResult, bool> predicate)` - Finds entities matching a predicate
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Data;
+using RoslynGuardAnalyzer.Domain.Models;
+
+// Create repository instance (uses default AppData location)
+var repository = new AnalysisResultRepository();
+
+// Or specify custom data directory
+var customRepository = new AnalysisResultRepository("/path/to/custom/data");
+
+// Save an analysis result
+await repository.SaveAsync(analysisResult);
+
+// Load all results from disk
+await repository.LoadAllAsync();
+
+// Get results for a specific project
+var projectResults = repository.GetByProject(@"C:\src\MyProject");
+
+// Get successful analyses only
+var successfulResults = repository.GetSuccessfulAnalyses();
+
+// Get results with more than 5 violations
+var highViolationResults = repository.GetWithViolationCountGreaterThan(5);
+
+// Get the latest analysis for a project
+var latestResult = repository.GetLatestForProject(@"C:\src\MyProject");
+
+// Export results to CSV
+await repository.ExportToCsvAsync(@"C:\temp\analysis-results.csv");
+
+// Get statistics about stored results
+var stats = repository.GetStatistics();
+Console.WriteLine($"Success rate: {stats.GetSuccessRate()}%");
+
+// Clear results older than 30 days
+await repository.ClearOldResultsAsync(30);
+```
+
+The repository stores analysis results as JSON files in a `results` subdirectory within the configured data directory (default: `%APPDATA%\RoslynGuardAnalyzer\Data\results`). Each file is named using the pattern `{resultId}_{timestamp}.json` to ensure uniqueness.
+
 ## RuleConfigurationBuilder
 
 The `RuleConfigurationBuilder` class (in `RoslynGuardAnalyzer.Configuration`) is a fluent builder that creates `RuleConfiguration` instances with type safety and sensible defaults. It lets you compose a rule configuration step by step and then materialize it with `Build()`. The builder is `sealed`, so it cannot be subclassed.
