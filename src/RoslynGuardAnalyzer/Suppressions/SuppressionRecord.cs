@@ -136,6 +136,25 @@ public sealed class SuppressionRecord : IEquatable<SuppressionRecord>
     }
 
     /// <summary>
+    /// Returns a string representation of the suppression record for debugging and logging.
+    /// </summary>
+    /// <returns>A string containing the suppression type, rule ID, and location information.</returns>
+    public override string ToString()
+    {
+        var locationParts = new System.Collections.Generic.List<string>();
+        if (!string.IsNullOrWhiteSpace(TargetFile))
+            locationParts.Add(TargetFile);
+        if (!string.IsNullOrWhiteSpace(TargetElement))
+            locationParts.Add(TargetElement);
+
+        var location = locationParts.Any()
+            ? $" at {string.Join(":", locationParts)}"
+            : string.Empty;
+
+        return $"SuppressionRecord: {RuleId}{(IsActive ? "" : " (inactive)")}{location}";
+    }
+
+    /// <summary>
     /// Determines whether two suppression records are equal.
     /// </summary>
     /// <param name="left">The first suppression record to compare.</param>
