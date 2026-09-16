@@ -934,3 +934,95 @@ var naming = RuleConfigurationBuilder.CreateNamingConvention()
 ```
 
 `Build()` returns a fully populated `RuleConfiguration` that can be passed to the analyzer or further customized through its own API (for example, `AddRule`, `ExcludeNamespace`, or `SetCustomSetting`).
+
+## ProjectRepository
+
+The `ProjectRepository` class (in `RoslynGuardAnalyzer.Data`) manages persistence of analyzed projects to disk storage. It inherits from `RepositoryBase<AnalysisProject>` and provides specialized query methods for filtering projects by target framework, language, file count, analysis date, name, path, and referenced dependencies. Projects are stored as a single JSON file (`projects.json`) in the configured data directory, which defaults to `%APPDATA%\RoslynGuardAnalyzer\Data`.
+
+### Public API:
+
+```csharp
+public sealed class ProjectRepository : RepositoryBase<AnalysisProject>
+public ProjectRepository(string? dataDirectory = null)
+public IReadOnlyList<AnalysisProject> GetByTargetFramework(string targetFramework)
+public IReadOnlyList<AnalysisProject> GetModernDotNetProjects()
+public IReadOnlyList<AnalysisProject> GetByLanguage(string language)
+public IReadOnlyList<AnalysisProject> GetWithMoreFilesThan(int fileCount)
+public IReadOnlyList<AnalysisProject> GetAnalyzedAfter(DateTime date)
+public IReadOnlyList<AnalysisProject> SearchByName(string pattern)
+public AnalysisProject? FindByPath(string path)
+public IReadOnlyList<AnalysisProject> GetWithReferences()
+public Task SaveAsync()
+public Task LoadAsync()
+public Task ExportAsync(string filePath)
+public Task ImportAsync(string filePath)
+public ProjectRepositoryStatistics GetStatistics()
+public Task RemoveProjectAsync(string projectId, bool deleteSourceFiles = false)
+public void ValidateAndCleanup()
+public override string ToString()
+```
+
+`GetByTargetFramework`, `GetByLanguage`, `SearchByName`, and `FindByPath` throw `ArgumentException` when given a null or empty argument. `GetAnalyzedAfter` throws when the date is `DateTime.MinValue`. `SaveAsync` and `LoadAsync` persist and restore the full project set to and from `projects.json`; `ExportAsync` and `ImportAsync` do the same against an arbitrary JSON file, with `ImportAsync` updating existing projects by ID and adding new ones. `RemoveProjectAsync` removes a project and, when `deleteSourceFiles` is `true`, also deletes its source directory. `ValidateAndCleanup` removes projects that fail `AnalysisProject.IsValid()`.
+
+### Inherited from RepositoryBase<AnalysisProject>:
+
+- `void Add(string id, AnalysisProject entity)` - Adds an entity to the repository
+- `AnalysisProject? GetById(string id)` - Retrieves an entity by ID
+- `IReadOnlyList<AnalysisProject> GetAll()` - Gets all entities in the repository
+- `void Update(string id, AnalysisProject entity)` - Updates an existing entity
+- `bool Remove(string id)` - Removes an entity by ID
+- `bool Exists(string id)` - Checks if an entity exists
+- `int Count()` - Gets the count of entities in the repository
+- `void Clear()` - Clears all entities from the repository
+- `void AddRange(Dictionary<string, AnalysisProject> entities)` - Adds multiple entities at once
+- `IReadOnlyList<AnalysisProject> Find(Func<AnalysisProject, bool> predicate)` - Finds entities matching a predicate
+
+### ProjectRepositoryStatistics
+
+`GetStatistics()` returns a `ProjectRepositoryStatistics` instance describing the stored projects:
+
+- `TotalProjects` - Total number of projects
+- `ModernDotNetProjects` - Count of .NET Core/.NET 5+ projects
+- `AverageFileCount` - Average file count across projects
+- `TotalFiles` - Sum of all project file counts
+- `ProjectsByFramework` - Dictionary mapping target framework to project count
+- `UniqueLanguages` - Number of distinct project languages
+- `GetModernDotNetPercentage()` - Percentage of projects that are modern .NET
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Data;
+using RoslynGuardAnalyzer.Domain.Models;
+
+// Create repository instance (uses default AppData location)
+var repository = new ProjectRepository();
+
+// Or specify a custom data directory
+var customRepository = new ProjectRepository("/path/to/custom/data");
+
+// Add a project and persist it
+var project = new AnalysisProject("OrderService", @"C:\src\OrderService");
+project.AddSourceFile(@"C:\src\OrderService\OrderService.cs");
+repository.Add(project.Id, project);
+await repository.SaveAsync();
+
+// Load all projects from disk
+await repository.LoadAsync();
+
+// Query projects by framework and language
+var modern = repository.GetModernDotNetProjects();
+var csharp = repository.GetByLanguage("C#");
+var net8 = repository.GetByTargetFramework("net8.0");
+
+// Find a project by path
+var byPath = repository.FindByPath(@"C:\src\OrderService");
+
+// Get statistics about stored projects
+var stats = repository.GetStatistics();
+Console.WriteLine($"Total projects: {stats.TotalProjects}");
+Console.WriteLine($"Modern .NET: {stats.GetModernDotNetPercentage():F1}%");
+
+// Remove a project (optionally deleting its source files)
+await repository.RemoveProjectAsync(project.Id, deleteSourceFiles: false);
+```
