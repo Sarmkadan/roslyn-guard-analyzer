@@ -2202,3 +2202,78 @@ if (metrics is not null)
     Console.WriteLine(PerformanceMetricsMiddleware.GenerateReport(metrics));
 }
 ```
+
+## SuppressionManager
+
+The `SuppressionManager` class (in `RoslynGuardAnalyzer.Suppressions`) maintains a thread-safe, in-memory collection of rule suppressions. Suppressions can apply to an entire rule or be narrowed to a source file and target element, and can be inactive or expire at a specified UTC time. The manager can test or filter violations and persist the collection as JSON.
+
+Adding a record with an existing suppression ID replaces that record. `LoadAsync` replaces the current collection with the active, unexpired records from the file; a missing file leaves the current collection unchanged. Persistence failures are logged and do not propagate to the caller.
+
+### Public API
+
+```csharp
+public interface ISuppressionManager
+public sealed class SuppressionManager : ISuppressionManager
+public SuppressionManager(ILogger<SuppressionManager> logger)
+public void AddSuppression(SuppressionRecord record)
+public bool RemoveSuppression(string suppressionId)
+public IReadOnlyList<SuppressionRecord> GetSuppressions(string? ruleId = null)
+public bool IsSuppressed(RuleViolation violation)
+public IReadOnlyList<RuleViolation> FilterSuppressed(
+    IEnumerable<RuleViolation> violations)
+public Task SaveAsync(
+    string filePath,
+    CancellationToken cancellationToken = default)
+public Task LoadAsync(
+    string filePath,
+    CancellationToken cancellationToken = default)
+```
+
+`GetSuppressions` returns records ordered by creation time and can filter them by rule ID. Matching is case-insensitive for rule IDs, file paths, and target elements. A suppression without a target file or element covers every violation for its rule; inactive and expired records do not match.
+
+### Example usage
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Infrastructure;
+using RoslynGuardAnalyzer.Suppressions;
+
+var services = new ServiceCollection();
+services.RegisterAnalyzerServices();
+
+using var provider = services.BuildServiceProvider();
+var suppressions = provider.GetRequiredService<ISuppressionManager>();
+var suppressionPath = Path.Combine(".roslyn-guard", "suppressions.json");
+
+await suppressions.LoadAsync(suppressionPath);
+
+suppressions.AddSuppression(new SuppressionRecord
+{
+    RuleId = "RG001",
+    TargetFile = "src/MyProject/LegacyService.cs",
+    Justification = "Accepted until the legacy service is replaced.",
+    Author = "architecture-team",
+    ExpiresAt = DateTime.UtcNow.AddDays(30)
+});
+
+var violations = new[]
+{
+    new RuleViolation(
+        "RG001",
+        "Public type naming",
+        "Public types must use the configured naming convention.",
+        "src/MyProject/LegacyService.cs"),
+    new RuleViolation(
+        "RG001",
+        "Public type naming",
+        "Public types must use the configured naming convention.",
+        "src/MyProject/CustomerService.cs")
+};
+
+var unsuppressed = suppressions.FilterSuppressed(violations);
+foreach (var violation in unsuppressed)
+    Console.WriteLine(violation);
+
+await suppressions.SaveAsync(suppressionPath);
+```
