@@ -63,6 +63,9 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     [JsonPropertyName("description")]
     public string? Description { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BaselineViolation"/> class.
+    /// </summary>
     public BaselineViolation()
     {
         Id = Guid.NewGuid().ToString();
@@ -72,6 +75,9 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
         CreatedAt = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="BaselineViolation"/> class with violation details.
+    /// </summary>
     public BaselineViolation(string ruleId, string filePath, int lineNumber, string contentHash, string? description = null)
     {
         Id = Guid.NewGuid().ToString();
@@ -249,6 +255,9 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
         return age <= maxAge;
     }
 
+    /// <summary>
+    /// Determines whether this violation is equal to another baseline violation.
+    /// </summary>
     public bool Equals(BaselineViolation? other)
     {
         if (other is null)
@@ -262,8 +271,14 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
                string.Equals(ContentHash, other.ContentHash, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// Determines whether this violation is equal to the specified object.
+    /// </summary>
     public override bool Equals(object? obj) => Equals(obj as BaselineViolation);
 
+    /// <summary>
+    /// Returns a hash code for this violation.
+    /// </summary>
     public override int GetHashCode()
     {
         // Use the same fields that are compared in Equals
@@ -277,6 +292,9 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
         }
     }
 
+    /// <summary>
+    /// Returns a string representation of this violation.
+    /// </summary>
     public override string ToString() =>
         $"BaselineViolation {{ RuleId={RuleId}, File={PathNormalizer.NormalizeForDisplay(FilePath)}, Line={LineNumber}, Hash={ContentHash[..8]}... }}";
 }
@@ -286,26 +304,50 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
 /// </summary>
 public sealed class Baseline
 {
+    /// <summary>
+    /// Gets or sets the baseline format version.
+    /// </summary>
     [JsonPropertyName("version")]
     public string Version { get; set; } = "1.0";
 
+    /// <summary>
+    /// Gets or sets the baseline schema version.
+    /// </summary>
     [JsonPropertyName("schemaVersion")]
     public string SchemaVersion { get; set; } = "1.0";
 
+    /// <summary>
+    /// Gets or sets the name of the project associated with the baseline.
+    /// </summary>
     [JsonPropertyName("projectName")]
     public string ProjectName { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Gets or sets the date and time when the baseline was created.
+    /// </summary>
     [JsonPropertyName("baselineCreatedAt")]
     public DateTime BaselineCreatedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>
+    /// Gets or sets the violations contained in the baseline.
+    /// </summary>
     [JsonPropertyName("violations")]
     public List<BaselineViolation> Violations { get; set; } = [];
 
+    /// <summary>
+    /// Gets the number of violations in the baseline.
+    /// </summary>
     [JsonIgnore]
     public int ViolationCount => Violations.Count;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Baseline"/> class.
+    /// </summary>
     public Baseline() { }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Baseline"/> class for the specified project.
+    /// </summary>
     public Baseline(string projectName)
     {
         ProjectName = projectName ?? throw new ArgumentNullException(nameof(projectName));
