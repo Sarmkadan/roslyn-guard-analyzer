@@ -1,18 +1,60 @@
 ## BaselineService
 
-The BaselineService class is responsible for managing baseline files that store known violations. It provides methods to load and save baselines, as well as filter new violations not present in the baseline.
+The `BaselineService` class (in `RoslynGuardAnalyzer.Services`) manages JSON baseline files containing violations that have already been accepted. It can create a baseline from analysis results, persist and reload it, and filter a later set of violations so that only findings not present in the baseline are reported. An optional expiration period removes stale baseline entries before filtering.
+
+Paths passed to the service must be non-empty, contain no `..` traversal segments, and use valid path characters. Loading a missing, unreadable, or invalid baseline returns `null` after logging the problem. Saving creates the parent directory when necessary and rethrows write or serialization failures.
+
+### Public API:
+
+```csharp
+public interface IBaselineService
+public sealed class BaselineService : IBaselineService
+public BaselineService(ILogger<BaselineService> logger)
+public Task<Baseline?> LoadBaselineAsync(string filePath)
+public Task SaveBaselineAsync(Baseline baseline, string filePath)
+public List<RuleViolation> FilterNewViolations(
+    List<RuleViolation> violations,
+    Baseline? baseline,
+    TimeSpan baselineExpiration = default)
+public Baseline CreateBaseline(AnalysisResult result)
+public Baseline CreateBaseline(
+    string projectName,
+    List<RuleViolation> violations)
+```
+
+Both `CreateBaseline` overloads copy the supplied violations into a new `Baseline`. `FilterNewViolations` returns all supplied violations when no usable baseline exists; when `baselineExpiration` is set, it also removes expired entries from the supplied baseline before comparing violations.
 
 ### Example usage:
 
 ```csharp
-public async Task<Baseline?> LoadBaselineAsync(string filePath)
-public async Task SaveBaselineAsync(Baseline baseline, string filePath)
-public List<RuleViolation> FilterNewViolations(List<RuleViolation> violations, Baseline? baseline, TimeSpan baselineExpiration = default)
-public Baseline CreateBaseline(AnalysisResult result)
-public Baseline CreateBaseline(string projectName, List<RuleViolation> violations)
-```
+using Microsoft.Extensions.DependencyInjection;
+using RoslynGuardAnalyzer.Infrastructure;
+using RoslynGuardAnalyzer.Services;
 
-These methods can be used to manage baselines and filter new violations in a .NET application.
+var services = new ServiceCollection();
+services.RegisterAnalyzerServices();
+
+using var provider = services.BuildServiceProvider();
+var analysisService = provider.GetRequiredService<IAnalysisService>();
+var baselineService = provider.GetRequiredService<IBaselineService>();
+
+var baselinePath = Path.Combine(".roslyn-guard", "baseline.json");
+var previousBaseline = await baselineService.LoadBaselineAsync(baselinePath);
+var result = await analysisService.AnalyzeProjectAsync(
+    "src/MyProject/MyProject.csproj");
+
+var newViolations = baselineService.FilterNewViolations(
+    result.Violations,
+    previousBaseline,
+    TimeSpan.FromDays(90));
+
+foreach (var violation in newViolations)
+    Console.WriteLine($"{violation.RuleId}: {violation.Message}");
+
+// Accept the current analysis results as the baseline for future runs.
+var currentBaseline = baselineService.CreateBaseline(result);
+await baselineService.SaveBaselineAsync(currentBaseline, baselinePath);
+```
 
 ## ConfigurationLoader
 
