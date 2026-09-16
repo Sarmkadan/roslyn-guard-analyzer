@@ -19,11 +19,26 @@ namespace RoslynGuardAnalyzer.Services;
 /// </summary>
 public sealed class BackgroundTaskQueue
 {
+    /// <summary>
+    /// Represents a background task to be processed.
+    /// </summary>
     public sealed class BackgroundTask
     {
+        /// <summary>
+        /// Unique identifier for the task.
+        /// </summary>
         public required string Id { get; init; }
+        /// <summary>
+        /// The work to be performed as a function that takes a cancellation token and returns a task.
+        /// </summary>
         public required Func<CancellationToken, Task> Work { get; init; }
+        /// <summary>
+        /// The priority of the task. Higher values indicate higher priority.
+        /// </summary>
         public int Priority { get; init; } = 0; // Higher = higher priority
+        /// <summary>
+        /// The date and time when the task was enqueued.
+        /// </summary>
         public DateTime EnqueuedAt { get; init; } = DateTime.UtcNow;
     }
 
@@ -34,6 +49,10 @@ public sealed class BackgroundTaskQueue
     /// <summary>
     /// Enqueues a background task.
     /// </summary>
+    /// <param name="work">The work to be performed as a function that takes a cancellation token and returns a task.</param>
+    /// <param name="priority">The priority of the task. Higher values indicate higher priority. Default is 0.</param>
+    /// <returns>The unique identifier of the enqueued task.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when work is null.</exception>
     public string EnqueueTask(Func<CancellationToken, Task> work, int priority = 0)
     {
         if (work is null)
@@ -55,6 +74,8 @@ public sealed class BackgroundTaskQueue
     /// <summary>
     /// Dequeues the next background task to process.
     /// </summary>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>The dequeued background task, or null if no tasks are available.</returns>
     public async Task<BackgroundTask?> DequeueAsync(CancellationToken cancellationToken)
     {
         await _semaphore.WaitAsync(cancellationToken);
@@ -133,6 +154,11 @@ public sealed class BackgroundTaskProcessor : IDisposable
     private readonly CancellationTokenSource _cancellationTokenSource;
     private Task? _processingTask;
 
+    /// <summary>
+    /// Initializes a new instance of the BackgroundTaskProcessor class.
+    /// </summary>
+    /// <param name="queue">The background task queue to process tasks from.</param>
+    /// <exception cref="ArgumentNullException">Thrown when queue is null.</exception>
     public BackgroundTaskProcessor(BackgroundTaskQueue queue)
     {
         _queue = queue ?? throw new ArgumentNullException(nameof(queue));
@@ -154,6 +180,7 @@ public sealed class BackgroundTaskProcessor : IDisposable
     /// <summary>
     /// Stops the background task processor gracefully.
     /// </summary>
+    /// <returns>A task that represents the asynchronous stop operation.</returns>
     public async Task StopAsync()
     {
         _queue.Stop();
@@ -175,6 +202,8 @@ public sealed class BackgroundTaskProcessor : IDisposable
     /// <summary>
     /// Processes tasks from the queue continuously.
     /// </summary>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous processing operation.</returns>
     private async Task ProcessQueueAsync(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
@@ -206,6 +235,9 @@ public sealed class BackgroundTaskProcessor : IDisposable
         }
     }
 
+    /// <summary>
+    /// Releases the resources used by the BackgroundTaskProcessor.
+    /// </summary>
     public void Dispose()
     {
         _cancellationTokenSource?.Dispose();
