@@ -228,6 +228,19 @@ public static class RuleViolationExtensions
     }
 
     /// <summary>
+    /// Determines whether this violation includes a suggested fix.
+    /// </summary>
+    /// <param name="violation">The violation to check.</param>
+    /// <returns><see langword="true"/> when a non-empty suggested fix is available; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="violation"/> is <see langword="null"/>.</exception>
+    public static bool HasSuggestedFix(this RuleViolation violation)
+    {
+        ArgumentNullException.ThrowIfNull(violation);
+
+        return !string.IsNullOrWhiteSpace(violation.SuggestedFix);
+    }
+
+    /// <summary>
     /// Gets a formatted string containing the violation's code snippet if available.
     /// </summary>
     /// <param name="violation">The violation to get snippet from.</param>
