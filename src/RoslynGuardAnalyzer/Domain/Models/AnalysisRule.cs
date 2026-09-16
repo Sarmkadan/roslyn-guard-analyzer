@@ -19,20 +19,74 @@ namespace RoslynGuardAnalyzer.Domain.Models;
 /// </summary>
 public class AnalysisRule
 {
+    /// <summary>
+    /// Gets or sets the unique identifier of the rule.
+    /// </summary>
     public string Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets the display name of the rule.
+    /// </summary>
     public string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the description of the rule.
+    /// </summary>
     public string Description { get; set; }
+
+    /// <summary>
+    /// Gets or sets the category to which the rule belongs.
+    /// </summary>
     public RuleCategory Category { get; set; }
+
+    /// <summary>
+    /// Gets or sets the default severity level of the rule.
+    /// </summary>
     public SeverityLevel DefaultSeverity { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the rule is enabled.
+    /// </summary>
     public bool IsEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets the optional pattern used by the rule.
+    /// </summary>
     public string? RulePattern { get; set; }
+
+    /// <summary>
+    /// Gets or sets the rule-specific configuration values.
+    /// </summary>
     public Dictionary<string, object> Configuration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the URL for the rule documentation.
+    /// </summary>
     public string? DocumentationUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets the date and time when the rule was created.
+    /// </summary>
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the date and time when the rule was last modified.
+    /// </summary>
     public DateTime? ModifiedAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the author of the rule.
+    /// </summary>
     public string? Author { get; set; }
+
+    /// <summary>
+    /// Gets or sets the version of the rule.
+    /// </summary>
     public Version? Version { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AnalysisRule"/> class.
+    /// </summary>
     public AnalysisRule()
     {
         Id = string.Empty;
@@ -45,6 +99,9 @@ public class AnalysisRule
         CreatedAt = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AnalysisRule"/> class with the specified rule details.
+    /// </summary>
     public AnalysisRule(string id, string name, string description, RuleCategory category)
         : this()
     {
@@ -136,5 +193,8 @@ public class AnalysisRule
         ModifiedAt = DateTime.UtcNow;
     }
 
+    /// <summary>
+    /// Returns a string that identifies the rule by its identifier and name.
+    /// </summary>
     public override string ToString() => $"{Id}: {Name}";
 }
