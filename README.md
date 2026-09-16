@@ -338,6 +338,55 @@ foreach (var (rule, count) in AnalysisStatisticsService.GetTopRulesByViolations(
     Console.WriteLine($"{rule}: {count}");
 ```
 
+## DiagnosticsService
+
+The `DiagnosticsService` class (in `RoslynGuardAnalyzer.Services`) collects in-memory diagnostics for analysis runs. It tracks completed analyses, elapsed analysis time, violations, and errors, and can report process information such as runtime version, memory usage, processor count, and service uptime. Its statistics operations are thread-safe, and it retains only the 10 most recently recorded error messages.
+
+### Public API:
+
+```csharp
+public sealed class DiagnosticsService
+public void RecordAnalysis(long durationMs, int violationsFound)
+public void RecordError(string errorMessage)
+public long GetAverageAnalysisTime()
+public int GetAnalysisCount()
+public int GetTotalViolationsFound()
+public int GetErrorCount()
+public IReadOnlyList<string> GetRecentErrors(int count = 5)
+public Dictionary<string, object> GetSystemInfo()
+public string GenerateDiagnosticReport()
+public void Reset()
+```
+
+`GetAverageAnalysisTime` returns the integer average in milliseconds, or zero before an analysis is recorded. `GetRecentErrors` returns a read-only snapshot of the newest requested messages. `GenerateDiagnosticReport` combines run statistics, up to five recent errors, and current system information in a human-readable string. `Reset` clears the collected counters and errors; the service uptime continues from when the instance was created.
+
+### Example usage:
+
+```csharp
+using System.Diagnostics;
+using RoslynGuardAnalyzer.Services;
+
+var diagnostics = new DiagnosticsService();
+var stopwatch = Stopwatch.StartNew();
+
+try
+{
+    // Run analysis and record its violation count.
+    var violationsFound = 4;
+    stopwatch.Stop();
+    diagnostics.RecordAnalysis(stopwatch.ElapsedMilliseconds, violationsFound);
+}
+catch (Exception exception)
+{
+    diagnostics.RecordError(exception.Message);
+}
+
+Console.WriteLine($"Analyses: {diagnostics.GetAnalysisCount()}");
+Console.WriteLine($"Average time: {diagnostics.GetAverageAnalysisTime()} ms");
+Console.WriteLine($"Violations: {diagnostics.GetTotalViolationsFound()}");
+Console.WriteLine(diagnostics.GenerateDiagnosticReport());
+```
+
 ## RuleEngine
 
 The `RuleEngine` class (in `RoslynGuardAnalyzer.Services`) executes architectural analysis rules against extracted `CodeElement` instances and returns the resulting `RuleViolation` objects. It supports the built-in layer-dependency, naming-convention, async-pattern, and null-safety categories as well as `CustomAnalysisRule` instances. Disabled rules and suppressed elements are skipped; when all registered rules are executed, rule evaluation is parallelized and the results are returned in deterministic file, line, and rule-ID order.
