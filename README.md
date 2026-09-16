@@ -1,3 +1,77 @@
+## ValidationService
+
+The `ValidationService` class (in `RoslynGuardAnalyzer.Services`) validates rule configurations, individual analysis rules, project paths, code elements, and completed analysis results. It returns validation failures as error messages instead of throwing for invalid values; null arguments are rejected. Project-path validation expands environment variables, accepts directories or `.csproj`, `.cs`, and `.sln` files, and verifies that the target is accessible. The same source file also provides naming extensions for checking C# identifiers, PascalCase, and camelCase text.
+
+### Public API:
+
+```csharp
+public interface IValidationService
+public sealed class ValidationService : IValidationService
+public (bool IsValid, List<string> Errors) ValidateRuleConfiguration(
+    RuleConfiguration config)
+public (bool IsValid, List<string> Errors) ValidateRule(AnalysisRule rule)
+public (bool IsValid, string? Error) ValidateProjectPath(string projectPath)
+public (bool IsValid, List<string> Errors) ValidateCodeElement(
+    CodeElement element)
+public (bool IsValid, List<string> Errors) ValidateAnalysisResult(
+    AnalysisResult result)
+
+public static class ValidationExtensions
+public static bool IsValidIdentifier(this string identifier)
+public static bool IsPascalCase(this string text)
+public static bool IsCamelCase(this string text)
+```
+
+`IValidationService` exposes rule-configuration, rule, and project-path validation. The code-element and analysis-result methods are available when using `ValidationService` directly. Rule validation also checks an optional `RulePattern` for valid regular-expression syntax.
+
+### Example usage:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Infrastructure;
+using RoslynGuardAnalyzer.Services;
+
+var services = new ServiceCollection();
+services.RegisterValidationOnly();
+
+using var provider = services.BuildServiceProvider();
+var validationService = provider.GetRequiredService<IValidationService>();
+
+var rule = new AnalysisRule(
+    "RG001",
+    "Public type naming",
+    "Public types must use the configured naming convention.",
+    RuleCategory.NamingConvention)
+{
+    RulePattern = "^[A-Z][A-Za-z0-9]*$"
+};
+
+var configuration = new RuleConfiguration(
+    "Default rules",
+    "Rules used by the default analysis profile.");
+configuration.AddRule(rule);
+
+var (isValid, errors) =
+    validationService.ValidateRuleConfiguration(configuration);
+
+if (!isValid)
+{
+    foreach (var error in errors)
+        Console.Error.WriteLine(error);
+}
+
+var (pathIsValid, pathError) =
+    validationService.ValidateProjectPath("src/MyProject/MyProject.csproj");
+
+if (!pathIsValid)
+    Console.Error.WriteLine(pathError);
+
+Console.WriteLine("CustomerService is an identifier: " +
+    "CustomerService".IsValidIdentifier());
+```
+
 ## ReportingService
 
 The `ReportingService` class (in `RoslynGuardAnalyzer.Services`) turns analysis results into human-readable or machine-readable reports. It can produce a detailed text summary, format an `AnalysisResult` as JSON, CSV, or XML, and save a `ViolationReport` asynchronously. When saving, it creates the parent directory if necessary and chooses the serialized content from the report's `Format`.
