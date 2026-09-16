@@ -629,6 +629,21 @@ public static class StringExtensions
     }
 
     /// <summary>
+    /// Checks if a string contains any of the given values (case-insensitive).
+    /// </summary>
+    /// <param name="text">The string to check.</param>
+    /// <param name="values">The values to match against.</param>
+    /// <returns><see langword="true"/> if the string contains any value; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="text"/> or <paramref name="values"/> is <see langword="null"/></exception>
+    public static bool ContainsAny(this string text, params string[] values)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(values);
+
+        return values.Any(value => text.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
     /// Counts the occurrences of a substring in a string.
     /// </summary>
     /// <param name="text">The input string to search.</param>
