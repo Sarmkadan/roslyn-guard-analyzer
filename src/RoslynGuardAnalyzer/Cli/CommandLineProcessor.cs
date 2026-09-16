@@ -114,7 +114,9 @@ public sealed class CommandLineProcessor
     private static void PrintErrors(List<string> errors)
     {
         if (errors.Count == 0)
+        {
             return;
+        }
 
         Console.Error.WriteLine(ErrorsHeader);
         foreach (var error in errors)
@@ -165,7 +167,9 @@ public sealed class CommandLineProcessor
     public void PrintOptionsSummary()
     {
         if (_parsedOptions is null)
+        {
             return;
+        }
 
         Console.WriteLine(ConfigurationHeader);
         Console.WriteLine(TargetLabel + _parsedOptions.GetTargetPath());
