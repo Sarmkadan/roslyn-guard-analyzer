@@ -283,6 +283,73 @@ if (namingRule is not null)
 }
 ```
 
+## CustomRuleEngine
+
+The `CustomRuleEngine` class (in `RoslynGuardAnalyzer.Rules`) evaluates predicate-based `CustomAnalysisRule` instances against extracted `CodeElement` objects. It can run a single supplied rule or retrieve every custom rule from an `ICustomRuleRegistry` and combine their violations. Registered rules are evaluated sequentially, and the input elements are materialized once so each rule receives the same collection.
+
+### Public API:
+
+```csharp
+public sealed class CustomRuleEngine
+public CustomRuleEngine(ICustomRuleRegistry customRuleRegistry)
+public Task<List<RuleViolation>> EvaluateRuleAsync(
+    CustomAnalysisRule rule,
+    IEnumerable<CodeElement> elements,
+    CancellationToken cancellationToken = default)
+public Task<List<RuleViolation>> EvaluateAsync(
+    IEnumerable<CodeElement> elements,
+    CancellationToken cancellationToken = default)
+```
+
+`EvaluateRuleAsync` evaluates only the supplied rule. `EvaluateAsync` evaluates all rules returned by the registry and aggregates their violations. Both methods honor cancellation before rule evaluation; `EvaluateAsync` also checks for cancellation before each registered rule.
+
+### Example usage:
+
+```csharp
+using System;
+using System.Collections.Generic;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
+
+var registry = new CustomRuleRegistry();
+
+var rule = CustomRuleBuilder
+    .Create("RG-CUSTOM-001", "AvoidManagerSuffix")
+    .For(RuleCategory.NamingConvention)
+    .WithSeverity(SeverityLevel.Warning)
+    .WithDescription("Type names should describe a specific responsibility.")
+    .When(element =>
+        element.ElementType == CodeElementType.Class &&
+        element.Name.EndsWith("Manager", StringComparison.Ordinal))
+    .WithMessage(element => $"Rename '{element.Name}' to a more specific name.")
+    .Build();
+
+registry.RegisterCustomRule(rule);
+var engine = new CustomRuleEngine(registry);
+
+var elements = new List<CodeElement>
+{
+    new()
+    {
+        Id = "OrderManager",
+        Name = "OrderManager",
+        ElementType = CodeElementType.Class,
+        FilePath = "src/OrderManager.cs",
+        Namespace = "MyApp.Services",
+        StartLineNumber = 7
+    }
+};
+
+var violations = await engine.EvaluateAsync(elements);
+
+foreach (var violation in violations)
+    Console.WriteLine($"{violation.RuleId}: {violation.Message}");
+
+// A rule can also be evaluated directly without registering it.
+var directViolations = await engine.EvaluateRuleAsync(rule, elements);
+```
+
 ## ServiceCollectionExtensionsValidationTests
 
 The ServiceCollectionExtensionsValidationTests class contains unit tests for the AnalyzerConfiguration validation extension methods in the ServiceCollectionExtensionsValidation class.
