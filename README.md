@@ -54,6 +54,118 @@ var explicitConfig = await ConfigurationLoader.LoadFromFileAsync(
     Path.Combine(projectDirectory, "analyzer-settings.json"));
 ```
 
+## ConfigurationValidator
+
+The `ConfigurationValidator` class (in `RoslynGuardAnalyzer.Configuration`) validates configuration objects for consistency and correctness. It checks rules, paths, and parameter values to ensure the analyzer configuration is valid before execution.
+
+### Public API:
+
+```csharp
+public sealed class ConfigurationValidator
+public sealed class ValidationResult
+public bool IsValid { get; set; }
+public List<string> Errors { get; }
+public List<string> Warnings { get; }
+public void AddError(string message)
+public void AddWarning(string message)
+public override string ToString()
+public static ValidationResult ValidateAnalysisConfig(AnalysisConfig config)
+public static ValidationResult ValidateCliOptions(Cli.CliOptions options)
+public static ValidationResult ValidateRuleNames(IEnumerable<string> ruleNames, IEnumerable<string> supportedRules)
+public static ValidationResult ValidateComprehensive(AnalysisConfig? analysisConfig, Cli.CliOptions? cliOptions)
+```
+
+### ValidationResult
+
+The `ValidationResult` class contains the outcome of validation operations:
+- `IsValid`: Boolean indicating if validation passed
+- `Errors`: List of error messages that caused validation to fail
+- `Warnings`: List of warning messages that don't prevent execution but indicate potential issues
+- `AddError(string)`: Adds an error message and marks the result as invalid
+- `AddWarning(string)`: Adds a warning message
+- `ToString()`: Returns a formatted string representation of the validation result
+
+### Validation Methods
+
+1. **ValidateAnalysisConfig**: Validates an `AnalysisConfig` object
+   - Checks minimum severity is one of: Low, Medium, High, Critical
+   - Ensures max violations to report is positive
+   - Validates output format is one of: text, json, csv, html, xml
+   - Checks for duplicate rule names
+   - Validates exclude patterns are not empty
+
+2. **ValidateCliOptions**: Validates CLI options
+   - Verifies specified file and directory paths exist
+   - Ensures analysis timeout and max parallel threads are positive
+   - Warns if max parallel threads exceeds reasonable limits
+
+3. **ValidateRuleNames**: Validates that rule names are supported
+   - Checks each rule name against a list of supported rules
+   - Reports errors for unknown rule names
+
+4. **ValidateComprehensive**: Performs comprehensive validation
+   - Combines analysis config and CLI options validation
+   - Returns combined validation result with all errors and warnings
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Configuration;
+using RoslynGuardAnalyzer.Cli;
+
+// Validate analysis configuration
+var config = new AnalysisConfig 
+{ 
+    MinimumSeverity = "Medium",
+    MaxViolationsToReport = 100,
+    OutputFormat = "json",
+    EnabledRules = new[] { "RG-N001", "RG-A001" }
+};
+
+var configResult = ConfigurationValidator.ValidateAnalysisConfig(config);
+if (!configResult.IsValid)
+{
+    Console.Error.WriteLine("Configuration errors:");
+    Console.Error.WriteLine(configResult);
+    return;
+}
+
+// Validate CLI options
+var cliOptions = new CliOptions
+{
+    ProjectPath = "./src/MyProject.csproj",
+    AnalysisTimeoutSeconds = 30,
+    MaxParallelThreads = 4
+};
+
+var cliResult = ConfigurationValidator.ValidateCliOptions(cliOptions);
+if (!cliResult.IsValid)
+{
+    Console.Error.WriteLine("CLI options errors:");
+    Console.Error.WriteLine(cliResult);
+    return;
+}
+
+// Comprehensive validation
+var combinedResult = ConfigurationValidator.ValidateComprehensive(config, cliOptions);
+if (!combinedResult.IsValid)
+{
+    Console.Error.WriteLine("Validation failed:");
+    Console.Error.WriteLine(combinedResult);
+    return;
+}
+
+Console.WriteLine("Configuration is valid!");
+if (combinedResult.Warnings.Count > 0)
+{
+    Console.WriteLine("Warnings:");
+    foreach (var warning in combinedResult.Warnings)
+    {
+        Console.WriteLine($"  ! {warning}");
+    }
+}
+```
+
 ## ParallelAnalysisConfig
 
 The `ParallelAnalysisConfig` class provides configuration options for controlling parallel execution during code analysis. It allows developers to tune concurrency levels for both project-level and rule-level operations to optimize performance based on available system resources.
