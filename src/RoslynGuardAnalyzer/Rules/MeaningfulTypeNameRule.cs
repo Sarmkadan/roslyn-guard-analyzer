@@ -52,6 +52,8 @@ public static class MeaningfulTypeNameRule
     /// <returns>True if the element is a public type with a meaningless name; otherwise, false.</returns>
     private static bool HasMeaninglessTypeName(CodeElement element)
     {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+
         // Only check types (classes, structs, interfaces, enums)
         if (element.ElementType != CodeElementType.Class &&
             element.ElementType != CodeElementType.Struct &&
@@ -78,6 +80,8 @@ public static class MeaningfulTypeNameRule
 
     private static bool MatchesPlaceholderPattern(string typeName)
     {
+        ArgumentNullException.ThrowIfNull(typeName, nameof(typeName));
+
         if (string.IsNullOrWhiteSpace(typeName))
         {
             return false;
@@ -130,6 +134,8 @@ public static class MeaningfulTypeNameRule
 
     private static string CreateViolationMessage(CodeElement element)
     {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+
         var typeName = element.Name;
         var typeKind = element.ElementType.ToString().ToLowerInvariant();
         var fileLocation = element.GetLocation();
