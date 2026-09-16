@@ -81,10 +81,14 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     public BaselineViolation(string ruleId, string filePath, int lineNumber, string contentHash, string? description = null)
     {
         Id = Guid.NewGuid().ToString();
-        RuleId = ruleId ?? throw new ArgumentNullException(nameof(ruleId));
-        FilePath = filePath ?? throw new ArgumentNullException(nameof(filePath));
+        ArgumentNullException.ThrowIfNull(ruleId);
+        ArgumentNullException.ThrowIfNull(filePath);
+        ArgumentNullException.ThrowIfNull(contentHash);
+
+        RuleId = ruleId;
+        FilePath = filePath;
         LineNumber = lineNumber;
-        ContentHash = contentHash ?? throw new ArgumentNullException(nameof(contentHash));
+        ContentHash = contentHash;
         Description = description;
         CreatedAt = DateTime.UtcNow;
     }
@@ -97,8 +101,7 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     /// <returns>New BaselineViolation instance</returns>
     public static BaselineViolation FromRuleViolation(RuleViolation violation, string contentHash)
     {
-        if (violation is null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         if (string.IsNullOrWhiteSpace(contentHash))
             throw new ArgumentException("Content hash cannot be null or empty", nameof(contentHash));
@@ -119,8 +122,7 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     /// <returns>New BaselineViolation instance with computed content hash</returns>
     public static BaselineViolation FromRuleViolation(RuleViolation violation)
     {
-        if (violation is null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         var contentHash = ComputeContentHash(violation);
         return FromRuleViolation(violation, contentHash);
@@ -136,8 +138,7 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     /// <returns>Base64-encoded SHA256 hash representing the violation's content</returns>
     public static string ComputeContentHash(RuleViolation violation)
     {
-        if (violation is null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         // Use a normalized string that represents the violation's essence
         // Include rule, normalized file path, message, and code snippet for maximum stability
@@ -350,7 +351,9 @@ public sealed class Baseline
     /// </summary>
     public Baseline(string projectName)
     {
-        ProjectName = projectName ?? throw new ArgumentNullException(nameof(projectName));
+        ArgumentNullException.ThrowIfNull(projectName);
+
+        ProjectName = projectName;
     }
 
     /// <summary>
@@ -358,8 +361,7 @@ public sealed class Baseline
     /// </summary>
     public void AddViolation(BaselineViolation violation)
     {
-        if (violation is null)
-            throw new ArgumentNullException(nameof(violation));
+        ArgumentNullException.ThrowIfNull(violation);
 
         Violations.Add(violation);
     }
