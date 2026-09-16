@@ -18,6 +18,66 @@ namespace RoslynGuardAnalyzer.Formatters;
 /// </summary>
 public sealed class HtmlFormatter : IOutputFormatter
 {
+    // HTML Constants
+    private const string Doctype = "<!DOCTYPE html>";
+    private const string HtmlOpen = "<html>";
+    private const string HtmlClose = "</html>";
+    private const string HeadOpen = "<head>";
+    private const string HeadClose = "</head>";
+    private const string BodyOpen = "<body>";
+    private const string BodyClose = "</body>";
+    private const string ContainerOpen = "<div class=\"container\">";
+    private const string ContainerClose = "</div>";
+    private const string H1Open = "<h1>";
+    private const string H1Close = "</h1>";
+    private const string H2Open = "<h2>";
+    private const string H2Close = "</h2>";
+    private const string DivOpen = "<div";
+    private const string DivClose = "</div>";
+    private const string POpen = "<p>";
+    private const string PClose = "</p>";
+    private const string StrongOpen = "<strong>";
+    private const string StrongClose = "</strong>";
+    private const string TableOpen = "<table";
+    private const string TableClose = "</table>";
+    private const string TheadOpen = "<thead>";
+    private const string TheadClose = "</thead>";
+    private const string TbodyOpen = "<tbody>";
+    private const string TbodyClose = "</tbody>";
+    private const string TrOpen = "<tr";
+    private const string TrClose = "</tr>";
+    private const string ThOpen = "<th>";
+    private const string ThClose = "</th>";
+    private const string TdOpen = "<td>";
+    private const string TdClose = "</td>";
+    private const string MetaCharset = "<meta charset=\"utf-8\">";
+    private const string TitlePrefix = "Analysis Report - ";
+    private const string ReportTitle = "Roslyn Guard Analyzer Report";
+    private const string ViolationsReportTitle = "Violations Report";
+    private const string NoViolationsMessage = "✓ No violations found";
+    private const string GeneratedFormat = "{0:yyyy-MM-dd HH:mm:ss} UTC";
+
+    // CSS Class Constants
+    private const string ClassContainer = "container";
+    private const string ClassHeaderInfo = "header-info";
+    private const string ClassSummary = "summary";
+    private const string ClassStatBox = "stat-box";
+    private const string ClassStatValue = "stat-value";
+    private const string ClassStatLabel = "stat-label";
+    private const string ClassViolationsTable = "violations-table";
+    private const string ClassSuccess = "success";
+    private const string ClassSeverityPrefix = "severity-";
+
+    // Other Constants
+    private const string ProjectLabel = "Project:";
+    private const string PathLabel = "Path:";
+    private const string GeneratedLabel = "Generated:";
+    private const string RuleHeader = "Rule";
+    private const string SeverityHeader = "Severity";
+    private const string MessageHeader = "Message";
+    private const string FileHeader = "File";
+    private const string LineHeader = "Line";
+
     public string Format => "html";
 
     public bool CanFormat(string format)
@@ -47,57 +107,65 @@ public sealed class HtmlFormatter : IOutputFormatter
     private static string BuildHtml(string title, string projectPath, IReadOnlyList<RuleViolation> violations)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("<!DOCTYPE html>");
-        sb.AppendLine("<html>");
-        sb.AppendLine("<head>");
-        sb.AppendLine("<meta charset=\"utf-8\">");
-        sb.AppendLine("<title>Analysis Report - " + HtmlEscape(title) + "</title>");
+        sb.AppendLine(Doctype);
+        sb.AppendLine(HtmlOpen);
+        sb.AppendLine(HeadOpen);
+        sb.AppendLine(MetaCharset);
+        sb.AppendLine($"<title>{HtmlEscape(TitlePrefix + title)}</title>");
         sb.AppendLine(GetStyles());
-        sb.AppendLine("</head>");
-        sb.AppendLine("<body>");
-        sb.AppendLine("<div class=\"container\">");
-        sb.AppendLine("<h1>Roslyn Guard Analyzer Report</h1>");
-        sb.AppendLine("<div class=\"header-info\">");
-        sb.AppendLine($"<p><strong>Project:</strong> {HtmlEscape(title)}</p>");
+        sb.AppendLine(HeadClose);
+        sb.AppendLine(BodyOpen);
+        sb.AppendLine(ContainerOpen);
+        sb.AppendLine($"{H1Open}{ReportTitle}{H1Close}");
+        sb.AppendLine($"<div class=\"{ClassHeaderInfo}\">");
+        sb.AppendLine($"{POpen}{StrongOpen}{ProjectLabel}{StrongClose} {HtmlEscape(title)}{PClose}");
         if (!string.IsNullOrWhiteSpace(projectPath))
-            sb.AppendLine($"<p><strong>Path:</strong> {HtmlEscape(projectPath)}</p>");
-        sb.AppendLine($"<p><strong>Generated:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>");
-        sb.AppendLine("</div>");
-        sb.AppendLine("<div class=\"summary\">");
-        sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{violations.Count}</div><div class=\"stat-label\">Total Violations</div></div>");
-        sb.AppendLine($"<div class=\"stat-box\"><div class=\"stat-value\">{violations.Select(v => v.FilePath).Distinct().Count()}</div><div class=\"stat-label\">Affected Files</div></div>");
-        sb.AppendLine("</div>");
+            sb.AppendLine($"{POpen}{StrongOpen}{PathLabel}{StrongClose} {HtmlEscape(projectPath)}{PClose}");
+        sb.AppendLine($"{POpen}{StrongOpen}{GeneratedLabel}{StrongClose} {DateTime.UtcNow.ToString(GeneratedFormat)}{PClose}");
+        sb.AppendLine(DivClose);
+        sb.AppendLine($"<div class=\"{ClassSummary}\">");
+        sb.AppendLine($"<div class=\"{ClassStatBox}\"><div class=\"{ClassStatValue}\">{violations.Count}</div><div class=\"{ClassStatLabel}\">Total Violations</div></div>");
+        sb.AppendLine($"<div class=\"{ClassStatBox}\"><div class=\"{ClassStatValue}\">{violations.Select(v => v.FilePath).Distinct().Count()}</div><div class=\"{ClassStatLabel}\">Affected Files</div></div>");
+        sb.AppendLine(DivClose);
 
         if (violations.Count > 0)
         {
-            sb.AppendLine("<h2>Violations</h2>");
-            sb.AppendLine("<table class=\"violations-table\">");
-            sb.AppendLine("<thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>File</th><th>Line</th></tr></thead>");
-            sb.AppendLine("<tbody>");
+            sb.AppendLine($"{H2Open}Violations{H2Close}");
+            sb.AppendLine($"<table class=\"{ClassViolationsTable}\">");
+            sb.AppendLine(TheadOpen);
+            sb.AppendLine(TrOpen);
+            sb.AppendLine(ThOpen + RuleHeader + ThClose);
+            sb.AppendLine(ThOpen + SeverityHeader + ThClose);
+            sb.AppendLine(ThOpen + MessageHeader + ThClose);
+            sb.AppendLine(ThOpen + FileHeader + ThClose);
+            sb.AppendLine(ThOpen + LineHeader + ThClose);
+            sb.AppendLine(TrClose);
+            sb.AppendLine(TheadClose);
+            sb.AppendLine(TbodyOpen);
 
             foreach (var violation in violations.OrderByDescending(v => v.Severity))
             {
                 var severityClass = violation.Severity.ToString().ToLowerInvariant();
-                sb.AppendLine($"<tr class=\"severity-{severityClass}\">");
-                sb.AppendLine($"<td>{HtmlEscape(violation.RuleName)}</td>");
-                sb.AppendLine($"<td>{violation.Severity}</td>");
-                sb.AppendLine($"<td>{HtmlEscape(violation.Message)}</td>");
-                sb.AppendLine($"<td>{HtmlEscape(System.IO.Path.GetFileName(violation.FilePath))}</td>");
-                sb.AppendLine($"<td>{violation.LineNumber}</td>");
-                sb.AppendLine("</tr>");
+                sb.AppendLine($"<tr class=\"{ClassSeverityPrefix}{severityClass}\">");
+                sb.AppendLine(TdOpen + HtmlEscape(violation.RuleName) + TdClose);
+                sb.AppendLine(TdOpen + violation.Severity + TdClose);
+                sb.AppendLine(TdOpen + HtmlEscape(violation.Message) + TdClose);
+                sb.AppendLine(TdOpen + HtmlEscape(System.IO.Path.GetFileName(violation.FilePath)) + TdClose);
+                sb.AppendLine(TdOpen + violation.LineNumber + TdClose);
+                sb.AppendLine(TrClose);
             }
 
-            sb.AppendLine("</tbody>");
-            sb.AppendLine("</table>");
+            sb.AppendLine(TbodyClose);
+            sb.AppendLine(TableClose);
         }
         else
         {
-            sb.AppendLine("<div class=\"success\"><p>✓ No violations found</p></div>");
+            sb.AppendLine($"<div class=\"{ClassSuccess}\"><p>{NoViolationsMessage}</p></div>");
         }
 
-        sb.AppendLine("</div>");
-        sb.AppendLine("</body>");
-        sb.AppendLine("</html>");
+        sb.AppendLine(ContainerClose);
+        sb.AppendLine(BodyClose);
+        sb.AppendLine(HtmlClose);
         return sb.ToString();
     }
 
