@@ -45,6 +45,11 @@ public static class MeaningfulTypeNameRule
             .Build();
     }
 
+    /// <summary>
+    /// Determines whether the specified code element has a meaningless type name.
+    /// </summary>
+    /// <param name="element">The code element to check.</param>
+    /// <returns>True if the element is a public type with a meaningless name; otherwise, false.</returns>
     private static bool HasMeaninglessTypeName(CodeElement element)
     {
         // Only check types (classes, structs, interfaces, enums)
