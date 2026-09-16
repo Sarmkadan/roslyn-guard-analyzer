@@ -489,6 +489,63 @@ if (writer.IsFormatSupported("csv"))
     await writer.WriteViolationsAsync(result.Violations, "csv", "reports/violations.csv");
 ```
 
+## RuleRegistry
+
+The `RuleRegistry` class (in `RoslynGuardAnalyzer.Services`) is the in-memory catalog of architectural rules used by the analyzer. Each new registry starts with the built-in layer-dependency, naming-convention, async-pattern, and null-safety rules. Callers can register additional valid `AnalysisRule` instances, look up or remove rules by ID, filter rules by category, and retrieve snapshots of all or only enabled rules.
+
+Rule IDs must be unique. Registering a null, invalid, or duplicate rule throws an exception. ID lookups and category names are case-sensitive, and `GetRulesByCategory` expects the name of a `RuleCategory` value, such as `CodeStructure`. The registry is also registered as the singleton `IRuleRegistry` implementation by `RegisterAnalyzerServices()`.
+
+### Public API:
+
+```csharp
+public sealed class RuleRegistry : IRuleRegistry
+public RuleRegistry(ILogger<RuleRegistry>? logger = null)
+public void RegisterRule(AnalysisRule rule)
+public AnalysisRule? GetRule(string ruleId)
+public IReadOnlyList<AnalysisRule> GetAllRules()
+public IReadOnlyList<AnalysisRule> GetRulesByCategory(string category)
+public bool RemoveRule(string ruleId)
+public int GetRuleCount()
+public IReadOnlyList<AnalysisRule> GetEnabledRules()
+public void Clear()
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Services;
+
+var registry = new RuleRegistry();
+
+var codeStructureRule = new AnalysisRule(
+    "RG-C001",
+    "Controller Size Rule",
+    "Flags controllers that contain too many actions.",
+    RuleCategory.CodeStructure)
+{
+    DefaultSeverity = SeverityLevel.Warning,
+    IsEnabled = true
+};
+
+registry.RegisterRule(codeStructureRule);
+
+var registeredRule = registry.GetRule("RG-C001");
+var structureRules = registry.GetRulesByCategory(
+    nameof(RuleCategory.CodeStructure));
+var enabledRules = registry.GetEnabledRules();
+
+Console.WriteLine($"Registered rules: {registry.GetRuleCount()}");
+Console.WriteLine($"Code structure rules: {structureRules.Count}");
+Console.WriteLine($"Enabled rules: {enabledRules.Count}");
+
+if (registeredRule is not null)
+    Console.WriteLine($"Found {registeredRule.Id}: {registeredRule.Name}");
+
+registry.RemoveRule("RG-C001");
+```
+
 ## RuleEngine
 
 The `RuleEngine` class (in `RoslynGuardAnalyzer.Services`) executes architectural analysis rules against extracted `CodeElement` instances and returns the resulting `RuleViolation` objects. It supports the built-in layer-dependency, naming-convention, async-pattern, and null-safety categories as well as `CustomAnalysisRule` instances. Disabled rules and suppressed elements are skipped; when all registered rules are executed, rule evaluation is parallelized and the results are returned in deterministic file, line, and rule-ID order.
