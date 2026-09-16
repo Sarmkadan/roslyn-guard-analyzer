@@ -1616,3 +1616,65 @@ Each middleware receives a `PipelineContext` and a `next` delegate. Calling `awa
 - Modify the context for downstream middleware
 
 Because subscribers are invoked outside the lock and exceptions are isolated per subscriber, a failing handler does not block the remaining subscribers; all failures are surfaced together in the resulting `AggregateException`.
+
+## PerformanceMetricsMiddleware
+
+The `PerformanceMetricsMiddleware` class (in `RoslynGuardAnalyzer.Middleware`) measures an analysis pipeline invocation and stores the resulting metrics in its `PipelineContext`. It captures elapsed wall-clock time, UTC start and end times, processor count, and any non-negative increase in managed memory. Metrics are saved after downstream middleware finishes, including when downstream processing throws, making them available for diagnostics and performance-regression reporting after execution.
+
+### Public API
+
+```csharp
+public sealed class PerformanceMetricsMiddleware : IMiddleware
+public string Name { get; }
+public Task InvokeAsync(PipelineContext context, MiddlewareDelegate next)
+public static void RecordComponentTiming(
+    PipelineContext context,
+    string componentName,
+    long milliseconds)
+public static PerformanceMetrics? GetMetrics(PipelineContext context)
+public static string GenerateReport(PerformanceMetrics metrics)
+
+public sealed class PerformanceMetrics
+public long TotalMilliseconds { get; set; }
+public long PeakMemoryBytes { get; set; }
+public int ProcessorCount { get; set; }
+public Dictionary<string, long> ComponentTimingsMs { get; }
+public DateTime StartTime { get; set; }
+public DateTime EndTime { get; set; }
+public TimeSpan GetElapsed()
+```
+
+`GetMetrics` returns `null` until metrics have been placed in the context. `RecordComponentTiming` adds repeated measurements for the same component when metrics are already present, and `GenerateReport` produces a human-readable summary with component timings ordered from slowest to fastest.
+
+### Example usage
+
+```csharp
+using RoslynGuardAnalyzer.Middleware;
+
+var context = new PipelineContext
+{
+    ProjectPath = "src/MyProject/MyProject.csproj",
+    AnalysisId = Guid.NewGuid().ToString(),
+    StartTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+};
+
+var pipeline = new AnalysisPipeline()
+    .Use(new PerformanceMetricsMiddleware())
+    .UseHandler(async _ =>
+    {
+        await Task.Delay(25); // Replace with the analysis operation.
+    });
+
+await pipeline.ExecuteAsync(context);
+
+var metrics = PerformanceMetricsMiddleware.GetMetrics(context);
+if (metrics is not null)
+{
+    PerformanceMetricsMiddleware.RecordComponentTiming(
+        context,
+        "Project analysis",
+        metrics.TotalMilliseconds);
+
+    Console.WriteLine(PerformanceMetricsMiddleware.GenerateReport(metrics));
+}
+```
