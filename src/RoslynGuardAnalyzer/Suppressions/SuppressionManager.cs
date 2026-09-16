@@ -33,7 +33,11 @@ public sealed class SuppressionManager : ISuppressionManager
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Adds a suppression record to the in-memory store, replacing any existing record with the same identifier.
+    /// </summary>
+    /// <param name="record">The suppression record to add.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="record"/> is <c>null</c>.</exception>
     public void AddSuppression(SuppressionRecord record)
     {
         if (record is null)
@@ -47,7 +51,12 @@ public sealed class SuppressionManager : ISuppressionManager
         _logger.LogInformation("Added suppression {SuppressionId} for rule {RuleId}.", record.Id, record.RuleId);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Removes a suppression record by its identifier.
+    /// </summary>
+    /// <param name="suppressionId">The identifier of the suppression record to remove.</param>
+    /// <returns><c>true</c> if the record was found and removed; otherwise, <c>false</c>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="suppressionId"/> is <c>null</c>.</exception>
     public bool RemoveSuppression(string suppressionId)
     {
         if (suppressionId is null)
@@ -66,7 +75,11 @@ public sealed class SuppressionManager : ISuppressionManager
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Returns the suppression records, optionally filtered by rule identifier, ordered by creation time.
+    /// </summary>
+    /// <param name="ruleId">The rule identifier to filter by, or <c>null</c> to return all records.</param>
+    /// <returns>A read-only list of matching suppression records.</returns>
     public IReadOnlyList<SuppressionRecord> GetSuppressions(string? ruleId = null)
     {
         lock (_syncRoot)
@@ -79,7 +92,12 @@ public sealed class SuppressionManager : ISuppressionManager
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Determines whether the specified rule violation is suppressed.
+    /// </summary>
+    /// <param name="violation">The rule violation to check.</param>
+    /// <returns><c>true</c> if the violation is suppressed; otherwise, <c>false</c>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="violation"/> is <c>null</c>.</exception>
     public bool IsSuppressed(RuleViolation violation)
     {
         if (violation is null)
@@ -91,7 +109,12 @@ public sealed class SuppressionManager : ISuppressionManager
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Filters out suppressed violations from the provided sequence.
+    /// </summary>
+    /// <param name="violations">The violations to filter.</param>
+    /// <returns>A read-only list of violations that are not suppressed.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="violations"/> is <c>null</c>.</exception>
     public IReadOnlyList<RuleViolation> FilterSuppressed(IEnumerable<RuleViolation> violations)
     {
         if (violations is null)
