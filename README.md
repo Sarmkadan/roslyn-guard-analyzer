@@ -884,6 +884,53 @@ The HTML output includes:
 - Proper HTML escaping to prevent injection issues
 - Embedded CSS for consistent styling across browsers
 
+## SarifFormatter
+
+The `SarifFormatter` class (in `RoslynGuardAnalyzer.Formatters`) formats analysis results as SARIF 2.1.0 (Static Analysis Results Interchange Format) output. SARIF is a JSON-based standard format for the output of static analysis tools, enabling integration with various code analysis platforms and tools.
+
+### Public API:
+
+```csharp
+public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter>
+public string Format => "sarif";
+public bool CanFormat(string format);
+public string FormatResult(AnalysisResult result);
+public string FormatViolations(IEnumerable<RuleViolation> violations);
+public string FormatReport(ViolationReport report);
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Formatters;
+using RoslynGuardAnalyzer.Core;
+
+// Create formatter instance
+var formatter = new SarifFormatter();
+
+// Check if it can handle a format
+bool canHandleSarif = formatter.CanFormat("sarif"); // returns true
+bool canHandleJson = formatter.CanFormat("json"); // returns false
+
+// Format analysis results
+string sarifOutput = formatter.FormatResult(analysisResult);
+
+// Format violations directly
+string violationsSarif = formatter.FormatViolations(violations);
+
+// Format a violation report
+string reportSarif = formatter.FormatReport(report);
+```
+
+The SARIF output includes:
+- Standard SARIF 2.1.0 JSON structure with version and schema references
+- Tool information identifying "Roslyn Guard Analyzer" as the analysis tool
+- Rule definitions for each unique rule ID encountered
+- Result entries for each violation with proper SARIF levels (error, warning, note)
+- Location information including file paths, line/column numbers, and code snippets
+- Properties containing additional metadata like severity, category, project name, and detection timestamp
+- GUID identifiers for each result to enable result tracking across runs
+
 ## AnalysisResultRepository
 
 The `AnalysisResultRepository` class (in `RoslynGuardAnalyzer.Data`) manages persistence of analysis results to disk storage. It inherits from `RepositoryBase<AnalysisResult>` and provides specialized methods for querying and managing analysis results stored as JSON files in the application data directory.
