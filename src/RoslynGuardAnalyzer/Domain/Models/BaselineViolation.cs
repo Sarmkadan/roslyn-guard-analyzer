@@ -294,10 +294,16 @@ public sealed class BaselineViolation : IEquatable<BaselineViolation>
     }
 
     /// <summary>
-    /// Returns a string representation of this violation.
+    /// Returns a concise, human-readable representation of the violation for debugging.
     /// </summary>
-    public override string ToString() =>
-        $"BaselineViolation {{ RuleId={RuleId}, File={PathNormalizer.NormalizeForDisplay(FilePath)}, Line={LineNumber}, Hash={ContentHash[..8]}... }}";
+    public override string ToString()
+    {
+        var hashPreview = string.IsNullOrEmpty(ContentHash)
+            ? string.Empty
+            : ContentHash[..Math.Min(8, ContentHash.Length)];
+
+        return $"BaselineViolation {{ RuleId={RuleId}, File={PathNormalizer.NormalizeForDisplay(FilePath)}, Line={LineNumber}, Hash={hashPreview}... }}";
+    }
 }
 
 /// <summary>
