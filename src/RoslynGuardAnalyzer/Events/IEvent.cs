@@ -44,9 +44,24 @@ public interface IEvent
 /// </summary>
 public abstract class Event : IEvent
 {
+    /// <summary>
+    /// Gets the unique identifier for this event instance.
+    /// </summary>
     public string EventId { get; }
+
+    /// <summary>
+    /// Gets the type or name of the event.
+    /// </summary>
     public abstract string EventType { get; }
+
+    /// <summary>
+    /// Gets the UTC timestamp when the event was created.
+    /// </summary>
     public DateTime TimestampUtc { get; }
+
+    /// <summary>
+    /// Gets the metadata associated with the event.
+    /// </summary>
     public Dictionary<string, object> Metadata { get; }
 
     protected Event()
