@@ -147,6 +147,14 @@ public sealed class ViolationReport
 
         return summary.ToString();
     }
+
+    /// <summary>
+    /// Returns a concise summary of the report.
+    /// </summary>
+    public override string ToString()
+    {
+        return $"{Title} ({ProjectName}): {GetTotalViolationCount()} violation(s)";
+    }
 }
 
 /// <summary>
