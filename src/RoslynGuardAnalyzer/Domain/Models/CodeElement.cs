@@ -173,6 +173,14 @@ public sealed class CodeElement
     }
 
     /// <summary>
+    /// Returns a concise, human-readable representation of the element.
+    /// </summary>
+    public override string ToString()
+    {
+        return $"{ElementType} {GetFullyQualifiedName()} at {GetLocation()}";
+    }
+
+    /// <summary>
     /// Validates that the element has required information.
     /// </summary>
     public bool IsValid()
