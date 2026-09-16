@@ -44,6 +44,23 @@ namespace RoslynGuardAnalyzer.Domain.Models
         }
 
         /// <summary>
+        /// Gets the number of violations associated with the specified rule.
+        /// </summary>
+        /// <param name="report">The report to query.</param>
+        /// <param name="ruleId">The identifier of the rule to count.</param>
+        /// <returns>The number of violations whose rule identifier matches <paramref name="ruleId"/>.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when <paramref name="report"/> is <c>null</c>.</exception>
+        /// <exception cref="ArgumentException">Thrown when <paramref name="ruleId"/> is <c>null</c> or empty.</exception>
+        public static int GetViolationCountByRule(this ViolationReport report, string ruleId)
+        {
+            ArgumentNullException.ThrowIfNull(report);
+            ArgumentException.ThrowIfNullOrEmpty(ruleId);
+
+            return report.ViolationGroups.Sum(group =>
+                group.Violations.Count(violation => violation.RuleId == ruleId));
+        }
+
+        /// <summary>
         /// Generates a concise Markdown representation of the report, suitable for inclusion in
         /// documentation, emails, or pull‑request comments.
         /// </summary>
