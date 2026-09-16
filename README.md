@@ -1026,3 +1026,99 @@ Console.WriteLine($"Modern .NET: {stats.GetModernDotNetPercentage():F1}%");
 // Remove a project (optionally deleting its source files)
 await repository.RemoveProjectAsync(project.Id, deleteSourceFiles: false);
 ```
+
+## RuleRepository
+
+The `RuleRepository` class (in `RoslynGuardAnalyzer.Data`) manages persistence of architectural analysis rules. It inherits from `RepositoryBase<AnalysisRule>` and provides specialized query methods for filtering rules by category, severity, enabled state, and creation date, plus enable/disable operations and JSON import/export. Rules are stored as a single JSON file (`rules.json`) in the configured data directory, which defaults to `%APPDATA%\RoslynGuardAnalyzer\Data`.
+
+### Public API:
+
+```csharp
+public sealed class RuleRepository : RepositoryBase<AnalysisRule>
+public RuleRepository(string? dataDirectory = null)
+public IReadOnlyList<AnalysisRule> GetByCategory(RuleCategory category)
+public IReadOnlyList<AnalysisRule> GetEnabledRules()
+public IReadOnlyList<AnalysisRule> GetBySeverity(SeverityLevel severity)
+public IReadOnlyList<AnalysisRule> GetCreatedAfter(DateTime date)
+public bool DisableRule(string ruleId)
+public bool EnableRule(string ruleId)
+public Task SaveAsync()
+public Task LoadAsync()
+public Task ExportAsync(string filePath)
+public Task ImportAsync(string filePath)
+public string GetDataDirectory()
+public RuleRepositoryStatistics GetStatistics()
+```
+
+`GetByCategory` throws `ArgumentNullException` when given a null category. `DisableRule` and `EnableRule` throw `ArgumentException` when given a null or empty rule ID and return `false` when no rule with that ID exists. `SaveAsync` and `LoadAsync` persist and restore the full rule set to and from `rules.json`; `ExportAsync` and `ImportAsync` do the same against an arbitrary JSON file, with `ImportAsync` updating existing rules by ID and adding new ones. All persistence methods wrap failures in `InvalidOperationException`.
+
+### Inherited from RepositoryBase<AnalysisRule>:
+
+- `void Add(string id, AnalysisRule entity)` - Adds an entity to the repository
+- `AnalysisRule? GetById(string id)` - Retrieves an entity by ID
+- `IReadOnlyList<AnalysisRule> GetAll()` - Gets all entities in the repository
+- `void Update(string id, AnalysisRule entity)` - Updates an existing entity
+- `bool Remove(string id)` - Removes an entity by ID
+- `bool Exists(string id)` - Checks if an entity exists
+- `int Count()` - Gets the count of entities in the repository
+- `void Clear()` - Clears all entities from the repository
+- `void AddRange(Dictionary<string, AnalysisRule> entities)` - Adds multiple entities at once
+- `IReadOnlyList<AnalysisRule> Find(Func<AnalysisRule, bool> predicate)` - Finds entities matching a predicate
+
+### RuleRepositoryStatistics
+
+`GetStatistics()` returns a `RuleRepositoryStatistics` instance describing the stored rules:
+
+- `TotalRules` - Total number of rules
+- `EnabledRules` - Count of enabled rules
+- `DisabledRules` - Count of disabled rules
+- `RulesByCategory` - Dictionary mapping rule category to rule count
+- `GetEnabledPercentage()` - Percentage of rules that are enabled
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Data;
+using RoslynGuardAnalyzer.Domain.Models;
+
+// Create repository instance (uses default AppData location)
+var repository = new RuleRepository();
+
+// Or specify a custom data directory
+var customRepository = new RuleRepository("/path/to/custom/data");
+
+// Add a rule and persist it
+var rule = new AnalysisRule(
+    "RG-N001",
+    "Interface naming",
+    "Interface names should start with 'I'.",
+    RuleCategory.NamingConvention)
+{
+    DefaultSeverity = SeverityLevel.Error
+};
+repository.Add(rule.Id, rule);
+await repository.SaveAsync();
+
+// Load all rules from disk
+await repository.LoadAsync();
+
+// Query rules by category and severity
+var namingRules = repository.GetByCategory(RuleCategory.NamingConvention);
+var errorRules = repository.GetBySeverity(SeverityLevel.Error);
+
+// Get only enabled rules
+var enabledRules = repository.GetEnabledRules();
+
+// Enable or disable a rule by ID
+repository.DisableRule("RG-N001");
+repository.EnableRule("RG-N001");
+
+// Export rules to a JSON file
+await repository.ExportAsync(@"C:\temp\rules-backup.json");
+
+// Get statistics about stored rules
+var stats = repository.GetStatistics();
+Console.WriteLine($"Total rules: {stats.TotalRules}");
+Console.WriteLine($"Enabled: {stats.GetEnabledPercentage():F1}%");
+```
