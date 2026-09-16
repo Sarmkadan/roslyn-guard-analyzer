@@ -1548,4 +1548,71 @@ await bus.PublishAsync(new ViolationDetectedEvent
 bus.Unsubscribe<AnalysisStartedEvent>(handler);
 ```
 
+## AnalysisPipeline
+
+The `AnalysisPipeline` class (in `RoslynGuardAnalyzer.Middleware`) manages and executes a chain of middleware components in order. It implements the pipeline/filter pattern for composable request handling, allowing middleware to inspect, transform, or short-circuit the analysis flow.
+
+### Public API
+
+```csharp
+public sealed class AnalysisPipeline
+public IReadOnlyList<IMiddleware> Middlewares { get; }
+public AnalysisPipeline Use(IMiddleware middleware)
+public AnalysisPipeline UseHandler(MiddlewareDelegate handler)
+public Task ExecuteAsync(PipelineContext context)
+public string GetChainDescription()
+```
+
+- `Use(IMiddleware middleware)`: Adds a middleware component to the pipeline. Middleware is executed in the order it was added. Returns the pipeline instance for fluent chaining.
+- `UseHandler(MiddlewareDelegate handler)`: Sets the final handler to be called after all middleware. Returns the pipeline instance for fluent chaining.
+- `ExecuteAsync(PipelineContext context)`: Executes the pipeline with the given context. Builds the middleware chain and invokes it with proper ordering.
+- `GetChainDescription()`: Gets a string representation of the middleware chain for diagnostics.
+
+### Example usage
+
+```csharp
+using RoslynGuardAnalyzer.Middleware;
+
+// Create pipeline and register middleware
+var pipeline = new AnalysisPipeline()
+    .Use(new LoggingMiddleware())
+    .Use(new PerformanceMetricsMiddleware())
+    .Use(new ErrorHandlingMiddleware());
+
+// Set the final handler (your core analysis logic)
+pipeline.UseHandler(async context =>
+{
+    // Perform actual analysis here
+    await AnalyzeProjectAsync(context);
+});
+
+// Execute the pipeline
+await pipeline.ExecuteAsync(new PipelineContext
+{
+    ProjectPath = @"src/MyProject/MyProject.csproj",
+    AnalysisId = Guid.NewGuid().ToString(),
+    StartTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+});
+```
+
+### Middleware Contract
+
+Middleware components implement the `IMiddleware` interface:
+
+```csharp
+public interface IMiddleware
+{
+    string Name { get; }
+    Task InvokeAsync(PipelineContext context, MiddlewareDelegate next);
+}
+
+public delegate Task MiddlewareDelegate(PipelineContext context);
+```
+
+Each middleware receives a `PipelineContext` and a `next` delegate. Calling `await next(context)` invokes the next middleware in the chain. Middleware can:
+- Execute logic before calling `next()` (pre-processing)
+- Execute logic after calling `next()` (post-processing)
+- Short-circuit by not calling `next()`
+- Modify the context for downstream middleware
+
 Because subscribers are invoked outside the lock and exceptions are isolated per subscriber, a failing handler does not block the remaining subscribers; all failures are surfaced together in the resulting `AggregateException`.
