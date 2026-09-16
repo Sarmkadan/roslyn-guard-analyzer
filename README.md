@@ -387,6 +387,59 @@ Console.WriteLine($"Violations: {diagnostics.GetTotalViolationsFound()}");
 Console.WriteLine(diagnostics.GenerateDiagnosticReport());
 ```
 
+## OutputWriter
+
+The `OutputWriter` class (in `RoslynGuardAnalyzer.Services`) formats analyzer output and writes it either to standard output or to a file. It supports complete `AnalysisResult` objects, collections of `RuleViolation` objects, and `ViolationReport` objects through a `FormatterRegistry`, while `WriteAsync` writes unformatted text. When no registry is supplied, the writer uses the default JSON, CSV, HTML, and SARIF formatters.
+
+### Public API:
+
+```csharp
+public sealed class OutputWriter
+public OutputWriter(FormatterRegistry? formatterRegistry = null)
+public Task WriteResultAsync(
+    AnalysisResult result,
+    string format,
+    string? outputFilePath = null)
+public Task WriteViolationsAsync(
+    IEnumerable<RuleViolation> violations,
+    string format,
+    string? outputFilePath = null)
+public Task WriteReportAsync(
+    ViolationReport report,
+    string format,
+    string? outputFilePath = null)
+public Task WriteAsync(string content, string? outputFilePath = null)
+public IEnumerable<string> GetSupportedFormats()
+public bool IsFormatSupported(string format)
+```
+
+An omitted or blank `outputFilePath` sends the content to `Console.Out`. For file output, missing parent directories are created automatically and the file is overwritten; write failures are reported as `IOException`. The formatted methods throw when the requested format is not registered.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Services;
+
+var result = new AnalysisResult("Store.Api", "src/Store.Api/Store.Api.csproj");
+result.AddViolation(new RuleViolation(
+    "RG-N001",
+    "NamingConvention",
+    "Type name should use PascalCase.",
+    "src/Store.Api/order_service.cs"));
+
+var writer = new OutputWriter();
+
+// Write JSON to stdout.
+await writer.WriteResultAsync(result, "json");
+
+// Create the reports directory if needed and write a SARIF file.
+await writer.WriteResultAsync(result, "sarif", "reports/analysis.sarif");
+
+if (writer.IsFormatSupported("csv"))
+    await writer.WriteViolationsAsync(result.Violations, "csv", "reports/violations.csv");
+```
+
 ## RuleEngine
 
 The `RuleEngine` class (in `RoslynGuardAnalyzer.Services`) executes architectural analysis rules against extracted `CodeElement` instances and returns the resulting `RuleViolation` objects. It supports the built-in layer-dependency, naming-convention, async-pattern, and null-safety categories as well as `CustomAnalysisRule` instances. Disabled rules and suppressed elements are skipped; when all registered rules are executed, rule evaluation is parallelized and the results are returned in deterministic file, line, and rule-ID order.
