@@ -228,6 +228,74 @@ foreach (var violation in fileResult.Violations)
     Console.WriteLine($"{violation.RuleId}: {violation.Message}");
 ```
 
+## AnalysisStatisticsService
+
+The `AnalysisStatisticsService` class (in `RoslynGuardAnalyzer.Services`) aggregates `RuleViolation` collections or an `AnalysisResult` into counts by severity, rule, and file. It can also rank the most frequently violated rules and files, calculate severity percentages and a bounded risk score, and produce human-readable summary and health reports. In its severity summaries, `Error`, `Warning`, and `Info` are presented as High, Medium, and Low respectively.
+
+### Public API:
+
+```csharp
+public sealed class AnalysisStatisticsService
+public sealed class ViolationStatistics
+public int TotalCount { get; set; }
+public int CriticalCount { get; set; }
+public int HighCount { get; set; }
+public int MediumCount { get; set; }
+public int LowCount { get; set; }
+public Dictionary<string, int> ByRule { get; }
+public Dictionary<string, int> ByFile { get; }
+public Dictionary<SeverityLevel, int> BySeverity { get; }
+public int AffectedFiles { get; set; }
+public int AffectedRules { get; set; }
+
+public static ViolationStatistics CalculateStatistics(
+    IEnumerable<RuleViolation>? violations)
+public static ViolationStatistics CalculateStatistics(AnalysisResult? result)
+public static List<(string Rule, int Count)> GetTopRulesByViolations(
+    IEnumerable<RuleViolation> violations,
+    int count = 10)
+public static List<(string File, int Count)> GetTopFilesByViolations(
+    IEnumerable<RuleViolation> violations,
+    int count = 10)
+public static Dictionary<string, double> GetSeverityDistribution(
+    IEnumerable<RuleViolation> violations)
+public static string GenerateSummaryReport(ViolationStatistics stats)
+public static int CalculateRiskScore(ViolationStatistics stats)
+public static string GetHealthAssessment(ViolationStatistics stats)
+```
+
+`CalculateStatistics` requires a non-null violation collection; passing `null`, including through a null `AnalysisResult`, throws `ArgumentNullException`. File totals use full stored paths, while `GetTopFilesByViolations` groups violations by file name. The risk score is capped at 100.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Services;
+
+var result = new AnalysisResult("Store.Api", "src/Store.Api/Store.Api.csproj");
+result.AddViolations(new[]
+{
+    new RuleViolation("RG-A001", "LayerDependency", "UI depends on Data", "src/Api/Orders.cs")
+    {
+        Severity = SeverityLevel.Error
+    },
+    new RuleViolation("RG-N001", "NamingConvention", "Type name is not PascalCase", "src/Api/Models.cs")
+    {
+        Severity = SeverityLevel.Warning
+    }
+});
+
+var statistics = AnalysisStatisticsService.CalculateStatistics(result);
+
+Console.WriteLine(AnalysisStatisticsService.GenerateSummaryReport(statistics));
+Console.WriteLine($"Risk score: {AnalysisStatisticsService.CalculateRiskScore(statistics)}");
+Console.WriteLine(AnalysisStatisticsService.GetHealthAssessment(statistics));
+
+foreach (var (rule, count) in AnalysisStatisticsService.GetTopRulesByViolations(result.Violations, 5))
+    Console.WriteLine($"{rule}: {count}");
+```
+
 ## RuleEngine
 
 The `RuleEngine` class (in `RoslynGuardAnalyzer.Services`) executes architectural analysis rules against extracted `CodeElement` instances and returns the resulting `RuleViolation` objects. It supports the built-in layer-dependency, naming-convention, async-pattern, and null-safety categories as well as `CustomAnalysisRule` instances. Disabled rules and suppressed elements are skipped; when all registered rules are executed, rule evaluation is parallelized and the results are returned in deterministic file, line, and rule-ID order.
