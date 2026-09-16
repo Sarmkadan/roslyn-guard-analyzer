@@ -20,6 +20,13 @@ namespace RoslynGuardAnalyzer.Services;
 public sealed class ValidationService : IValidationService
 {
     /// <summary>
+    /// Initializes a new instance of the <see cref="ValidationService"/> class.
+    /// </summary>
+    public ValidationService()
+    {
+    }
+
+    /// <summary>
     /// Validates a rule configuration for consistency and completeness.
     /// </summary>
     public (bool IsValid, List<string> Errors) ValidateRuleConfiguration(RuleConfiguration? config)
