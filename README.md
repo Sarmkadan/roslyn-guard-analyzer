@@ -1,3 +1,52 @@
+## ReportingService
+
+The `ReportingService` class (in `RoslynGuardAnalyzer.Services`) turns analysis results into human-readable or machine-readable reports. It can produce a detailed text summary, format an `AnalysisResult` as JSON, CSV, or XML, and save a `ViolationReport` asynchronously. When saving, it creates the parent directory if necessary and chooses the serialized content from the report's `Format`.
+
+### Public API:
+
+```csharp
+public interface IReportingService
+public sealed class ReportingService : IReportingService
+public string GenerateReport(AnalysisResult result)
+public string GenerateFormattedReport(AnalysisResult result, string format)
+public Task SaveReportAsync(ViolationReport report, string filePath)
+```
+
+`GenerateFormattedReport` recognizes `"JSON"`, `"CSV"`, and `"XML"` case-insensitively; any other value produces the standard text report. `SaveReportAsync` serializes `ReportFormat.Json`, `ReportFormat.Csv`, and `ReportFormat.Xml` reports and writes `DetailedContent` for other formats. A null analysis result or report is rejected, as is an empty output path.
+
+### Example usage:
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Infrastructure;
+using RoslynGuardAnalyzer.Services;
+
+var services = new ServiceCollection();
+services.RegisterAnalyzerServices();
+
+using var provider = services.BuildServiceProvider();
+var analysisService = provider.GetRequiredService<IAnalysisService>();
+var reportingService = provider.GetRequiredService<IReportingService>();
+
+var result = await analysisService.AnalyzeProjectAsync(
+    "src/MyProject/MyProject.csproj");
+
+var json = reportingService.GenerateFormattedReport(result, "json");
+Console.WriteLine(json);
+
+var report = new ViolationReport("Architecture analysis", result.ProjectName)
+{
+    Format = ReportFormat.Text,
+    DetailedContent = reportingService.GenerateReport(result)
+};
+
+await reportingService.SaveReportAsync(
+    report,
+    Path.Combine("artifacts", "reports", "analysis.txt"));
+```
+
 ## BaselineService
 
 The `BaselineService` class (in `RoslynGuardAnalyzer.Services`) manages JSON baseline files containing violations that have already been accepted. It can create a baseline from analysis results, persist and reload it, and filter a later set of violations so that only findings not present in the baseline are reported. An optional expiration period removes stale baseline entries before filtering.
