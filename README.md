@@ -928,6 +928,72 @@ The HTML output includes:
 
 The `WebhookHandler` class (in `RoslynGuardAnalyzer.Integration`) manages webhook registrations and dispatches analysis results to external endpoints. It's useful for CI/CD pipeline integrations and notifications.
 
+## HttpClientFactory
+
+The `HttpClientFactory` class (in `RoslynGuardAnalyzer.Integration`) creates and configures HTTP clients for external integrations. It manages client lifecycle, connection pooling, timeouts, retry policies, and implements a circuit-breaker pattern for resilient HTTP communication.
+
+### Public API
+
+```csharp
+public sealed class HttpClientFactory : IDisposable
+public HttpClientFactory(HttpClientFactoryOptions? options = null)
+public HttpClient CreateClient(string baseUrl, string? clientName = null)
+public Task<HttpResponseMessage> ExecuteWithRetryAsync(
+    HttpClient client,
+    Func<HttpClient, Task<HttpResponseMessage>> request)
+public Task<string> GetJsonAsync(HttpClient client, string path)
+public Task<string> PostJsonAsync(HttpClient client, string path, string jsonContent)
+public void ClearCache()
+public void Dispose()
+```
+
+### HttpClientFactoryOptions
+
+Configuration options for the HttpClientFactory:
+
+```csharp
+public sealed class HttpClientFactoryOptions
+public TimeSpan DefaultTimeout { get; init; } = TimeSpan.FromSeconds(30);
+public int MaxRetries { get; init; } = 3;
+public int CircuitBreakerFailureThreshold { get; init; } = 5;
+public TimeSpan CircuitBreakerOpenDuration { get; init; } = TimeSpan.FromSeconds(30);
+public TimeSpan PooledConnectionLifetime { get; init; } = TimeSpan.FromMinutes(2);
+public int MaxConnectionsPerServer { get; init; } = 100;
+public bool EnableDnsRefresh { get; init; } = true;
+```
+
+### Example usage
+
+```csharp
+using RoslynGuardAnalyzer.Integration;
+
+// Create factory with default options
+var factory = new HttpClientFactory();
+
+// Create a client for a specific endpoint
+var client = factory.CreateClient("https://api.example.com");
+
+// Execute a request with automatic retry and circuit breaker
+var response = await factory.ExecuteWithRetryAsync(client, async c =>
+{
+    return await c.GetAsync("/data");
+});
+
+// Get JSON response
+string json = await factory.GetJsonAsync(client, "/api/users");
+
+// Post JSON data
+string result = await factory.PostJsonAsync(client, "/api/users", "{\"name\":\"John\"}");
+
+// Or create a named client (useful for multiple clients to same base URL)
+var githubClient = factory.CreateClient("https://api.github.com", "github");
+
+// Remember to dispose when done
+factory.Dispose();
+```
+
+The factory implements intelligent retry logic with exponential back-off and jitter, automatic circuit-breaking to prevent cascading failures, and connection pooling for efficient HTTP resource usage.
+
 ### Public API:
 
 ```csharp
