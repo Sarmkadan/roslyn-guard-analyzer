@@ -54,6 +54,8 @@ public static class AsyncVoidRule
 
     private static bool IsAsyncVoidNonEventHandler(CodeElement element)
     {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+
         // Only check methods
         if (element.ElementType != CodeElementType.Method)
             return false;
@@ -75,6 +77,8 @@ public static class AsyncVoidRule
 
     private static bool IsEventHandlerMethod(CodeElement element)
     {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+
         foreach (var pattern in EventHandlerNamePatterns)
         {
             if (element.HasAttribute(pattern))
@@ -86,6 +90,8 @@ public static class AsyncVoidRule
 
     private static string CreateViolationMessage(CodeElement element)
     {
+        ArgumentNullException.ThrowIfNull(element, nameof(element));
+
         var methodName = element.Name;
         var fileLocation = element.GetLocation();
 
