@@ -17,8 +17,22 @@ namespace RoslynGuardAnalyzer.Cli;
 /// </summary>
 public sealed class CliOptions
 {
+    /// <summary>
+    /// Gets or sets the path to the project to analyze.
+    /// Mutually exclusive with <see cref="FilePath"/>.
+    /// </summary>
     public string? ProjectPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to a single file to analyze.
+    /// Mutually exclusive with <see cref="ProjectPath"/>.
+    /// </summary>
     public string? FilePath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the output format for analysis results.
+    /// Supported values: text, json, csv, html, xml, sarif.
+    /// </summary>
     public string OutputFormat
     {
         get => _outputFormat;
@@ -29,12 +43,44 @@ public sealed class CliOptions
         }
     }
     private string _outputFormat = "text";
+
+    /// <summary>
+    /// Gets or sets the optional output file path for analysis results.
+    /// If null, results are written to standard output.
+    /// </summary>
     public string? OutputFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable verbose logging.
+    /// </summary>
     public bool Verbose { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to show help information.
+    /// </summary>
     public bool ShowHelp { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to show version information.
+    /// </summary>
     public bool ShowVersion { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum number of parallel threads to use for analysis.
+    /// Defaults to the number of processors available.
+    /// </summary>
     public int MaxParallelThreads { get; set; } = Environment.ProcessorCount;
+
+    /// <summary>
+    /// Gets or sets the analysis timeout in seconds.
+    /// Defaults to 300 seconds (5 minutes).
+    /// </summary>
     public int AnalysisTimeoutSeconds { get; set; } = 300;
+
+    /// <summary>
+    /// Gets or sets the list of rule IDs to include in analysis.
+    /// If empty, all rules are included.
+    /// </summary>
     public List<string> RuleFilter
     {
         get => _ruleFilter;
@@ -45,9 +91,27 @@ public sealed class CliOptions
         }
     }
     private List<string> _ruleFilter = [];
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the analyzer should fail (exit with non-zero code)
+    /// when violations are detected.
+    /// </summary>
     public bool FailOnViolations { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the path to a configuration file.
+    /// </summary>
     public string? ConfigFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to generate a report after analysis.
+    /// </summary>
     public bool GenerateReport { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the type of report to generate.
+    /// Supported values: summary, detailed, sarif.
+    /// </summary>
     public string ReportType
     {
         get => _reportType;
@@ -58,9 +122,26 @@ public sealed class CliOptions
         }
     }
     private string _reportType = "summary";
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to skip using cached analysis results.
+    /// </summary>
     public bool SkipCache { get; set; }
+
+    /// <summary>
+    /// Gets or sets the log level (0=silent, 1=error, 2=warning, 3=info, 4=debug).
+    /// Defaults to 2 (warning).
+    /// </summary>
     public int LogLevel { get; set; } = 2;
+
+    /// <summary>
+    /// Gets or sets the path to a baseline file for comparison.
+    /// </summary>
     public string? BaselineFile { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to create a baseline file from the analysis results.
+    /// </summary>
     public bool CreateBaseline { get; set; }
 
     /// <summary>
