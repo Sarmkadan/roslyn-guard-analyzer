@@ -1,3 +1,55 @@
+## FileSystemHelper
+
+The `FileSystemHelper` static class (in `RoslynGuardAnalyzer.Utilities`) provides common file-system operations with consistent argument validation and error handling. It discovers C# and project files recursively, filters generated or tooling directories, safely reads and writes text files, and queries file or directory metadata.
+
+File discovery excludes `bin`, `obj`, `.git`, `.vs`, `.vscode`, `node_modules`, `.nuget`, `packages`, `.build`, `dist`, and `coverage` directory components case-insensitively. `FindCSharpFiles` can add more exclusions for a particular search. Discovery returns an empty array when access is denied; reads return `null` for missing or inaccessible files; and writes return `false` for access or I/O failures. Empty path arguments are rejected by methods that explicitly validate them.
+
+### Public API:
+
+```csharp
+public static class FileSystemHelper
+public static string[] FindCSharpFiles(
+    string directory,
+    string[]? additionalExclusions = null)
+public static string[] FindProjectFiles(string directory)
+public static Task<string?> ReadFileAsync(string filePath)
+public static Task<bool> WriteFileAsync(string filePath, string content)
+public static bool FileExists(string path)
+public static bool DirectoryExists(string path)
+public static long GetFileSize(string filePath)
+public static DateTime? GetLastModifiedTime(string filePath)
+```
+
+`FindProjectFiles` returns both `.csproj` and `.fsproj` files. `WriteFileAsync` creates a missing parent directory before writing. `GetFileSize` returns `-1` when the file is missing or its metadata cannot be read, while `GetLastModifiedTime` returns `null` when the timestamp lookup throws.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Utilities;
+
+var sourceFiles = FileSystemHelper.FindCSharpFiles(
+    projectDirectory,
+    ["Generated", "Snapshots"]);
+
+foreach (var sourceFile in sourceFiles)
+{
+    var contents = await FileSystemHelper.ReadFileAsync(sourceFile);
+    if (contents is null)
+        continue;
+
+    Console.WriteLine(
+        $"{sourceFile}: {FileSystemHelper.GetFileSize(sourceFile)} bytes");
+}
+
+var projectFiles = FileSystemHelper.FindProjectFiles(projectDirectory);
+var reportPath = Path.Combine(projectDirectory, "artifacts", "sources.txt");
+var report = $"Projects: {projectFiles.Length}{Environment.NewLine}" +
+    string.Join(Environment.NewLine, sourceFiles);
+
+if (!await FileSystemHelper.WriteFileAsync(reportPath, report))
+    Console.Error.WriteLine($"Could not write {reportPath}");
+```
+
 ## ValidationService
 
 The `ValidationService` class (in `RoslynGuardAnalyzer.Services`) validates rule configurations, individual analysis rules, project paths, code elements, and completed analysis results. It returns validation failures as error messages instead of throwing for invalid values; null arguments are rejected. Project-path validation expands environment variables, accepts directories or `.csproj`, `.cs`, and `.sln` files, and verifies that the target is accessible. The same source file also provides naming extensions for checking C# identifiers, PascalCase, and camelCase text.
