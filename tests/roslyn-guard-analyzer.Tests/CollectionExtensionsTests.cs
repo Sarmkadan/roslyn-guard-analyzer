@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
@@ -41,6 +42,24 @@ namespace RoslynGuardAnalyzer.Tests
         public void OrEmptyTest()
         {
             // Test implementation here
+        }
+
+        [Fact]
+        public void WhereNotNullFiltersNullItemsAndPreservesOrder()
+        {
+            IEnumerable<string?> source = new[] { "first", null, "second", null };
+
+            var result = source.WhereNotNull().ToList();
+
+            Assert.Equal(new[] { "first", "second" }, result);
+        }
+
+        [Fact]
+        public void WhereNotNullThrowsWhenSourceIsNull()
+        {
+            IEnumerable<string?>? source = null;
+
+            Assert.Throws<ArgumentNullException>(() => source!.WhereNotNull());
         }
 
         [Fact]
