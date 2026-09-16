@@ -924,6 +924,120 @@ The HTML output includes:
 - Proper HTML escaping to prevent injection issues
 - Embedded CSS for consistent styling across browsers
 
+## WebhookHandler
+
+The `WebhookHandler` class (in `RoslynGuardAnalyzer.Integration`) manages webhook registrations and dispatches analysis results to external endpoints. It's useful for CI/CD pipeline integrations and notifications.
+
+### Public API:
+
+```csharp
+public sealed class WebhookHandler
+public sealed class WebhookRegistration
+public required string Id { get; init; }
+public required string Url { get; init; }
+public required string EventType { get; init; } // AnalysisCompleted, ViolationDetected, etc.
+public Dictionary<string, string> Headers { get; init; } = []
+public bool IsActive { get; set; } = true
+public DateTime RegisteredAt { get; init; } = DateTime.UtcNow
+
+public WebhookHandler(HttpClientFactory? httpClientFactory = null)
+public string RegisterWebhook(string url, string eventType, Dictionary<string, string>? headers = null)
+public bool UnregisterWebhook(string webhookId)
+public bool DeactivateWebhook(string webhookId)
+public Task TriggerWebhooksAsync(string eventType, string jsonPayload)
+public IReadOnlyList<WebhookRegistration> GetAllWebhooks()
+public IReadOnlyList<WebhookRegistration> GetWebhooksForEvent(string eventType)
+public int WebhookCount { get; }
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Integration;
+
+// Create webhook handler
+var webhookHandler = new WebhookHandler();
+
+// Register a webhook for analysis completion events
+string webhookId = webhookHandler.RegisterWebhook(
+    url: "https://ci.example.com/webhook/roslyn-guard",
+    eventType: "AnalysisCompleted",
+    headers: new Dictionary<string, string>
+    {
+        ["Authorization"] = "Bearer your-token-here",
+        ["Content-Type"] = "application/json"
+    }
+);
+
+// Register another webhook for violation detection
+webhookHandler.RegisterWebhook(
+    url: "https://slack.example.com/webhook",
+    eventType: "ViolationDetected",
+    headers: new Dictionary<string, string>
+    {
+        ["Content-Type"] = "application/json"
+    }
+);
+
+// Trigger webhooks when analysis completes
+var analysisResults = JsonSerializer.Serialize(analysisResult);
+await webhookHandler.TriggerWebhooksAsync("AnalysisCompleted", analysisResults);
+
+// Get all registered webhooks
+IReadOnlyList<WebhookRegistration> webhooks = webhookHandler.GetAllWebhooks();
+
+// Get webhooks for specific event type
+IReadOnlyList<WebhookRegistration> completionWebhooks = 
+    webhookHandler.GetWebhooksForEvent("AnalysisCompleted");
+
+// Deactivate a webhook (without removing it)
+webhookHandler.DeactivateWebhook(webhookId);
+
+// Unregister a webhook completely
+webhookHandler.UnregisterWebhook(webhookId);
+```
+
+### Webhook Payload Format
+
+When triggered, webhooks receive a JSON payload containing the analysis results. The payload structure matches the `AnalysisResult` class:
+
+```json
+{
+  "analysisId": "string",
+  "projectPath": "string",
+  "timestampUtc": "2023-01-01T12:00:00Z",
+  "violations": [
+    {
+      "ruleId": "string",
+      "ruleName": "string",
+      "message": "string",
+      "severity": "string",
+      "filePath": "string",
+      "lineNumber": 0,
+      "columnNumber": 0,
+      "codeSnippet": "string"
+    }
+  ],
+  "totalFilesAnalyzed": 0,
+  "totalElementsAnalyzed": 0,
+  "violationCount": 0,
+  "analysisDurationMs": 0,
+  "success": true
+}
+```
+
+### Event Types
+
+Common event types include:
+- `AnalysisCompleted`: Fired when analysis finishes successfully
+- `AnalysisFailed`: Fired when analysis encounters an error
+- `ViolationDetected`: Fired when violations are found during analysis
+- `AnalysisStarted`: Fired when analysis begins
+
+### Thread Safety
+
+All methods of `WebhookHandler` are thread-safe and can be called concurrently from multiple threads.
+
 ## SarifFormatter
 
 The `SarifFormatter` class (in `RoslynGuardAnalyzer.Formatters`) formats analysis results as SARIF 2.1.0 (Static Analysis Results Interchange Format) output. SARIF is a JSON-based standard format for the output of static analysis tools, enabling integration with various code analysis platforms and tools.
