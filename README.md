@@ -798,3 +798,60 @@ cache.InvalidateByPattern("analysis:project:");
 ```
 
 This service provides a simple, thread-unsafe in-memory cache for analysis results in a .NET application, letting callers avoid recomputing expensive analysis when the underlying inputs are unchanged.
+
+## RuleConfigurationBuilder
+
+The `RuleConfigurationBuilder` class (in `RoslynGuardAnalyzer.Configuration`) is a fluent builder that creates `RuleConfiguration` instances with type safety and sensible defaults. It lets you compose a rule configuration step by step and then materialize it with `Build()`. The builder is `sealed`, so it cannot be subclassed.
+
+### Public API:
+
+```csharp
+public sealed class RuleConfigurationBuilder
+public RuleConfigurationBuilder(string? ruleName)   // throws on null/empty
+public RuleConfigurationBuilder WithEnabled(bool enabled)
+public RuleConfigurationBuilder WithSeverity(string severity)
+public RuleConfigurationBuilder WithParameter(string? key, object? value)
+public RuleConfigurationBuilder WithParameters(Dictionary<string, object> parameters)
+public RuleConfigurationBuilder WithDescription(string description)
+public RuleConfiguration Build()
+public static RuleConfigurationBuilder CreateNamingConvention()
+public static RuleConfigurationBuilder CreateLayerDependency()
+public static RuleConfigurationBuilder CreateAsyncPatterns()
+public static RuleConfigurationBuilder CreateNullSafety()
+```
+
+The constructor requires a non-empty rule name. `WithSeverity` accepts only `Low`, `Medium`, `High`, or `Critical` (case-insensitive) and throws `ArgumentException` otherwise. `WithParameter` and `WithDescription` throw on null or empty input. `Build()` returns a `RuleConfiguration` whose `Name` and `Description` are set and whose `Enabled` and `Severity` values are stored as custom settings, followed by any additional parameters (values are converted to strings).
+
+The static factory methods seed a builder with common settings for a specific rule category:
+
+- `CreateNamingConvention()` — `NamingConvention`, `Medium` severity, checks public members and constants.
+- `CreateLayerDependency()` — `LayerDependency`, `High` severity, with `StrictMode` off by default.
+- `CreateAsyncPatterns()` — `AsyncPatterns`, `Medium` severity, requires the async suffix and disallows blocking calls.
+- `CreateNullSafety()` — `NullSafety`, `High` severity, requires null checks and disallows null-forgiving operators.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Configuration;
+using RoslynGuardAnalyzer.Domain.Models;
+
+// Compose a configuration step by step.
+var config = new RuleConfigurationBuilder("LayerDependency")
+    .WithEnabled(true)
+    .WithSeverity("High")
+    .WithDescription("Enforces architectural layer dependencies")
+    .WithParameter("StrictMode", true)
+    .WithParameter("AllowedLayers", new[] { "Domain", "Application", "Infrastructure" })
+    .Build();
+
+Console.WriteLine(config.Name);            // LayerDependency
+Console.WriteLine(config.GetCustomSetting("Severity")); // High
+Console.WriteLine(config.GetCustomSetting("StrictMode")); // True
+
+// Or start from a pre-seeded category builder and tweak it.
+var naming = RuleConfigurationBuilder.CreateNamingConvention()
+    .WithEnabled(false)
+    .Build();
+```
+
+`Build()` returns a fully populated `RuleConfiguration` that can be passed to the analyzer or further customized through its own API (for example, `AddRule`, `ExcludeNamespace`, or `SetCustomSetting`).
