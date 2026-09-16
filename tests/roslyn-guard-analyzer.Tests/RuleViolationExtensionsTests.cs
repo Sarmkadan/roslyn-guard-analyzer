@@ -418,6 +418,33 @@ public class RuleViolationExtensionsTests
         Assert.Throws<ArgumentNullException>(() => nullViolation!.HasAnyCategory(nullCategories!));
     }
 
+    [Theory]
+    [InlineData("Use a cancellation token.", true)]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    public void HasSuggestedFix_ShouldIndicateWhetherSuggestedFixIsAvailable(string? suggestedFix, bool expected)
+    {
+        // Arrange
+        _baseViolation.SuggestedFix = suggestedFix;
+
+        // Act
+        var result = _baseViolation.HasSuggestedFix();
+
+        // Assert
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void HasSuggestedFix_WithNullViolation_ShouldThrowArgumentNullException()
+    {
+        // Arrange
+        RuleViolation? nullViolation = null;
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => nullViolation!.HasSuggestedFix());
+    }
+
     [Fact]
     public void GetFormattedCodeSnippet_WithCodeSnippet_ShouldReturnFormattedSnippetWithLineNumbers()
     {
