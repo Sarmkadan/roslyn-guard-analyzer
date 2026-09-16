@@ -839,6 +839,46 @@ string reportCsv = formatter.FormatReport(report);
 
 The CSV output includes columns for Rule, Severity, Message, File, Line, Column, and Code, with proper escaping for special characters.
 
+## JsonFormatter
+
+The `JsonFormatter` class (in `RoslynGuardAnalyzer.Formatters`) formats analysis results as JSON output suitable for programmatic consumption and integration with other tools.
+
+### Public API:
+
+```csharp
+public sealed class JsonFormatter : IOutputFormatter
+public string Format => "json";
+public bool CanFormat(string format);
+public string FormatResult(AnalysisResult result);
+public string FormatViolations(IEnumerable<RuleViolation> violations);
+public string FormatReport(ViolationReport report);
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Formatters;
+using RoslynGuardAnalyzer.Core;
+
+// Create formatter instance
+var formatter = new JsonFormatter();
+
+// Check if it can handle a format
+bool canHandleJson = formatter.CanFormat("json"); // returns true
+bool canHandleCsv = formatter.CanFormat("csv"); // returns false
+
+// Format analysis results
+string jsonOutput = formatter.FormatResult(analysisResult);
+
+// Format violations directly
+string violationsJson = formatter.FormatViolations(violations);
+
+// Format a violation report
+string reportJson = formatter.FormatReport(report);
+```
+
+The JSON output includes all analysis data in a structured format with proper escaping for special characters. The output is minified JSON suitable for programmatic consumption.
+
 ## HtmlFormatter
 
 The `HtmlFormatter` class (in `RoslynGuardAnalyzer.Formatters`) formats analysis results as HTML output suitable for viewing in web browsers. It produces styled, readable HTML with summary statistics and detailed violation information.
