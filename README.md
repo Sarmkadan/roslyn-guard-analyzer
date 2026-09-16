@@ -799,6 +799,46 @@ cache.InvalidateByPattern("analysis:project:");
 
 This service provides a simple, thread-unsafe in-memory cache for analysis results in a .NET application, letting callers avoid recomputing expensive analysis when the underlying inputs are unchanged.
 
+## CsvFormatter
+
+The `CsvFormatter` class (in `RoslynGuardAnalyzer.Formatters`) formats analysis results as CSV (Comma-Separated Values) output suitable for import into spreadsheet applications and data analysis tools.
+
+### Public API:
+
+```csharp
+public sealed class CsvFormatter : IOutputFormatter
+public string Format => "csv";
+public bool CanFormat(string format);
+public string FormatResult(AnalysisResult result);
+public string FormatViolations(IEnumerable<RuleViolation> violations);
+public string FormatReport(ViolationReport report);
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Formatters;
+using RoslynGuardAnalyzer.Core;
+
+// Create formatter instance
+var formatter = new CsvFormatter();
+
+// Check if it can handle a format
+bool canHandleCsv = formatter.CanFormat("csv"); // returns true
+bool canHandleJson = formatter.CanFormat("json"); // returns false
+
+// Format analysis results
+string csvOutput = formatter.FormatResult(analysisResult);
+
+// Format violations directly
+string violationsCsv = formatter.FormatViolations(violations);
+
+// Format a violation report
+string reportCsv = formatter.FormatReport(report);
+```
+
+The CSV output includes columns for Rule, Severity, Message, File, Line, Column, and Code, with proper escaping for special characters.
+
 ## AnalysisResultRepository
 
 The `AnalysisResultRepository` class (in `RoslynGuardAnalyzer.Data`) manages persistence of analysis results to disk storage. It inherits from `RepositoryBase<AnalysisResult>` and provides specialized methods for querying and managing analysis results stored as JSON files in the application data directory.
