@@ -1122,3 +1122,78 @@ var stats = repository.GetStatistics();
 Console.WriteLine($"Total rules: {stats.TotalRules}");
 Console.WriteLine($"Enabled: {stats.GetEnabledPercentage():F1}%");
 ```
+
+## EventBus
+
+The `EventBus` class (in `RoslynGuardAnalyzer.Events`) is an in-memory implementation of the `IEventBus` publish-subscribe interface. It maintains a thread-safe registry of subscribers and dispatches events to them asynchronously. Events implement `IEvent` (or derive from the `Event` base class) and carry an `EventId`, an `EventType` name, a UTC `TimestampUtc`, and optional `Metadata`.
+
+`EventBus` provides the following guarantees:
+
+- **Ordering**: Events are dispatched to subscribers in the order they were subscribed.
+- **Isolation**: An exception thrown by one subscriber does not prevent other subscribers from being invoked.
+- **Delivery**: All subscribers for a given event type are invoked unless cancelled via a `CancellationToken`.
+- **Inheritance**: Subscribers registered for a base type also receive events of derived types.
+- **Aggregation**: If multiple subscribers throw, the exceptions are collected and thrown together as an `AggregateException` after all subscribers have run.
+
+### Public API:
+
+```csharp
+public sealed class EventBus : IEventBus
+public EventBus()
+public Task PublishAsync(IEvent @event)
+public Task PublishAsync(IEvent @event, CancellationToken cancellationToken)
+public IDisposable Subscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
+public IDisposable Subscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent
+public void Unsubscribe<TEvent>(Func<TEvent, Task> handler) where TEvent : IEvent
+public void Unsubscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent
+public int SubscriptionCount { get; }
+public void ClearSubscriptions()
+```
+
+`PublishAsync` throws `ArgumentNullException` when the event is `null` and `AggregateException` when any subscriber fails. The overload taking a `CancellationToken` additionally throws `OperationCanceledException` when cancelled. `Subscribe` returns an `IDisposable` that unsubscribes the handler when disposed. `Unsubscribe` removes all matching subscriptions for the given handler. `SubscriptionCount` and `ClearSubscriptions` are primarily useful for testing.
+
+The `EventBusExtensions` class adds convenience overloads: strongly-typed `PublishAsync<TEvent>`, `Subscribe<TEvent>`/`Unsubscribe<TEvent>` that take the bus as the receiver, and `PublishAllAsync` which publishes a collection of events sequentially in order.
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Events;
+
+var bus = new EventBus();
+
+// Subscribe to a specific event type. The returned IDisposable unsubscribes on dispose.
+using var subscription = bus.Subscribe<AnalysisStartedEvent>(async ev =>
+{
+    Console.WriteLine($"Analysis {ev.AnalysisId} started for {ev.ProjectPath}");
+});
+
+// Publish an event; all matching subscribers are invoked asynchronously.
+await bus.PublishAsync(new AnalysisStartedEvent
+{
+    ProjectPath = "src/MyProject/MyProject.csproj",
+    AnalysisId = Guid.NewGuid().ToString()
+});
+
+// Subscribe with cancellation support.
+var cts = new CancellationTokenSource();
+bus.Subscribe<ViolationDetectedEvent>(
+    async (ev, token) =>
+    {
+        token.ThrowIfCancellationRequested();
+        Console.WriteLine($"{ev.RuleName}: {ev.Violation.Message}");
+    },
+    cts.Token);
+
+// Publish with cancellation.
+await bus.PublishAsync(new ViolationDetectedEvent
+{
+    Violation = violation,
+    RuleName = "RG-N001",
+    Severity = "High"
+}, cts.Token);
+
+// Unsubscribe explicitly when the handler is no longer needed.
+bus.Unsubscribe<AnalysisStartedEvent>(handler);
+```
+
+Because subscribers are invoked outside the lock and exceptions are isolated per subscriber, a failing handler does not block the remaining subscribers; all failures are surfaced together in the resulting `AggregateException`.
