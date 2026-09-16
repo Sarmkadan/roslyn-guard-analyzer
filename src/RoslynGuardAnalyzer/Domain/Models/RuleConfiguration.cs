@@ -283,4 +283,12 @@ public sealed class RuleConfiguration
     {
         UpdatedAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Returns a concise, human-readable representation of the configuration.
+    /// </summary>
+    public override string ToString()
+    {
+        return $"{Name} ({Id}) - {GetEnabledRuleCount()} enabled rules, min severity {MinimumReportedSeverity}";
+    }
 }
