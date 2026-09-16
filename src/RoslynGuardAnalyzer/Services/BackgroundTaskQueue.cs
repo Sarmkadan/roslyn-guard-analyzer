@@ -76,8 +76,12 @@ public sealed class BackgroundTaskQueue
     /// </summary>
     /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
     /// <returns>The dequeued background task, or null if no tasks are available.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when cancellationToken is null.</exception>
     public async Task<BackgroundTask?> DequeueAsync(CancellationToken cancellationToken)
     {
+        if (cancellationToken == null)
+            throw new ArgumentNullException(nameof(cancellationToken));
+
         await _semaphore.WaitAsync(cancellationToken);
 
         // Get all tasks, sort by priority, re-queue all but the first
