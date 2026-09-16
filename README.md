@@ -283,6 +283,71 @@ if (namingRule is not null)
 }
 ```
 
+## CustomRuleBuilder
+
+The `CustomRuleBuilder` class (in `RoslynGuardAnalyzer.Rules`) provides a fluent API for defining predicate-based analysis rules without creating a new `AnalysisRule` subclass. A completed build produces a `CustomAnalysisRule`, which stores the predicate used to identify violations and the message factory used to describe them.
+
+### Public API:
+
+```csharp
+public sealed class CustomAnalysisRule : AnalysisRule
+public CustomAnalysisRule(
+    string id,
+    string name,
+    string description,
+    RuleCategory category,
+    SeverityLevel severity,
+    Func<CodeElement, bool> violationPredicate,
+    Func<CodeElement, string> messageFactory)
+public Func<CodeElement, bool> ViolationPredicate { get; }
+public Func<CodeElement, string> MessageFactory { get; }
+
+public sealed class CustomRuleBuilder
+public static CustomRuleBuilder Create(string id, string name)
+public CustomRuleBuilder For(RuleCategory category)
+public CustomRuleBuilder WithSeverity(SeverityLevel severity)
+public CustomRuleBuilder WithDescription(string description)
+public CustomRuleBuilder When(Func<CodeElement, bool> predicate)
+public CustomRuleBuilder WithMessage(string message)
+public CustomRuleBuilder WithMessage(Func<CodeElement, string> messageFactory)
+public CustomAnalysisRule Build()
+```
+
+New builders default to the `CodeStructure` category and `Warning` severity. `When` is required before `Build`; the description defaults to the rule name, and the generated message identifies the rule and matching element when `WithMessage` is omitted. Calling a configuration method more than once replaces its previous value.
+
+### Example usage:
+
+```csharp
+using System;
+using RoslynGuardAnalyzer.Core;
+using RoslynGuardAnalyzer.Domain.Models;
+using RoslynGuardAnalyzer.Rules;
+
+var rule = CustomRuleBuilder
+    .Create("RG-CUSTOM-001", "AvoidManagerSuffix")
+    .For(RuleCategory.NamingConvention)
+    .WithSeverity(SeverityLevel.Warning)
+    .WithDescription("Type names should describe a specific responsibility.")
+    .When(element =>
+        element.ElementType == CodeElementType.Class &&
+        element.Name.EndsWith("Manager", StringComparison.Ordinal))
+    .WithMessage(element => $"Rename '{element.Name}' to a more specific name.")
+    .Build();
+
+var element = new CodeElement
+{
+    Id = "OrderManager",
+    Name = "OrderManager",
+    ElementType = CodeElementType.Class,
+    FilePath = "src/OrderManager.cs"
+};
+
+if (rule.ViolationPredicate(element))
+    Console.WriteLine(rule.MessageFactory(element));
+```
+
+The resulting rule can be registered with `CustomRuleRegistry`, evaluated by `CustomRuleEngine`, or passed to the main `RuleEngine`.
+
 ## CustomRuleEngine
 
 The `CustomRuleEngine` class (in `RoslynGuardAnalyzer.Rules`) evaluates predicate-based `CustomAnalysisRule` instances against extracted `CodeElement` objects. It can run a single supplied rule or retrieve every custom rule from an `ICustomRuleRegistry` and combine their violations. Registered rules are evaluated sequentially, and the input elements are materialized once so each rule receives the same collection.
