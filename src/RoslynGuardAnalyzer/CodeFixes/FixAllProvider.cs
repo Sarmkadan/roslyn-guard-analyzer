@@ -126,6 +126,12 @@ public sealed class FixAllProvider : IFixAllProvider
     /// </summary>
     public async Task<IReadOnlyList<CodeFix>> PreviewAllAsync(IEnumerable<RuleViolation> violations, FixAllOptions options, CancellationToken ct = default)
     {
+        if (violations is null)
+            throw new ArgumentNullException(nameof(violations));
+
+        if (options is null)
+            throw new ArgumentNullException(nameof(options));
+
         var filteredViolations = FilterViolations(violations, options).ToList();
         LogViolationGroups(filteredViolations);
 
