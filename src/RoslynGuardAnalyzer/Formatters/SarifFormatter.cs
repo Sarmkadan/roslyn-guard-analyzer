@@ -25,6 +25,10 @@ public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter
 {
     private const string SarifVersion = "2.1.0";
     private const string SarifSchema = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json";
+    private const string SarifUriBaseId = "%SRCROOT%";
+    private const string ToolName = "Roslyn Guard Analyzer";
+    private const string ToolVersion = "1.0.0";
+    private const string ToolInformationUri = "https://github.com/sarmkadan/roslyn-guard-analyzer";
 
     /// <summary>
     /// Gets the format identifier for SARIF output.
@@ -142,7 +146,7 @@ public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter
                                 Uri = violation.FilePath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
                                     ? new Uri(violation.FilePath)
                                     : new Uri(violation.FilePath, UriKind.RelativeOrAbsolute),
-                                UriBaseId = "%SRCROOT%"
+                                UriBaseId = SarifUriBaseId
                             },
                             Region = new SarifRegion
                             {
@@ -189,9 +193,9 @@ public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter
                     {
                         Driver = new SarifToolDriver
                         {
-                            Name = "Roslyn Guard Analyzer",
-                            InformationUri = new Uri("https://github.com/sarmkadan/roslyn-guard-analyzer"),
-                            Version = "1.0.0",
+                            Name = ToolName,
+                            InformationUri = new Uri(ToolInformationUri),
+                            Version = ToolVersion,
                             Rules = rules
                         }
                     },
