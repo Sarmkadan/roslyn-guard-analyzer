@@ -839,6 +839,51 @@ string reportCsv = formatter.FormatReport(report);
 
 The CSV output includes columns for Rule, Severity, Message, File, Line, Column, and Code, with proper escaping for special characters.
 
+## HtmlFormatter
+
+The `HtmlFormatter` class (in `RoslynGuardAnalyzer.Formatters`) formats analysis results as HTML output suitable for viewing in web browsers. It produces styled, readable HTML with summary statistics and detailed violation information.
+
+### Public API:
+
+```csharp
+public sealed class HtmlFormatter : IOutputFormatter
+public string Format => "html";
+public bool CanFormat(string format);
+public string FormatResult(AnalysisResult result);
+public string FormatViolations(IEnumerable<RuleViolation> violations);
+public string FormatReport(ViolationReport report);
+```
+
+### Example usage:
+
+```csharp
+using RoslynGuardAnalyzer.Formatters;
+using RoslynGuardAnalyzer.Core;
+
+// Create formatter instance
+var formatter = new HtmlFormatter();
+
+// Check if it can handle a format
+bool canHandleHtml = formatter.CanFormat("html"); // returns true
+bool canHandleJson = formatter.CanFormat("json"); // returns false
+
+// Format analysis results
+string htmlOutput = formatter.FormatResult(analysisResult);
+
+// Format violations directly
+string violationsHtml = formatter.FormatViolations(violations);
+
+// Format a violation report
+string reportHtml = formatter.FormatReport(report);
+```
+
+The HTML output includes:
+- A responsive, styled layout with summary statistics (total violations and affected files)
+- A violations table showing rule, severity, message, file, and line number for each violation
+- Severity-based row coloring (critical, error, warning, info)
+- Proper HTML escaping to prevent injection issues
+- Embedded CSS for consistent styling across browsers
+
 ## AnalysisResultRepository
 
 The `AnalysisResultRepository` class (in `RoslynGuardAnalyzer.Data`) manages persistence of analysis results to disk storage. It inherits from `RepositoryBase<AnalysisResult>` and provides specialized methods for querying and managing analysis results stored as JSON files in the application data directory.
