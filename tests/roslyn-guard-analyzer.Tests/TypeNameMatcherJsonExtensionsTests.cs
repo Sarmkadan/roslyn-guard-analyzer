@@ -37,13 +37,9 @@ public class TypeNameMatcherJsonExtensionsTests
     }
 
     [Fact]
-    public void FromJson_NullInput_ReturnsNull()
+    public void FromJson_NullInput_ThrowsArgumentNullException()
     {
-        // Act
-        var typeNameMatcher = TypeNameMatcherJsonExtensions.FromJson(null);
-
-        // Assert
-        Assert.Null(typeNameMatcher);
+        Assert.Throws<ArgumentNullException>(() => TypeNameMatcherJsonExtensions.FromJson(null));
     }
 
     [Fact]

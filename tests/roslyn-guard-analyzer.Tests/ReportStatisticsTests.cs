@@ -149,7 +149,7 @@ public sealed class ReportStatisticsTests
         statistics.ErrorCount.Should().Be(5);
         statistics.WarningCount.Should().Be(15);
         statistics.InfoCount.Should().Be(20);
-        statistics.AffectedFileCount.Should().Be(41); // Each violation in separate file
+        statistics.AffectedFileCount.Should().Be(20); // Unique files: file0.cs through file19.cs (file1.cs from critical overlaps)
 
         // Verify severity score calculation
         var severityScore = statistics.CalculateSeverityScore();
@@ -363,13 +363,13 @@ public sealed class ReportStatisticsTests
         score.Should().BeGreaterOrEqualTo(0);
         score.Should().BeLessOrEqualTo(100);
 
-        // With 1 critical and 3 errors, score should be significantly reduced
         // Base: 100
         // Critical weight (10): 1 * 10 = 10
         // Error weight (5): 3 * 5 = 15
-        // Total deduction: 25
-        // Expected score: 100 - 25 = 75
-        score.Should().Be(75);
+        // Warning weight (1): 5 * 1 = 5
+        // Total deduction: 30
+        // Expected score: 100 - 30 = 70
+        score.Should().Be(70);
     }
 
     [Fact]

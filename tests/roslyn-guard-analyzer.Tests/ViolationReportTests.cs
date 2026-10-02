@@ -202,17 +202,16 @@ public class ViolationReportTests
     #region Method Tests
 
     [Fact]
-    public void AddViolationGroup_WithNullGroup_DoesNothing()
+    public void AddViolationGroup_WithNullGroup_ThrowsArgumentNullException()
     {
         // Arrange
         var report = new ViolationReport();
-        var initialCount = report.ViolationGroups.Count;
 
         // Act
-        report.AddViolationGroup(null);
+        Action act = () => report.AddViolationGroup(null);
 
         // Assert
-        report.ViolationGroups.Count.Should().Be(initialCount);
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -416,7 +415,7 @@ public class ViolationReportTests
     }
 
     [Fact]
-    public void GetViolationsFromFile_WithNullOrEmptyPath_ReturnsEmptyList()
+    public void GetViolationsFromFile_WithNullOrEmptyPath_ThrowsArgumentException()
     {
         // Arrange
         var report = new ViolationReport();
@@ -426,13 +425,9 @@ public class ViolationReportTests
         group.AddViolation(violation);
         report.AddViolationGroup(group);
 
-        // Act
-        var emptyResult = report.GetViolationsFromFile(string.Empty);
-        var whitespaceResult = report.GetViolationsFromFile("   ");
-
-        // Assert
-        emptyResult.Should().BeEmpty();
-        whitespaceResult.Should().BeEmpty();
+        // Act & Assert
+        Action act = () => report.GetViolationsFromFile(string.Empty);
+        act.Should().Throw<ArgumentException>();
     }
 
     [Fact]

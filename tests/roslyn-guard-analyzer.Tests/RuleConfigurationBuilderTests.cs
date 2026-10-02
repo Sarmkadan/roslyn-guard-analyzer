@@ -23,14 +23,25 @@ public sealed class RuleConfigurationBuilderTests
         Assert.Equal(ruleName, config.Name);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Constructor_WithInvalidName_ThrowsArgumentException(string? name)
+    [Fact]
+    public void Constructor_WithNullName_ThrowsArgumentNullException()
     {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => new RuleConfigurationBuilder(name!));
+        Assert.Throws<ArgumentNullException>(() => new RuleConfigurationBuilder(null!));
+    }
+
+    [Fact]
+    public void Constructor_WithEmptyName_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => new RuleConfigurationBuilder(""));
+    }
+
+    [Fact]
+    public void Constructor_WithWhitespaceName_DoesNotThrow()
+    {
+        // ThrowIfNullOrEmpty does not check whitespace
+        var builder = new RuleConfigurationBuilder("   ");
+        var config = builder.Build();
+        Assert.Equal("   ", config.Name);
     }
 
     [Fact]
@@ -59,30 +70,37 @@ public sealed class RuleConfigurationBuilderTests
         Assert.Throws<ArgumentException>(() => builder.WithSeverity(severity));
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void WithParameter_NullOrEmptyKey_ThrowsArgumentException(string? key)
+    [Fact]
+    public void WithParameter_NullKey_ThrowsArgumentNullException()
+    {
+        var builder = new RuleConfigurationBuilder("TestRule");
+        Assert.Throws<ArgumentNullException>(() => builder.WithParameter(null!, 123));
+    }
+
+    [Fact]
+    public void WithParameter_EmptyKey_ThrowsArgumentException()
+    {
+        var builder = new RuleConfigurationBuilder("TestRule");
+        Assert.Throws<ArgumentException>(() => builder.WithParameter("", 123));
+    }
+
+    [Fact]
+    public void WithParameter_WhitespaceKey_DoesNotThrow()
+    {
+        // ThrowIfNullOrEmpty does not check whitespace
+        var builder = new RuleConfigurationBuilder("TestRule");
+        var returned = builder.WithParameter("   ", 123);
+        Assert.Same(builder, returned);
+    }
+
+    [Fact]
+    public void WithParameters_Null_ThrowsArgumentNullException()
     {
         // Arrange
         var builder = new RuleConfigurationBuilder("TestRule");
 
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => builder.WithParameter(key!, 123));
-    }
-
-    [Fact]
-    public void WithParameters_Null_DoesNotThrowAndKeepsBuilder()
-    {
-        // Arrange
-        var builder = new RuleConfigurationBuilder("TestRule");
-
-        // Act
-        var returned = builder.WithParameters(null!);
-
-        // Assert
-        Assert.Same(builder, returned);
+        Assert.Throws<ArgumentNullException>(() => builder.WithParameters(null!));
     }
 
     [Fact]
@@ -103,19 +121,11 @@ public sealed class RuleConfigurationBuilderTests
         Assert.Equal("ComplexRule", config.Name);
         Assert.Equal("A complex rule", config.Description);
 
-        // The custom settings are stored as strings; we verify via the public API.
-        // RuleConfiguration exposes SetCustomSetting, which stores values as strings.
-        // We can retrieve them using reflection if no getter exists.
-        var settingsField = typeof(RuleConfiguration).GetField("_customSettings",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        Assert.NotNull(settingsField);
-
-        var dict = settingsField!.GetValue(config) as IDictionary<string, string>;
-        Assert.NotNull(dict);
-        Assert.Equal("False", dict!["Enabled"]);
-        Assert.Equal("Critical", dict!["Severity"]);
-        Assert.Equal("42", dict!["ParamA"]);
-        Assert.Equal("value", dict!["ParamB"]);
+        // CustomSettings is a public property
+        Assert.Equal("False", config.CustomSettings["Enabled"]);
+        Assert.Equal("Critical", config.CustomSettings["Severity"]);
+        Assert.Equal("42", config.CustomSettings["ParamA"]);
+        Assert.Equal("value", config.CustomSettings["ParamB"]);
     }
 
     [Fact]

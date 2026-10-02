@@ -105,41 +105,23 @@ public class RuleViolationDisplayExtensionsTests
     }
 
     [Fact]
-    public void ToConsoleLine_WithNullFilePath_HandlesGracefully()
+    public void ToConsoleLine_WithNullFilePath_ThrowsArgumentNullException()
     {
-        // Arrange
-        var violation = new RuleViolation("CA1822", "Test Rule", "Test message", null)
-        {
-            Severity = SeverityLevel.Error,
-            LineNumber = 1
-        };
-
-        // Act
-        var result = violation.ToConsoleLine();
+        // Arrange & Act
+        Action act = () => new RuleViolation("CA1822", "Test Rule", "Test message", null);
 
         // Assert
-        result.Should().Contain("Error");
-        result.Should().Contain(":1");
-        result.Should().Contain("Test message");
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void ToConsoleLine_WithEmptyFilePath_HandlesGracefully()
+    public void ToConsoleLine_WithEmptyFilePath_ThrowsArgumentException()
     {
-        // Arrange
-        var violation = new RuleViolation("CA1822", "Test Rule", "Test message", string.Empty)
-        {
-            Severity = SeverityLevel.Error,
-            LineNumber = 1
-        };
-
-        // Act
-        var result = violation.ToConsoleLine();
+        // Arrange & Act
+        Action act = () => new RuleViolation("CA1822", "Test Rule", "Test message", string.Empty);
 
         // Assert
-        result.Should().Contain("Error");
-        result.Should().Contain(":1");
-        result.Should().Contain("Test message");
+        act.Should().Throw<ArgumentException>();
     }
 
     #endregion

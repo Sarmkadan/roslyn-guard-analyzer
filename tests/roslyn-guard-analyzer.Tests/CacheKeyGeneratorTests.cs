@@ -11,8 +11,6 @@ public class CacheKeyGeneratorTests
 {
     [Theory]
     [InlineData("test", "9f86d081884c7d65")]
-    [InlineData("", "empty")]
-    [InlineData(null!, "empty")]
     public void ComputeHash_ShouldReturnExpectedFormat(string input, string expected)
     {
         // Act
@@ -20,6 +18,20 @@ public class CacheKeyGeneratorTests
 
         // Assert
         result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void ComputeHash_WithNullInput_ThrowsArgumentNullException()
+    {
+        Action act = () => CacheKeyGenerator.ComputeHash(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void ComputeHash_WithEmptyInput_ThrowsArgumentException()
+    {
+        Action act = () => CacheKeyGenerator.ComputeHash(string.Empty);
+        act.Should().Throw<ArgumentException>();
     }
 
     [Fact]

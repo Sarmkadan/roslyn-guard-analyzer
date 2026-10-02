@@ -136,20 +136,17 @@ public class CustomAnalysisRuleTests
     }
 
     [Fact]
-    public void WithDescription_Null_UsesEmptyString()
+    public void WithDescription_Null_ThrowsArgumentNullException()
     {
         // Arrange
         var builder = CustomRuleBuilder
-            .Create("R007", "NullDescRule")
-            .WithDescription(null!)
-            .When(_ => true);
+            .Create("R007", "NullDescRule");
 
         // Act
-        var rule = builder.Build();
+        Action act = () => builder.WithDescription(null!);
 
         // Assert
-        // When description is null, the builder falls back to the rule name.
-        rule.Description.Should().Be("NullDescRule");
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]

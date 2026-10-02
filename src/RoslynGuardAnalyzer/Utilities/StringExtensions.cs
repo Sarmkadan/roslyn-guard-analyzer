@@ -6,6 +6,7 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -33,176 +34,19 @@ public static class StringExtensions
         if (string.IsNullOrWhiteSpace(text))
             return text;
 
-        // Early-out: if already in PascalCase format, return as-is
-        if (IsPascalCase(text))
-            return text;
+        var words = SplitIntoWords(text);
+        if (words.Count == 0)
+            return string.Empty;
 
-        // Fast path for common cases without separators
-        if (text.Length <= 128 && !ContainsAny(text, '_', '-', ' '))
+        var sb = new StringBuilder(text.Length);
+        foreach (var word in words)
         {
-            return CapitalizeFirstLetter(text);
+            if (word.Length == 0) continue;
+            sb.Append(char.ToUpperInvariant(word[0]));
+            if (word.Length > 1)
+                sb.Append(word.AsSpan(1).ToString().ToLowerInvariant());
         }
-
-        return ConvertToPascalCase(text);
-
-        static string CapitalizeFirstLetter(string s)
-        {
-            if (string.IsNullOrEmpty(s))
-                return s;
-
-            if (s.Length == 1)
-                return char.ToUpperInvariant(s[0]).ToString();
-
-            return char.ToUpperInvariant(s[0]) + s[1..];
-        }
-
-        static bool IsPascalCase(string s)
-        {
-            if (string.IsNullOrEmpty(s))
-                return true;
-
-            // Check if already in PascalCase (no separators, first char uppercase)
-            if (s.Length > 0 && !char.IsUpper(s[0]))
-                return false;
-
-            // Check for separators that shouldn't be in PascalCase
-            for (int i = 0; i < s.Length; i++)
-            {
-                char c = s[i];
-                if (c == '_' || c == '-' || c == ' ')
-                    return false;
-            }
-
-            return true;
-        }
-
-        static string ConvertToPascalCase(string text)
-        {
-            var separators = new[] { '_', '-', ' ' };
-            bool needsConversion = false;
-
-            // First pass: check if conversion is needed
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (separators.Contains(text[i]))
-                {
-                    needsConversion = true;
-                    break;
-                }
-            }
-
-            if (!needsConversion)
-                return CapitalizeFirstLetter(text);
-
-            // Normalize consecutive separators and trim leading/trailing separators
-            var normalized = new StringBuilder(text.Length);
-            bool prevIsSeparator = true; // Start as true to skip leading separators
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                char c = text[i];
-                if (separators.Contains(c))
-                {
-                    // Only add separator if previous char wasn't a separator
-                    if (!prevIsSeparator)
-                    {
-                        normalized.Append(' '); // Use space as normalized separator
-                        prevIsSeparator = true;
-                    }
-                }
-                else
-                {
-                    normalized.Append(c);
-                    prevIsSeparator = false;
-                }
-            }
-
-            // Remove trailing separator if any
-            if (prevIsSeparator && normalized.Length > 0)
-            {
-                normalized.Length--;
-            }
-
-            string normalizedText = normalized.ToString();
-
-            if (string.IsNullOrEmpty(normalizedText))
-                return string.Empty;
-
-            // Count parts to determine if we need allocation
-            int partCount = 1;
-            for (int i = 0; i < normalizedText.Length; i++)
-            {
-                if (normalizedText[i] == ' ')
-                    partCount++;
-            }
-
-            // Use ArrayPool for part tracking if needed
-            int[] partStarts = partCount <= 16
-                ? stackalloc int[16].ToArray()
-                : ArrayPool<int>.Shared.Rent(partCount);
-
-            try
-            {
-                int partIndex = 0;
-                partStarts[partIndex++] = 0;
-
-                for (int i = 0; i < normalizedText.Length; i++)
-                {
-                    if (normalizedText[i] == ' ')
-                    {
-                        partStarts[partIndex++] = i + 1;
-                    }
-                }
-
-                // Calculate total length needed
-                int resultLength = 0;
-                for (int i = 0; i < partIndex; i++)
-                {
-                    int start = partStarts[i];
-                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : normalizedText.Length;
-                    int partLength = end - start;
-
-                    if (partLength > 0)
-                    {
-                        resultLength += 1; // First char uppercase
-                        resultLength += partLength - 1; // Rest lowercase
-                    }
-                }
-
-                if (resultLength == 0)
-                    return string.Empty;
-
-                // Use string.Create for zero-allocation result
-                return string.Create(resultLength, normalizedText, (span, state) =>
-                {
-                    int charIndex = 0;
-                    for (int i = 0; i < partIndex; i++)
-                    {
-                        int start = partStarts[i];
-                        int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : state.Length;
-                        int partLength = end - start;
-
-                        if (partLength > 0)
-                        {
-                            // Capitalize first letter
-                            if (charIndex < span.Length)
-                                span[charIndex++] = char.ToUpperInvariant(state[start]);
-
-                            // Lowercase remaining letters
-                            for (int j = start + 1; j < end && charIndex < span.Length; j++)
-                            {
-                                span[charIndex++] = char.ToLowerInvariant(state[j]);
-                            }
-                        }
-                    }
-                });
-            }
-            finally
-            {
-                if (partCount > 16)
-                    ArrayPool<int>.Shared.Return(partStarts);
-            }
-        }
+        return sb.ToString();
     }
 
     /// <summary>
@@ -262,135 +106,11 @@ public static class StringExtensions
         if (string.IsNullOrEmpty(text))
             return text;
 
-        // Early-out: if already in snake_case format, return as-is
-        if (IsSnakeCase(text))
-            return text;
+        var words = SplitIntoWords(text);
+        if (words.Count == 0)
+            return string.Empty;
 
-        // Fast path for strings that don't need conversion
-        if (text.Length <= 128)
-        {
-            bool needsConversion = false;
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (char.IsUpper(text[i]))
-                {
-                    needsConversion = true;
-                    break;
-                }
-            }
-
-            if (!needsConversion)
-                return text.ToLowerInvariant();
-        }
-
-        return ConvertToSnakeCase(text);
-
-        static bool IsSnakeCase(string s)
-        {
-            if (string.IsNullOrEmpty(s))
-                return true;
-
-            // Check if already in snake_case (only lowercase and underscores)
-            bool hasUnderscore = false;
-            for (int i = 0; i < s.Length; i++)
-            {
-                char c = s[i];
-                if (c == '_')
-                    hasUnderscore = true;
-                else if (char.IsUpper(c))
-                    return false;
-            }
-
-            return hasUnderscore || !s.Contains('_');
-        }
-
-        static string ConvertToSnakeCase(string text)
-        {
-            // Normalize consecutive separators and handle leading/trailing separators
-            var normalized = new StringBuilder(text.Length);
-            bool prevIsSeparator = true; // Start as true to skip leading separators
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                char c = text[i];
-                if (c == '_' || c == '-' || c == ' ')
-                {
-                    // Only add separator if previous char wasn't a separator
-                    if (!prevIsSeparator)
-                    {
-                        normalized.Append('_');
-                        prevIsSeparator = true;
-                    }
-                }
-                else
-                {
-                    normalized.Append(c);
-                    prevIsSeparator = false;
-                }
-            }
-
-            // Remove trailing separator if any
-            if (prevIsSeparator && normalized.Length > 0)
-            {
-                normalized.Length--;
-            }
-
-            string normalizedText = normalized.ToString();
-
-            if (string.IsNullOrEmpty(normalizedText))
-                return string.Empty;
-
-            // Calculate required length first - handle acronyms properly
-            int resultLength = normalizedText.Length;
-            for (int i = 1; i < normalizedText.Length; i++)
-            {
-                // Insert underscore before uppercase letter if previous char is lowercase or digit
-                // This handles both word boundaries and acronyms properly
-                char prevChar = normalizedText[i - 1];
-                char currChar = normalizedText[i];
-
-                if (char.IsUpper(currChar) &&
-                    (char.IsLower(prevChar) || char.IsDigit(prevChar)) &&
-                    prevChar != '_')
-                    resultLength++;
-            }
-
-            if (resultLength == normalizedText.Length)
-                return normalizedText.ToLowerInvariant();
-
-            // Use string.Create for zero-allocation result
-            return string.Create(resultLength, normalizedText, (span, state) =>
-            {
-                int charIndex = 0;
-                for (int i = 0; i < state.Length; i++)
-                {
-                    char c = state[i];
-
-                    // Insert underscore before uppercase letter if previous char is lowercase or digit
-                    if (char.IsUpper(c))
-                    {
-                        // Insert underscore before uppercase letter if previous char is lowercase or digit
-                        if (i > 0)
-                        {
-                            char prevChar = state[i - 1];
-                            if ((char.IsLower(prevChar) || char.IsDigit(prevChar)) && prevChar != '_')
-                            {
-                                if (charIndex < span.Length)
-                                    span[charIndex++] = '_';
-                            }
-                        }
-
-                        if (charIndex < span.Length)
-                            span[charIndex++] = char.ToLowerInvariant(c);
-                    }
-                    else
-                    {
-                        if (charIndex < span.Length)
-                            span[charIndex++] = c;
-                    }
-                }
-            });
-        }
+        return string.Join("_", words).ToLowerInvariant();
     }
 
     /// <summary>
@@ -406,156 +126,98 @@ public static class StringExtensions
         if (string.IsNullOrWhiteSpace(text))
             return text;
 
-        // Early-out: if already in kebab-case format, return as-is
-        if (IsKebabCase(text))
-            return text;
+        var words = SplitIntoWords(text);
+        if (words.Count == 0)
+            return string.Empty;
 
-        return ConvertToKebabCase(text);
+        return string.Join("-", words).ToLowerInvariant();
+    }
 
-        static bool IsKebabCase(string s)
+    /// <summary>
+    /// Splits a string into words by detecting separators ('_', '-', ' ') and camelCase/PascalCase boundaries,
+    /// including proper handling of acronyms (e.g., "XMLHttpRequest" -> ["XML", "Http", "Request"]).
+    /// </summary>
+    private static List<string> SplitIntoWords(string text)
+    {
+        var words = new List<string>();
+        var current = new StringBuilder();
+
+        // First, split by explicit separators
+        var segments = new List<string>();
+        var seg = new StringBuilder();
+        bool prevSep = true;
+        for (int i = 0; i < text.Length; i++)
         {
-            if (string.IsNullOrEmpty(s))
-                return true;
-
-            // Check if already in kebab-case (only lowercase and hyphens)
-            bool hasHyphen = false;
-            for (int i = 0; i < s.Length; i++)
+            char c = text[i];
+            if (c == '_' || c == '-' || c == ' ')
             {
-                char c = s[i];
-                if (c == '-')
-                    hasHyphen = true;
-                else if (char.IsUpper(c))
-                    return false;
-            }
-
-            return hasHyphen || !s.Contains('-');
-        }
-
-        static string ConvertToKebabCase(string text)
-        {
-            var separators = new[] { '_', '-', ' ' };
-            bool needsConversion = false;
-
-            // First pass: check if conversion is needed
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (separators.Contains(text[i]))
+                if (!prevSep && seg.Length > 0)
                 {
-                    needsConversion = true;
-                    break;
+                    segments.Add(seg.ToString());
+                    seg.Clear();
                 }
+                prevSep = true;
             }
-
-            if (!needsConversion)
-                return text.ToLowerInvariant();
-
-            // Normalize consecutive separators and handle leading/trailing separators
-            var normalized = new StringBuilder(text.Length);
-            bool prevIsSeparator = true; // Start as true to skip leading separators
-
-            for (int i = 0; i < text.Length; i++)
+            else
             {
-                char c = text[i];
-                if (separators.Contains(c))
-                {
-                    // Only add separator if previous char wasn't a separator
-                    if (!prevIsSeparator)
-                    {
-                        normalized.Append('-');
-                        prevIsSeparator = true;
-                    }
-                }
-                else
-                {
-                    normalized.Append(c);
-                    prevIsSeparator = false;
-                }
-            }
-
-            // Remove trailing separator if any
-            if (prevIsSeparator && normalized.Length > 0)
-            {
-                normalized.Length--;
-            }
-
-            string normalizedText = normalized.ToString();
-
-            if (string.IsNullOrEmpty(normalizedText))
-                return string.Empty;
-
-            // Count parts
-            int partCount = 1;
-            for (int i = 0; i < normalizedText.Length; i++)
-            {
-                if (separators.Contains(normalizedText[i]))
-                    partCount++;
-            }
-
-            int[] partStarts = partCount <= 16
-                ? stackalloc int[16].ToArray()
-                : ArrayPool<int>.Shared.Rent(partCount);
-
-            try
-            {
-                int partIndex = 0;
-                partStarts[partIndex++] = 0;
-
-                for (int i = 0; i < normalizedText.Length; i++)
-                {
-                    if (separators.Contains(normalizedText[i]))
-                    {
-                        partStarts[partIndex++] = i + 1;
-                    }
-                }
-
-                // Calculate total length
-                int resultLength = 0;
-                for (int i = 0; i < partIndex; i++)
-                {
-                    int start = partStarts[i];
-                    int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : normalizedText.Length;
-                    int partLength = end - start;
-
-                    if (partLength > 0)
-                    {
-                        resultLength += partLength;
-                        if (i < partIndex - 1)
-                            resultLength++; // hyphen
-                    }
-                }
-
-                if (resultLength == 0)
-                    return string.Empty;
-
-                return string.Create(resultLength, normalizedText, (span, state) =>
-                {
-                    int charIndex = 0;
-                    for (int i = 0; i < partIndex; i++)
-                    {
-                        int start = partStarts[i];
-                        int end = i < partIndex - 1 ? partStarts[i + 1] - 1 : state.Length;
-                        int partLength = end - start;
-
-                        if (partLength > 0)
-                        {
-                            for (int j = start; j < end; j++)
-                            {
-                                if (charIndex < span.Length)
-                                    span[charIndex++] = char.ToLowerInvariant(state[j]);
-                            }
-
-                            if (i < partIndex - 1 && charIndex < span.Length)
-                                span[charIndex++] = '-';
-                        }
-                    }
-                });
-            }
-            finally
-            {
-                if (partCount > 16)
-                    ArrayPool<int>.Shared.Return(partStarts);
+                seg.Append(c);
+                prevSep = false;
             }
         }
+        if (seg.Length > 0)
+            segments.Add(seg.ToString());
+
+        // Then split each segment by camelCase/PascalCase boundaries
+        foreach (var segment in segments)
+        {
+            current.Clear();
+            for (int i = 0; i < segment.Length; i++)
+            {
+                char c = segment[i];
+                if (i == 0)
+                {
+                    current.Append(c);
+                    continue;
+                }
+
+                bool isUpper = char.IsUpper(c);
+                bool prevIsUpper = char.IsUpper(segment[i - 1]);
+                bool prevIsLower = char.IsLower(segment[i - 1]);
+                bool prevIsDigit = char.IsDigit(segment[i - 1]);
+                bool nextIsLower = i + 1 < segment.Length && char.IsLower(segment[i + 1]);
+
+                // Split before: uppercase after lowercase/digit, or uppercase before lowercase in acronym run
+                if (isUpper && (prevIsLower || prevIsDigit))
+                {
+                    // "helloWorld" -> "hello" | "World"
+                    if (current.Length > 0)
+                    {
+                        words.Add(current.ToString());
+                        current.Clear();
+                    }
+                }
+                else if (isUpper && prevIsUpper && nextIsLower)
+                {
+                    // "XMLHttp" -> "XML" | "Http" (split before the last uppercase before lowercase)
+                    if (current.Length > 0)
+                    {
+                        words.Add(current.ToString());
+                        current.Clear();
+                    }
+                }
+                else if (char.IsDigit(c) && !char.IsDigit(segment[i - 1]) && !char.IsUpper(segment[i - 1]))
+                {
+                    // Only split digit from lowercase, not from uppercase
+                    // "utf8String" keeps "utf8" together
+                }
+
+                current.Append(c);
+            }
+            if (current.Length > 0)
+                words.Add(current.ToString());
+        }
+
+        return words;
     }
 
     /// <summary>

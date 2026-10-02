@@ -44,8 +44,8 @@ public class ViolationReportJsonExtensionsTests
     [Fact]
     public void FromJson_NullOrEmpty_ThrowsArgumentException()
     {
-        // Null
-        Assert.Throws<ArgumentException>(() => ViolationReportJsonExtensions.FromJson(null!));
+        // Null - ThrowIfNullOrEmpty throws ArgumentNullException for null
+        Assert.Throws<ArgumentNullException>(() => ViolationReportJsonExtensions.FromJson(null!));
 
         // Empty string
         Assert.Throws<ArgumentException>(() => ViolationReportJsonExtensions.FromJson(string.Empty));

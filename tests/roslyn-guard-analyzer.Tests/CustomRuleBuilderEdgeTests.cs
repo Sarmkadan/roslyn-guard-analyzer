@@ -84,20 +84,16 @@ public sealed class CustomRuleBuilderEdgeTests
     /// Tests that building with null description defaults to rule name.
     /// </summary>
     [Fact]
-    public void Build_WithNullDescription_DefaultsToRuleName()
+    public void Build_WithNullDescription_ThrowsArgumentNullException()
     {
         // Arrange
         var builder = CustomRuleBuilder.Create("CUS006", "Null Description Rule")
             .For(RuleCategory.AsyncPattern)
-            .WithSeverity(SeverityLevel.Error)
-            .WithDescription(null)
-            .When(element => element.IsAsync);
+            .WithSeverity(SeverityLevel.Error);
 
-        // Act
-        var rule = builder.Build();
-
-        // Assert
-        rule.Description.Should().Be("Null Description Rule"); // Build() converts null to name
+        // Act & Assert
+        Action act = () => builder.WithDescription(null);
+        act.Should().Throw<ArgumentNullException>();
     }
 
     /// <summary>
@@ -177,18 +173,14 @@ public sealed class CustomRuleBuilderEdgeTests
     /// Tests that WithDescription accepts null and Build converts it to rule name.
     /// </summary>
     [Fact]
-    public void WithDescription_WithNull_BuildDefaultsToRuleName()
+    public void WithDescription_WithNull_ThrowsArgumentNullException()
     {
         // Arrange
-        var builder = CustomRuleBuilder.Create("CUS011", "Null Description Test")
-            .WithDescription(null)
-            .When(element => true);
+        var builder = CustomRuleBuilder.Create("CUS011", "Null Description Test");
 
-        // Act
-        var rule = builder.Build();
-
-        // Assert
-        rule.Description.Should().Be("Null Description Test"); // Build() converts null to name
+        // Act & Assert
+        Action act = () => builder.WithDescription(null);
+        act.Should().Throw<ArgumentNullException>();
     }
 
     /// <summary>

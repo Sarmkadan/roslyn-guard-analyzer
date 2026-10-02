@@ -179,10 +179,6 @@ public sealed class RuleViolationTests
 
     [Theory]
     [InlineData("id", "name", "msg", "file.cs", 1, 1, true)]
-    [InlineData("", "name", "msg", "file.cs", 1, 1, false)]
-    [InlineData("id", "", "msg", "file.cs", 1, 1, false)]
-    [InlineData("id", "name", "", "file.cs", 1, 1, false)]
-    [InlineData("id", "name", "msg", "", 1, 1, false)]
     [InlineData("id", "name", "msg", "file.cs", 0, 1, false)]
     [InlineData("id", "name", "msg", "file.cs", 1, -1, false)]
     public void IsValid_ReturnsExpectedResult(string ruleId, string ruleName, string message, string filePath, int line, int col, bool expected)
@@ -199,5 +195,36 @@ public sealed class RuleViolationTests
 
         // Assert
         result.Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData("", "name", "msg", "file.cs")]
+    [InlineData("id", "", "msg", "file.cs")]
+    [InlineData("id", "name", "", "file.cs")]
+    [InlineData("id", "name", "msg", "")]
+    public void Constructor_WithEmptyRequiredField_ThrowsArgumentException(string ruleId, string ruleName, string message, string filePath)
+    {
+        // Act
+        Action act = () => new RuleViolation(ruleId, ruleName, message, filePath);
+
+        // Assert
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void IsValid_WithEmptyFields_ReturnsFalse()
+    {
+        // Arrange - use default constructor to bypass validation
+        var violation = new RuleViolation
+        {
+            LineNumber = 1,
+            ColumnNumber = 1
+        };
+
+        // Act
+        var result = violation.IsValid();
+
+        // Assert
+        result.Should().BeFalse();
     }
 }

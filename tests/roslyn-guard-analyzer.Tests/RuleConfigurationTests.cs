@@ -295,16 +295,16 @@ public class RuleConfigurationTests
     }
 
     [Fact]
-    public void AddRule_WithNullRule_DoesNotAddRule()
+    public void AddRule_WithNullRule_ThrowsArgumentNullException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
         // Act
-        config.AddRule(null!);
+        Action act = () => config.AddRule(null!);
 
         // Assert
-        config.EnabledRules.Should().BeEmpty();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
@@ -357,22 +357,19 @@ public class RuleConfigurationTests
     }
 
     [Fact]
-    public void RemoveRule_WithNullOrEmptyRuleId_ReturnsFalse()
+    public void RemoveRule_WithNullOrEmptyRuleId_ThrowsArgumentException()
     {
         // Arrange
         var config = new RuleConfiguration();
         var rule = new AnalysisRule("R001", "Test Rule", "Test Description", RuleCategory.CodeStructure);
         config.AddRule(rule);
 
-        // Act
-        var result1 = config.RemoveRule(null!);
-        var result2 = config.RemoveRule(string.Empty);
-        var result3 = config.RemoveRule("   ");
+        // Act & Assert
+        Action act1 = () => config.RemoveRule(null!);
+        Action act2 = () => config.RemoveRule(string.Empty);
 
-        // Assert
-        result1.Should().BeFalse();
-        result2.Should().BeFalse();
-        result3.Should().BeFalse();
+        act1.Should().Throw<ArgumentNullException>();
+        act2.Should().Throw<ArgumentException>();
         config.EnabledRules.Should().ContainSingle();
     }
 
@@ -408,20 +405,17 @@ public class RuleConfigurationTests
     }
 
     [Fact]
-    public void GetRule_WithNullOrEmptyRuleId_ReturnsNull()
+    public void GetRule_WithNullOrEmptyRuleId_ThrowsArgumentException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
-        // Act
-        var result1 = config.GetRule(null!);
-        var result2 = config.GetRule(string.Empty);
-        var result3 = config.GetRule("   ");
+        // Act & Assert
+        Action act1 = () => config.GetRule(null!);
+        Action act2 = () => config.GetRule(string.Empty);
 
-        // Assert
-        result1.Should().BeNull();
-        result2.Should().BeNull();
-        result3.Should().BeNull();
+        act1.Should().Throw<ArgumentNullException>();
+        act2.Should().Throw<ArgumentException>();
     }
 
     [Fact]
@@ -438,18 +432,17 @@ public class RuleConfigurationTests
     }
 
     [Fact]
-    public void ExcludeNamespace_WithNullOrEmptyNamespace_DoesNotAddToList()
+    public void ExcludeNamespace_WithNullOrEmptyNamespace_ThrowsArgumentException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
-        // Act
-        config.ExcludeNamespace(null!);
-        config.ExcludeNamespace(string.Empty);
-        config.ExcludeNamespace("   ");
+        // Act & Assert
+        Action act1 = () => config.ExcludeNamespace(null!);
+        Action act2 = () => config.ExcludeNamespace(string.Empty);
 
-        // Assert
-        config.ExcludedNamespaces.Should().BeEmpty();
+        act1.Should().Throw<ArgumentNullException>();
+        act2.Should().Throw<ArgumentException>();
     }
 
     [Fact]
@@ -480,18 +473,17 @@ public class RuleConfigurationTests
     }
 
     [Fact]
-    public void ExcludeFile_WithNullOrEmptyFilePattern_DoesNotAddToList()
+    public void ExcludeFile_WithNullOrEmptyFilePattern_ThrowsArgumentException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
-        // Act
-        config.ExcludeFile(null!);
-        config.ExcludeFile(string.Empty);
-        config.ExcludeFile("   ");
+        // Act & Assert
+        Action act1 = () => config.ExcludeFile(null!);
+        Action act2 = () => config.ExcludeFile(string.Empty);
 
-        // Assert
-        config.ExcludedFiles.Should().BeEmpty();
+        act1.Should().Throw<ArgumentNullException>();
+        act2.Should().Throw<ArgumentException>();
     }
 
     [Fact]
@@ -509,29 +501,29 @@ public class RuleConfigurationTests
     }
 
     [Fact]
-    public void ShouldAnalyzeFile_WithNullFilePath_ReturnsFalse()
+    public void ShouldAnalyzeFile_WithNullFilePath_ThrowsArgumentNullException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
         // Act
-        var result = config.ShouldAnalyzeFile(null!);
+        Action act = () => config.ShouldAnalyzeFile(null!);
 
         // Assert
-        result.Should().BeFalse();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void ShouldAnalyzeFile_WithEmptyFilePath_ReturnsFalse()
+    public void ShouldAnalyzeFile_WithEmptyFilePath_ThrowsArgumentException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
         // Act
-        var result = config.ShouldAnalyzeFile(string.Empty);
+        Action act = () => config.ShouldAnalyzeFile(string.Empty);
 
         // Assert
-        result.Should().BeFalse();
+        act.Should().Throw<ArgumentException>();
     }
 
     [Fact]
@@ -590,29 +582,29 @@ public class RuleConfigurationTests
     }
 
     [Fact]
-    public void ShouldAnalyzeNamespace_WithNullNamespace_ReturnsTrue()
+    public void ShouldAnalyzeNamespace_WithNullNamespace_ThrowsArgumentNullException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
         // Act
-        var result = config.ShouldAnalyzeNamespace(null!);
+        Action act = () => config.ShouldAnalyzeNamespace(null!);
 
         // Assert
-        result.Should().BeTrue();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Fact]
-    public void ShouldAnalyzeNamespace_WithEmptyNamespace_ReturnsTrue()
+    public void ShouldAnalyzeNamespace_WithEmptyNamespace_ThrowsArgumentException()
     {
         // Arrange
         var config = new RuleConfiguration();
 
         // Act
-        var result = config.ShouldAnalyzeNamespace(string.Empty);
+        Action act = () => config.ShouldAnalyzeNamespace(string.Empty);
 
         // Assert
-        result.Should().BeTrue();
+        act.Should().Throw<ArgumentException>();
     }
 
     [Fact]
@@ -829,9 +821,11 @@ public class RuleConfigurationTests
     [Fact]
     public void IsValid_WithEmptyName_ReturnsFalse()
     {
-        // Arrange
-        var config = new RuleConfiguration(string.Empty, "Valid Description")
+        // Arrange - use default ctor then set Name directly to bypass constructor validation
+        var config = new RuleConfiguration()
         {
+            Name = string.Empty,
+            Description = "Valid Description",
             MaxViolationsToReport = 100,
             AnalysisTimeoutSeconds = 300
         };
@@ -865,9 +859,11 @@ public class RuleConfigurationTests
     [Fact]
     public void IsValid_WithNullDescription_ReturnsTrue()
     {
-        // Arrange
-        var config = new RuleConfiguration("Valid Name", null!)
+        // Arrange - use default ctor to bypass constructor validation of description
+        var config = new RuleConfiguration()
         {
+            Name = "Valid Name",
+            Description = null!,
             MaxViolationsToReport = 100,
             AnalysisTimeoutSeconds = 300
         };

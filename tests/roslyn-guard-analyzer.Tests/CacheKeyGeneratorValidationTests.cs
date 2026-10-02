@@ -22,7 +22,7 @@ public class CacheKeyGeneratorValidationTests
             "C:\\proj.csproj",
             "   ");
         Assert.Single(result);
-        Assert.Contains("Configuration hash cannot be whitespace", result);
+        Assert.Contains("Configuration hash cannot be whitespace if provided.", result);
     }
 
     // ---------- ValidateGenerateFileAnalysisKey ----------
@@ -40,7 +40,7 @@ public class CacheKeyGeneratorValidationTests
             "C:\\file.cs",
             "  ");
         Assert.Single(result);
-        Assert.Contains("File content hash cannot be whitespace", result);
+        Assert.Contains("File content hash cannot be whitespace if provided.", result);
     }
 
     // ---------- ValidateGenerateResultKey ----------
@@ -54,7 +54,7 @@ public class CacheKeyGeneratorValidationTests
     [Fact]
     public void ValidateGenerateResultKey_NullOrEmpty_Throws()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentNullException>(() =>
             CacheKeyGeneratorValidation.ValidateGenerateResultKey(null!));
         Assert.Throws<ArgumentException>(() =>
             CacheKeyGeneratorValidation.ValidateGenerateResultKey(string.Empty));
@@ -71,11 +71,11 @@ public class CacheKeyGeneratorValidationTests
     [Fact]
     public void ValidateGenerateRuleExecutionKey_NullOrEmpty_Throws()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentNullException>(() =>
             CacheKeyGeneratorValidation.ValidateGenerateRuleExecutionKey(null!, "Target"));
         Assert.Throws<ArgumentException>(() =>
             CacheKeyGeneratorValidation.ValidateGenerateRuleExecutionKey(string.Empty, "Target"));
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentNullException>(() =>
             CacheKeyGeneratorValidation.ValidateGenerateRuleExecutionKey("Rule", null!));
         Assert.Throws<ArgumentException>(() =>
             CacheKeyGeneratorValidation.ValidateGenerateRuleExecutionKey("Rule", string.Empty));
@@ -96,7 +96,7 @@ public class CacheKeyGeneratorValidationTests
             "MyNamespace.MyClass",
             "   ");
         Assert.Single(result);
-        Assert.Contains("Member name cannot be whitespace", result);
+        Assert.Contains("Member name cannot be whitespace if provided.", result);
     }
 
     // ---------- ValidateComputeHash ----------
@@ -112,7 +112,7 @@ public class CacheKeyGeneratorValidationTests
     {
         var result = CacheKeyGeneratorValidation.ValidateComputeHash("   ");
         Assert.Single(result);
-        Assert.Contains("Input cannot be whitespace", result);
+        Assert.Contains("Input cannot be whitespace if provided.", result);
     }
 
     // ---------- ValidateComputeFileHash ----------
@@ -126,7 +126,7 @@ public class CacheKeyGeneratorValidationTests
     [Fact]
     public void ValidateComputeFileHash_NullOrEmpty_Throws()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentNullException>(() =>
             CacheKeyGeneratorValidation.ValidateComputeFileHash(null!));
         Assert.Throws<ArgumentException>(() =>
             CacheKeyGeneratorValidation.ValidateComputeFileHash(string.Empty));
@@ -145,7 +145,7 @@ public class CacheKeyGeneratorValidationTests
     {
         var result = CacheKeyGeneratorValidation.ValidateCreateCompositeKey();
         Assert.Single(result);
-        Assert.Contains("At least one component is required", result);
+        Assert.Contains("At least one component is required.", result);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class CacheKeyGeneratorValidationTests
     {
         var result = CacheKeyGeneratorValidation.ValidateCreateCompositeKey("valid", "   ", "also");
         Assert.Single(result);
-        Assert.Contains("Component at index 1 cannot be null, empty, or whitespace", result);
+        Assert.Contains("Component at index 1 cannot be null, empty, or whitespace.", result);
     }
 
     // ---------- ValidateGeneratePatternKey ----------
@@ -167,7 +167,7 @@ public class CacheKeyGeneratorValidationTests
     [Fact]
     public void ValidateGeneratePatternKey_NullOrEmpty_Throws()
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.Throws<ArgumentNullException>(() =>
             CacheKeyGeneratorValidation.ValidateGeneratePatternKey(null!));
         Assert.Throws<ArgumentException>(() =>
             CacheKeyGeneratorValidation.ValidateGeneratePatternKey(string.Empty));
