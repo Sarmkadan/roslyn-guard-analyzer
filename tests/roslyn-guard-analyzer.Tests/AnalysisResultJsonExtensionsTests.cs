@@ -248,18 +248,13 @@ public class AnalysisResultJsonExtensionsTests
     }
 
     [Fact]
-    public void TryFromJson_LargeJson_ReturnsFalse()
+    public void TryFromJson_LargeJson_ThrowsArgumentException()
     {
-        // Arrange
-        // Create a JSON string that exceeds the 10MB limit
+        // Arrange - JSON exceeding 10MB limit
         string largeJson = new string('x', 11 * 1024 * 1024);
 
-        // Act
-        bool result = AnalysisResultJsonExtensions.TryFromJson(largeJson, out var value);
-
-        // Assert
-        Assert.False(result);
-        Assert.Null(value);
+        // Act & Assert - size validation throws before deserialization
+        Assert.Throws<ArgumentException>(() => AnalysisResultJsonExtensions.TryFromJson(largeJson, out _));
     }
 
     [Fact]

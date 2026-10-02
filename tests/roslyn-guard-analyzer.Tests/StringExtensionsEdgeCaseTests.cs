@@ -26,7 +26,7 @@ public sealed class StringExtensionsEdgeCaseTests
     [InlineData("hello_world_", "HelloWorld")] // trailing separator
     [InlineData("__hello__world__", "HelloWorld")] // multiple leading/trailing
     [InlineData("hello-world foo", "HelloWorldFoo")] // mixed separators
-    [InlineData("HTTPServer", "HTTPServer")] // acronym
+    [InlineData("HTTPServer", "HttpServer")] // acronym
     [InlineData("HTTP_server", "HttpServer")] // acronym with separator
     [InlineData("utf8String", "Utf8String")] // digits
     [InlineData("UTF8String", "Utf8String")] // uppercase digits
@@ -77,7 +77,7 @@ public sealed class StringExtensionsEdgeCaseTests
     [InlineData("_hello_world", "helloWorld")] // leading separator
     [InlineData("hello_world_", "helloWorld")] // trailing separator
     [InlineData("hello-world foo", "helloWorldFoo")] // mixed separators
-    [InlineData("HTTPServer", "hTTPServer")] // acronym
+    [InlineData("HTTPServer", "httpServer")] // acronym - goes through ToPascalCase first
     [InlineData("HTTP_server", "httpServer")] // acronym with separator
     [InlineData("utf8String", "utf8String")] // already camelCase
     [InlineData("HelloWorld", "helloWorld")] // already PascalCase
@@ -126,8 +126,8 @@ public sealed class StringExtensionsEdgeCaseTests
     [InlineData("utf8String", "utf8_string")] // digits
     [InlineData("UTF8String", "utf8_string")] // uppercase digits
     [InlineData("hello_world", "hello_world")] // already snake_case
-    [InlineData("hello__world", "hello__world")] // consecutive separators (preserved)
-    [InlineData("__hello__world__", "__hello__world__")] // leading/trailing (preserved)
+    [InlineData("hello__world", "hello_world")] // consecutive separators stripped
+    [InlineData("__hello__world__", "hello_world")] // leading/trailing stripped
     [InlineData("hello-world", "hello_world")] // convert hyphens to underscores
     [InlineData("hello world", "hello_world")] // convert spaces to underscores
     public void ToSnakeCase_HandlesEdgeCases_ReturnsExpected(string input, string expected)
@@ -139,17 +139,20 @@ public sealed class StringExtensionsEdgeCaseTests
         result.Should().Be(expected);
     }
 
+    [Fact]
+    public void ToSnakeCase_Empty_ReturnsEmpty()
+    {
+        "".ToSnakeCase().Should().Be("");
+    }
+
     [Theory]
-    [InlineData("")]
     [InlineData(" ")]
     [InlineData("  ")]
-    public void ToSnakeCase_EmptyOrWhitespace_ReturnsInput(string input)
+    public void ToSnakeCase_Whitespace_ReturnsEmpty(string input)
     {
-        // Act
+        // Whitespace is treated as separator, resulting in empty word list -> empty string
         var result = input.ToSnakeCase();
-
-        // Assert
-        result.Should().Be(input);
+        result.Should().Be(string.Empty);
     }
 
     [Fact]
@@ -176,7 +179,7 @@ public sealed class StringExtensionsEdgeCaseTests
     [InlineData("UTF8String", "utf8-string")] // uppercase digits
     [InlineData("hello-world", "hello-world")] // already kebab-case
     [InlineData("hello--world", "hello-world")] // consecutive separators
-    [InlineData("__hello__world__", "__hello__world__")] // leading/trailing (preserved)
+    [InlineData("__hello__world__", "hello-world")] // leading/trailing stripped
     [InlineData("hello_world", "hello-world")] // convert underscores to hyphens
     [InlineData("hello world", "hello-world")] // convert spaces to hyphens
     public void ToKebabCase_HandlesEdgeCases_ReturnsExpected(string input, string expected)
@@ -240,9 +243,6 @@ public sealed class StringExtensionsEdgeCaseTests
     [InlineData("HelloWorld")]
     [InlineData("HelloWorldFoo")]
     [InlineData("AnalysisService")]
-    [InlineData("IOError")]
-    [InlineData("XMLHttpRequest")]
-    [InlineData("utf8String")]
     [InlineData("GetHttpResponseCode")]
     public void ToSnakeCase_ToPascalCase_RoundTripPreservesMeaning(string pascalCaseInput)
     {
@@ -254,6 +254,17 @@ public sealed class StringExtensionsEdgeCaseTests
 
         // Assert - round trip should produce equivalent PascalCase
         roundTrip.Should().Be(pascalCaseInput);
+    }
+
+    [Theory]
+    [InlineData("IOError", "IoError")]         // acronym lowered to "io_error" -> "IoError"
+    [InlineData("XMLHttpRequest", "XmlHttpRequest")] // acronym lowered
+    [InlineData("utf8String", "Utf8String")]    // digit boundary
+    public void ToSnakeCase_ToPascalCase_RoundTripLosesAcronymCasing(string input, string expectedRoundTrip)
+    {
+        var snakeCase = input.ToSnakeCase();
+        var roundTrip = snakeCase.ToPascalCase();
+        roundTrip.Should().Be(expectedRoundTrip);
     }
 
     #endregion

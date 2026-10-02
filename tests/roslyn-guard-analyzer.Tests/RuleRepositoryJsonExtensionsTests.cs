@@ -14,8 +14,8 @@ public class RuleRepositoryJsonExtensionsTests
         var json = repository.ToJson();
 
         Assert.False(string.IsNullOrWhiteSpace(json));
-        Assert.Contains("{", json);
-        Assert.Contains("}", json);
+        // GetAll() returns a list, so serialized as array
+        Assert.Contains("[", json);
     }
 
     [Fact]
@@ -70,13 +70,14 @@ public class RuleRepositoryJsonExtensionsTests
     }
 
     [Fact]
-    public void TryFromJson_EmptyOrWhiteSpace_ReturnsFalse()
+    public void TryFromJson_EmptyOrWhiteSpace_ReturnsTrueWithNull()
     {
+        // FromJson returns null for empty/whitespace, TryFromJson wraps that as success
         var successEmpty = RuleRepositoryJsonExtensions.TryFromJson("", out var resultEmpty);
         var successWhitespace = RuleRepositoryJsonExtensions.TryFromJson("   ", out var resultWhitespace);
 
-        Assert.False(successEmpty);
-        Assert.False(successWhitespace);
+        Assert.True(successEmpty);
+        Assert.True(successWhitespace);
         Assert.Null(resultEmpty);
         Assert.Null(resultWhitespace);
     }

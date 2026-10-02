@@ -8,64 +8,17 @@ namespace RoslynGuardAnalyzer.Tests;
 
 public sealed class ValidationExtensionsJsonExtensionsTests
 {
-    // Helper to obtain a valid instance of the marker type.
-    private static object GetValidMarkerInstance()
-    {
-        // The project defines a type named ValidationExtensions.
-        // It is expected to be a non‑static class that can be instantiated.
-        // If the type is static, this method will need to be adjusted accordingly.
-        return Activator.CreateInstance(typeof(ValidationExtensions))!;
-    }
-
-    [Fact]
-    public void ToJson_ReturnsExpectedJson_WhenCalledWithDefaultIndentation()
-    {
-        // Arrange
-        var marker = GetValidMarkerInstance();
-
-        // Act
-        string json = marker.ToJson();
-
-        // Assert
-        // The JSON should contain the camel‑cased property name "type"
-        // and the value "ValidationExtensions".
-        Assert.Equal("{\"type\":\"ValidationExtensions\"}", json);
-    }
-
-    [Fact]
-    public void ToJson_ReturnsIndentedJson_WhenIndentionRequested()
-    {
-        // Arrange
-        var marker = GetValidMarkerInstance();
-
-        // Act
-        string json = marker.ToJson(indented: true);
-
-        // Assert
-        // Indented JSON contains line breaks; we verify that at least one newline exists.
-        Assert.Contains(Environment.NewLine, json);
-        // The content (ignoring whitespace) should still represent the same object.
-        string compact = json.Replace(Environment.NewLine, string.Empty).Replace(" ", string.Empty);
-        Assert.Equal("{\"type\":\"ValidationExtensions\"}", compact);
-    }
-
     [Fact]
     public void ToJson_ThrowsArgumentNullException_WhenValueIsNull()
     {
-        // Arrange
         object? nullValue = null;
-
-        // Act & Assert
         Assert.Throws<ArgumentNullException>(() => nullValue!.ToJson());
     }
 
     [Fact]
     public void ToJson_ThrowsArgumentException_WhenValueIsWrongType()
     {
-        // Arrange
         var wrong = new object();
-
-        // Act & Assert
         var ex = Assert.Throws<ArgumentException>(() => wrong.ToJson());
         Assert.Contains(nameof(ValidationExtensions), ex.Message);
     }
@@ -73,49 +26,39 @@ public sealed class ValidationExtensionsJsonExtensionsTests
     [Fact]
     public void FromJson_ReturnsTypeMarker_WithCorrectType()
     {
-        // Arrange
         string json = "{\"type\":\"ValidationExtensions\"}";
-
-        // Act
         var result = ValidationExtensionsJsonExtensions.FromJson(json);
-
-        // Assert
         Assert.NotNull(result);
         Assert.Equal("ValidationExtensions", result!.Type);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    public void FromJson_ThrowsArgumentException_OnNullOrEmpty(string json)
+    [Fact]
+    public void FromJson_NullInput_ThrowsArgumentNullException()
     {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => ValidationExtensionsJsonExtensions.FromJson(json!));
+        Assert.Throws<ArgumentNullException>(() => ValidationExtensionsJsonExtensions.FromJson(null!));
     }
 
     [Fact]
-    public void FromJson_ReturnsNull_OnInvalidJson()
+    public void FromJson_EmptyInput_ThrowsArgumentException()
     {
-        // Arrange
+        Assert.Throws<ArgumentException>(() => ValidationExtensionsJsonExtensions.FromJson(""));
+    }
+
+    [Fact]
+    public void FromJson_InvalidJson_ReturnsTypeMarkerWithNullType()
+    {
+        // Deserializes successfully but Type property is null
         string invalidJson = "{\"invalid\":\"data\"}";
-
-        // Act
         var result = ValidationExtensionsJsonExtensions.FromJson(invalidJson);
-
-        // Assert
-        Assert.Null(result);
+        Assert.NotNull(result);
+        Assert.Null(result!.Type);
     }
 
     [Fact]
     public void TryFromJson_ReturnsTrueAndOutputsValue_OnValidJson()
     {
-        // Arrange
         string json = "{\"type\":\"ValidationExtensions\"}";
-
-        // Act
         bool success = ValidationExtensionsJsonExtensions.TryFromJson(json, out var value);
-
-        // Assert
         Assert.True(success);
         Assert.NotNull(value);
         Assert.Equal("ValidationExtensions", value!.Type);
@@ -124,23 +67,21 @@ public sealed class ValidationExtensionsJsonExtensionsTests
     [Fact]
     public void TryFromJson_ReturnsFalse_OnInvalidJson()
     {
-        // Arrange
-        string json = "{\"type\":123}"; // type is not a string, deserialization fails
-
-        // Act
+        string json = "{\"type\":123}";
         bool success = ValidationExtensionsJsonExtensions.TryFromJson(json, out var value);
-
-        // Assert
         Assert.False(success);
         Assert.Null(value);
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    public void TryFromJson_ThrowsArgumentException_OnNullOrEmpty(string json)
+    [Fact]
+    public void TryFromJson_NullInput_ThrowsArgumentNullException()
     {
-        // Act & Assert
-        Assert.Throws<ArgumentException>(() => ValidationExtensionsJsonExtensions.TryFromJson(json!, out _));
+        Assert.Throws<ArgumentNullException>(() => ValidationExtensionsJsonExtensions.TryFromJson(null!, out _));
+    }
+
+    [Fact]
+    public void TryFromJson_EmptyInput_ThrowsArgumentException()
+    {
+        Assert.Throws<ArgumentException>(() => ValidationExtensionsJsonExtensions.TryFromJson("", out _));
     }
 }

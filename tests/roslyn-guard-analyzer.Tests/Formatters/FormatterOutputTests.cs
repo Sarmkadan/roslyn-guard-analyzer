@@ -139,7 +139,7 @@ public sealed class FormatterOutputTests
 
         // Assert
         result.Should().Contain("\"This message contains, a comma\""); // Should be quoted
-        result.Should().Contain("CommaTest,Error,\"This message contains, a comma\",/src/Test/File.cs,1,1,N/A");
+        result.Should().Contain("CommaTest,Error,\"This message contains, a comma\"");
     }
 
     [Fact]

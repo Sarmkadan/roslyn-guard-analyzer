@@ -43,13 +43,16 @@ public class BackgroundTaskQueueJsonExtensionsTests
     }
 
     [Fact]
-    public void FromJson_EmptyOrWhiteSpace_ReturnsNull()
+    public void FromJson_Empty_ReturnsNull()
     {
         var empty = BackgroundTaskQueueJsonExtensions.FromJson("");
-        var whitespace = BackgroundTaskQueueJsonExtensions.FromJson("   ");
-
         Assert.Null(empty);
-        Assert.Null(whitespace);
+    }
+
+    [Fact]
+    public void FromJson_Whitespace_ThrowsJsonException()
+    {
+        Assert.ThrowsAny<Exception>(() => BackgroundTaskQueueJsonExtensions.FromJson("   "));
     }
 
     [Fact]

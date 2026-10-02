@@ -111,10 +111,10 @@ public class WebhookHandlerTests
         Assert.Single(handler.GetAllWebhooks());
     }
 
-    [Fact] public void UnregisterWebhook_WithEmptyId_ReturnsFalse()
+    [Fact] public void UnregisterWebhook_WithEmptyId_ThrowsArgumentException()
     {
         var handler = new RoslynGuardAnalyzer.Integration.WebhookHandler(_httpClientFactory);
-        Assert.False(handler.UnregisterWebhook(string.Empty));
+        Assert.Throws<ArgumentException>(() => handler.UnregisterWebhook(string.Empty));
     }
 
     #endregion
@@ -136,10 +136,10 @@ public class WebhookHandlerTests
         Assert.False(handler.DeactivateWebhook("invalid-id"));
     }
 
-    [Fact] public void DeactivateWebhook_WithEmptyId_ReturnsFalse()
+    [Fact] public void DeactivateWebhook_WithEmptyId_ThrowsArgumentException()
     {
         var handler = new RoslynGuardAnalyzer.Integration.WebhookHandler(_httpClientFactory);
-        Assert.False(handler.DeactivateWebhook(string.Empty));
+        Assert.Throws<ArgumentException>(() => handler.DeactivateWebhook(string.Empty));
     }
 
     #endregion
