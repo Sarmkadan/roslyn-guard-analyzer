@@ -84,6 +84,15 @@ public sealed class CodeFix
     }
 
     /// <summary>
+    /// Returns a string representation of the code fix, including the fix title/id and target location.
+    /// </summary>
+    /// <returns>A string in the form <c>[RuleId] Title — FilePath:StartLine</c>.</returns>
+    public override string ToString()
+    {
+        return GetSummary();
+    }
+
+    /// <summary>
     /// Determines whether this fix has the minimum data required to be applied.
     /// </summary>
     /// <returns><see langword="true"/> if all required fields are populated; otherwise <see langword="false"/>.</returns>

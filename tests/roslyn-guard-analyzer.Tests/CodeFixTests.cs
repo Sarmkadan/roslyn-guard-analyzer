@@ -62,6 +62,25 @@ public class CodeFixTests
     }
 
     [Fact]
+    public void ToString_Returns_Expected_Format()
+    {
+        // Arrange
+        var fix = new CodeFix
+        {
+            RuleId = "RG001",
+            Title = "Rename method",
+            FilePath = "/src/Program.cs",
+            StartLine = 42
+        };
+
+        // Act
+        var result = fix.ToString();
+
+        // Assert
+        Assert.Equal("[RG001] Rename method — /src/Program.cs:42", result);
+    }
+
+    [Fact]
     public void IsValid_Returns_True_When_All_Required_Fields_Are_Present()
     {
         // Arrange
