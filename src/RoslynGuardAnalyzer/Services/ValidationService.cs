@@ -179,7 +179,7 @@ public sealed class ValidationService : IValidationService
 
         try
         {
-            _ = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.None, CustomAnalysisRuleJsonExtensions.RegexCompilationTimeout);
+            _ = new System.Text.RegularExpressions.Regex(pattern, System.Text.RegularExpressions.RegexOptions.None, System.Text.RegularExpressions.Regex.InfiniteMatchTimeout);
             return true;
         }
         catch (System.Text.RegularExpressions.RegexParseException)

@@ -380,7 +380,7 @@ public static class StringExtensions
 
         try
         {
-            return System.Text.RegularExpressions.Regex.IsMatch(text, pattern, System.Text.RegularExpressions.RegexOptions.None, CustomAnalysisRuleJsonExtensions.RegexCompilationTimeout);
+            return System.Text.RegularExpressions.Regex.IsMatch(text, pattern, System.Text.RegularExpressions.RegexOptions.None, System.Text.RegularExpressions.Regex.InfiniteMatchTimeout);
         }
         catch (System.Text.RegularExpressions.RegexParseException)
         {
