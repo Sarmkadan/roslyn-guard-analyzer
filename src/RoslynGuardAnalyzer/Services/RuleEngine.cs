@@ -22,6 +22,31 @@ namespace RoslynGuardAnalyzer.Services;
 /// </summary>
 public sealed class RuleEngine : IRuleEngine
 {
+    private const string TestProjectSuffix = ".Tests";
+    private const string GuardSkipCommentPrefix = "// ";
+    private const string DiagnosticSeverityKey = ".severity";
+    private const string DotNetDiagnosticPrefix = "dotnet_diagnostic";
+    private const string TaskReturnType = "Task";
+    private const string NullableAnnotation = "?";
+    private const string SeverityNone = "none";
+    private const string SeverityError = "error";
+    private const string SeverityWarning = "warning";
+    private const string SeveritySuggestion = "suggestion";
+    private const string SeverityInfo = "info";
+    private const string PropertyKind = "Property";
+    private const string FieldKind = "Field";
+    private const string PascalCaseNaming = "PascalCase";
+    private const int LineIndexAdjustment = 2;
+    private const int MinLineNumberForPreviousLine = 2;
+    private const string IllegalDependencyMessage = "Repository '{0}' depends on layer '{1}' (illegal dependency)";
+    private const string MethodReturnsTaskNotAsyncMessage = "Method '{0}' returns Task but is not marked as async";
+    private const string AsyncMethodShouldEndWithSuffixMessage = "Async method '{0}' should end with '{1}' suffix";
+    private const string ElementNotNullableAnnotatedMessage = "{0} '{1}' of reference type '{2}' is not nullable-annotated; mark it as nullable ('{3}') or ensure it is always initialized to a non-null value";
+    private const string InterfaceShouldStartWithPrefixMessage = "Interface '{0}' should start with '{1}'";
+    private const string MethodShouldUsePascalCaseMessage = "Method '{0}' should use {1} naming";
+    private const string PropertyShouldUsePascalCaseMessage = "Property '{0}' should use {1} naming";
+    private const string PrivateFieldShouldStartWithPrefixMessage = "Private field '{0}' should start with '{1}'";
+
     private readonly IRuleRegistry _ruleRegistry;
 
     public RuleEngine(IRuleRegistry ruleRegistry)
@@ -137,7 +162,7 @@ public sealed class RuleEngine : IRuleEngine
 
             foreach (var dependency in element.Dependencies)
             {
-                if (dependency.EndsWith(".Tests", StringComparison.OrdinalIgnoreCase)) continue;
+                if (dependency.EndsWith(TestProjectSuffix, StringComparison.OrdinalIgnoreCase)) continue;
 
                 var dependencyElement = elements
                     .FirstOrDefault(e => e.Name == dependency || e.GetFullyQualifiedName() == dependency);
@@ -157,7 +182,7 @@ public sealed class RuleEngine : IRuleEngine
                         violations.Add(new RuleViolation(
                             rule.Id,
                             rule.Name,
-                            $"Repository '{element.Name}' depends on layer '{dependency}' (illegal dependency)",
+                            string.Format(IllegalDependencyMessage, element.Name, dependency),
                             element.FilePath)
                         {
                             LineNumber = element.StartLineNumber,
@@ -196,19 +221,19 @@ public sealed class RuleEngine : IRuleEngine
         }
 
         // Fall back to reading the source file for inline comment directives.
-        if (string.IsNullOrEmpty(element.FilePath) || element.StartLineNumber <= 1 || !System.IO.File.Exists(element.FilePath))
+        if (string.IsNullOrEmpty(element.FilePath) || element.StartLineNumber <= MinLineNumberForPreviousLine || !System.IO.File.Exists(element.FilePath))
             return false;
 
         var lines = _fileLineCache.GetOrAdd(element.FilePath, static path => System.IO.File.ReadAllLines(path));
 
-        var prevLineIndex = element.StartLineNumber - 2; // convert 1-based to 0-based, then go back one line
+        var prevLineIndex = element.StartLineNumber - LineIndexAdjustment; // convert 1-based to 0-based, then go back one line
         if (prevLineIndex < 0 || prevLineIndex >= lines.Length)
             return false;
 
         var prevLine = lines[prevLineIndex].Trim();
 
-        return prevLine.Equals($"// {AnalyzerConstants.Suppression.GuardSkipAll}", StringComparison.OrdinalIgnoreCase) ||
-               prevLine.StartsWith($"// {AnalyzerConstants.Suppression.GuardSkipPrefix}{ruleId}", StringComparison.OrdinalIgnoreCase);
+        return prevLine.Equals($"{GuardSkipCommentPrefix}{AnalyzerConstants.Suppression.GuardSkipAll}", StringComparison.OrdinalIgnoreCase) ||
+               prevLine.StartsWith($"{GuardSkipCommentPrefix}{AnalyzerConstants.Suppression.GuardSkipPrefix}{ruleId}", StringComparison.OrdinalIgnoreCase);
     }
 
     private SeverityLevel? GetSeverity(AnalysisRule rule, string filePath)
@@ -226,7 +251,7 @@ public sealed class RuleEngine : IRuleEngine
                 foreach (var line in lines)
                 {
                     var trimmed = line.Trim();
-                    if (trimmed.StartsWith($"dotnet_diagnostic.{rule.Id}.severity", StringComparison.OrdinalIgnoreCase))
+                    if (trimmed.StartsWith($"{DotNetDiagnosticPrefix}.{rule.Id}{DiagnosticSeverityKey}", StringComparison.OrdinalIgnoreCase))
                     {
                         var parts = trimmed.Split('=');
                         if (parts.Length == 2)
@@ -284,7 +309,7 @@ public sealed class RuleEngine : IRuleEngine
         foreach (var element in elements.Where(e => e.ElementType == CodeElementType.Method))
         {
             // Methods returning Task should be async
-            if (element.ReturnType?.Contains("Task", StringComparison.OrdinalIgnoreCase) == true
+            if (element.ReturnType?.Contains(TaskReturnType, StringComparison.OrdinalIgnoreCase) == true
                 && !element.IsAsync)
             {
                 var sev = GetSeverity(rule, element.FilePath);
@@ -293,7 +318,7 @@ public sealed class RuleEngine : IRuleEngine
                     violations.Add(new RuleViolation(
                         rule.Id,
                         rule.Name,
-                        $"Method '{element.Name}' returns Task but is not marked as async",
+                        string.Format(MethodReturnsTaskNotAsyncMessage, element.Name),
                         element.FilePath)
                     {
                         LineNumber = element.StartLineNumber,
@@ -312,7 +337,7 @@ public sealed class RuleEngine : IRuleEngine
                     violations.Add(new RuleViolation(
                         rule.Id,
                         rule.Name,
-                        $"Async method '{element.Name}' should end with '{AnalyzerConstants.Naming.AsyncSuffix}' suffix",
+                        string.Format(AsyncMethodShouldEndWithSuffixMessage, element.Name, AnalyzerConstants.Naming.AsyncSuffix),
                         element.FilePath)
                     {
                         LineNumber = element.StartLineNumber,
@@ -364,12 +389,11 @@ public sealed class RuleEngine : IRuleEngine
             if (!sev.HasValue)
                 continue;
 
-            var kind = element.ElementType == CodeElementType.Property ? "Property" : "Field";
+            var kind = element.ElementType == CodeElementType.Property ? PropertyKind : FieldKind;
             violations.Add(new RuleViolation(
                 rule.Id,
                 rule.Name,
-                $"{kind} '{element.Name}' of reference type '{element.ReturnType}' is not nullable-annotated; " +
-                "mark it as nullable ('?') or ensure it is always initialized to a non-null value",
+                string.Format(ElementNotNullableAnnotatedMessage, kind, element.Name, element.ReturnType, NullableAnnotation),
                 element.FilePath)
             {
                 LineNumber = element.StartLineNumber,
@@ -391,16 +415,16 @@ public sealed class RuleEngine : IRuleEngine
         return element.ElementType switch
         {
             CodeElementType.Interface when !element.Name.StartsWith(AnalyzerConstants.Naming.InterfacePrefix) =>
-                new() { $"Interface '{element.Name}' should start with '{AnalyzerConstants.Naming.InterfacePrefix}'" },
+                new() { string.Format(InterfaceShouldStartWithPrefixMessage, element.Name, AnalyzerConstants.Naming.InterfacePrefix) },
 
             CodeElementType.Method when !char.IsUpper(element.Name[0]) =>
-                new() { $"Method '{element.Name}' should use PascalCase naming" },
+                new() { string.Format(MethodShouldUsePascalCaseMessage, element.Name, PascalCaseNaming) },
 
             CodeElementType.Property when !char.IsUpper(element.Name[0]) =>
-                new() { $"Property '{element.Name}' should use PascalCase naming" },
+                new() { string.Format(PropertyShouldUsePascalCaseMessage, element.Name, PascalCaseNaming) },
 
             CodeElementType.Field when !element.IsPublic && !element.Name.StartsWith(AnalyzerConstants.Naming.PrivateFieldPrefix) =>
-                new() { $"Private field '{element.Name}' should start with '{AnalyzerConstants.Naming.PrivateFieldPrefix}'" },
+                new() { string.Format(PrivateFieldShouldStartWithPrefixMessage, element.Name, AnalyzerConstants.Naming.PrivateFieldPrefix) },
 
             _ => issues
         };
