@@ -42,8 +42,9 @@ public sealed class BackgroundTaskQueue
         public DateTime EnqueuedAt { get; init; } = DateTime.UtcNow;
     }
 
+    private const int InitialSemaphoreCount = 0;
     private readonly ConcurrentQueue<BackgroundTask> _queue = [];
-    private readonly SemaphoreSlim _semaphore = new(0);
+    private readonly SemaphoreSlim _semaphore = new(InitialSemaphoreCount);
     private volatile bool _isRunning;
 
     /// <summary>
@@ -154,6 +155,10 @@ public sealed class BackgroundTaskQueue
 /// </summary>
 public sealed class BackgroundTaskProcessor : IDisposable
 {
+    private const int ErrorDelayMilliseconds = 1000;
+    private const string ErrorProcessingTaskMessage = "Error processing background task {0}: {1}";
+    private const string ErrorProcessorMessage = "Error in background task processor: {0}";
+
     private readonly BackgroundTaskQueue _queue;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private Task? _processingTask;
@@ -223,7 +228,7 @@ public sealed class BackgroundTaskProcessor : IDisposable
                     }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine($"Error processing background task {task.Id}: {ex.Message}");
+                        Console.Error.WriteLine(string.Format(ErrorProcessingTaskMessage, task.Id, ex.Message));
                     }
                 }
             }
@@ -233,8 +238,8 @@ public sealed class BackgroundTaskProcessor : IDisposable
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Error in background task processor: {ex.Message}");
-                await Task.Delay(1000, cancellationToken);
+                Console.Error.WriteLine(string.Format(ErrorProcessorMessage, ex.Message));
+                await Task.Delay(ErrorDelayMilliseconds, cancellationToken);
             }
         }
     }
