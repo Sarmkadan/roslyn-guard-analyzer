@@ -17,6 +17,27 @@ public sealed class HelpGenerator
 {
     private const string AppName = "roslyn-guard-analyzer";
     private const string AppVersion = "1.0.0";
+    private const string UsageArguments = "[OPTIONS] [PROJECT_PATH]";
+
+    private const string ProjectOption = "--project";
+    private const string FileOption = "--file";
+    private const string FormatOption = "--format";
+    private const string OutputOption = "--output";
+    private const string VerboseOption = "--verbose";
+    private const string HelpOption = "--help";
+    private const string ShortHelpOption = "-h";
+    private const string VersionOption = "--version";
+    private const string ShortVersionOption = "-v";
+
+    private const string DescriptionVerbose = "Verbose output";
+    private const string DescriptionShowHelp = "Show this help message";
+    private const string DescriptionShowVersion = "Show version information";
+
+    private const string SectionUsage = "USAGE:";
+    private const string SectionExamples = "EXAMPLES:";
+    private const string SectionOptions = "OPTIONS:";
+    private const string SectionSupportedRules = "SUPPORTED RULES:";
+    private const string SectionExitCodes = "EXIT CODES:";
 
     /// <summary>
     /// Generates complete help text including usage and all options.
@@ -30,26 +51,26 @@ public sealed class HelpGenerator
         sb.AppendLine("Roslyn-based code analyzer enforcing architectural rules");
         sb.AppendLine();
 
-        sb.AppendLine("USAGE:");
-        sb.AppendLine($"  {AppName} [OPTIONS] [PROJECT_PATH]");
+        sb.AppendLine(SectionUsage);
+        sb.AppendLine($"  {AppName} {UsageArguments}");
         sb.AppendLine();
 
-        sb.AppendLine("EXAMPLES:");
+        sb.AppendLine(SectionExamples);
         sb.AppendLine($"  {AppName} ./src/MyProject.csproj");
         sb.AppendLine($"  {AppName} --project=./src/MyProject --format=json --output=report.json");
         sb.AppendLine($"  {AppName} --file=./src/MyClass.cs --verbose");
         sb.AppendLine($"  {AppName} --project=. --rule-filter=LayerDependency,NamingConvention");
         sb.AppendLine();
 
-        sb.AppendLine("OPTIONS:");
+        sb.AppendLine(SectionOptions);
         sb.AppendLine();
 
         var options = new[]
         {
-            new { Name = "--project", Description = "Path to project file (.csproj) or directory" },
-            new { Name = "--file", Description = "Path to single C# file to analyze" },
-            new { Name = "--format", Description = "Output format: text, json, csv, html, xml (default: text)" },
-            new { Name = "--output", Description = "Write output to file (default: stdout)" },
+            new { Name = ProjectOption, Description = "Path to project file (.csproj) or directory" },
+            new { Name = FileOption, Description = "Path to single C# file to analyze" },
+            new { Name = FormatOption, Description = "Output format: text, json, csv, html, xml (default: text)" },
+            new { Name = OutputOption, Description = "Write output to file (default: stdout)" },
             new { Name = "--report-type", Description = "Report type: summary, detailed, violations (default: summary)" },
             new { Name = "--no-report", Description = "Skip report generation" },
             new { Name = "--config", Description = "Path to configuration file" },
@@ -58,12 +79,12 @@ public sealed class HelpGenerator
             new { Name = "--threads", Description = "Number of parallel threads (default: CPU count)" },
             new { Name = "--skip-cache", Description = "Skip analysis result caching" },
             new { Name = "--no-fail-on-violations", Description = "Exit with 0 even if violations found" },
-            new { Name = "--verbose", Description = "Verbose output" },
+            new { Name = VerboseOption, Description = DescriptionVerbose },
             new { Name = "--log-level", Description = "Log level: 0=silent, 1=error, 2=warn, 3=info, 4=debug" },
-            new { Name = "-h", Description = "Show this help message" },
-            new { Name = "--help", Description = "Show this help message" },
-            new { Name = "-v", Description = "Show version information" },
-            new { Name = "--version", Description = "Show version information" },
+            new { Name = ShortHelpOption, Description = DescriptionShowHelp },
+            new { Name = HelpOption, Description = DescriptionShowHelp },
+            new { Name = ShortVersionOption, Description = DescriptionShowVersion },
+            new { Name = VersionOption, Description = DescriptionShowVersion },
         };
 
         foreach (var option in options)
@@ -79,7 +100,7 @@ public sealed class HelpGenerator
 
         sb.AppendLine();
 
-        sb.AppendLine("SUPPORTED RULES:");
+        sb.AppendLine(SectionSupportedRules);
         sb.AppendLine("  • LayerDependency       - Enforces layer dependency constraints");
         sb.AppendLine("  • NamingConvention      - Validates naming conventions");
         sb.AppendLine("  • AsyncPatterns         - Checks async/await usage patterns");
@@ -87,7 +108,7 @@ public sealed class HelpGenerator
         sb.AppendLine("  • CircularDependency    - Detects circular references");
         sb.AppendLine();
 
-        sb.AppendLine("EXIT CODES:");
+        sb.AppendLine(SectionExitCodes);
         sb.AppendLine("  0                       Success, no violations");
         sb.AppendLine("  1                       Success, but violations found");
         sb.AppendLine("  -1                      Fatal error during analysis");
@@ -106,15 +127,15 @@ public sealed class HelpGenerator
 
         sb.AppendLine($"{AppName} - Architectural Rules Analyzer");
         sb.AppendLine();
-        sb.AppendLine("Usage: roslyn-guard-analyzer [OPTIONS] [PROJECT_PATH]");
+        sb.AppendLine($"Usage: {AppName} {UsageArguments}");
         sb.AppendLine();
         sb.AppendLine("Common options:");
-        sb.AppendLine("  --project PATH          Analyze project at PATH");
-        sb.AppendLine("  --file PATH             Analyze single file at PATH");
-        sb.AppendLine("  --format FORMAT         Output format (text|json|csv|html|xml)");
-        sb.AppendLine("  --output FILE           Write output to FILE");
-        sb.AppendLine("  --verbose               Verbose output");
-        sb.AppendLine("  -h, --help              Show detailed help");
+        sb.AppendLine($"  {ProjectOption} PATH          Analyze project at PATH");
+        sb.AppendLine($"  {FileOption} PATH             Analyze single file at PATH");
+        sb.AppendLine($"  {FormatOption} FORMAT         Output format (text|json|csv|html|xml)");
+        sb.AppendLine($"  {OutputOption} FILE           Write output to FILE");
+        sb.AppendLine($"  {VerboseOption}               {DescriptionVerbose}");
+        sb.AppendLine($"  {ShortHelpOption}, {HelpOption}              Show detailed help");
         sb.AppendLine();
 
         return sb.ToString();
@@ -139,7 +160,7 @@ public sealed class HelpGenerator
 
         var sb = new StringBuilder();
         sb.AppendLine($"Error: {error}");
-        sb.AppendLine($"Use '{AppName} --help' for more information.");
+        sb.AppendLine($"Use '{AppName} {HelpOption}' for more information.");
         return sb.ToString();
     }
 
@@ -148,7 +169,7 @@ public sealed class HelpGenerator
     /// </summary>
     public static string GenerateUsageSummary()
     {
-        return $"Usage: {AppName} [OPTIONS] [PROJECT_PATH]" + Environment.NewLine +
-               $"       Use '{AppName} --help' for detailed information" + Environment.NewLine;
+        return $"Usage: {AppName} {UsageArguments}" + Environment.NewLine +
+               $"       Use '{AppName} {HelpOption}' for detailed information" + Environment.NewLine;
     }
 }
