@@ -25,6 +25,8 @@ public interface IMiddleware
     /// Executes the middleware logic on the given context.
     /// Calls next() to invoke the next middleware in the pipeline.
     /// </summary>
+    /// <param name="context">The pipeline context.</param>
+    /// <param name="next">The delegate to invoke the next middleware in the pipeline.</param>
     Task InvokeAsync(PipelineContext context, MiddlewareDelegate next);
 }
 
@@ -39,12 +41,39 @@ public delegate Task MiddlewareDelegate(PipelineContext context);
 /// </summary>
 public sealed class PipelineContext
 {
+    /// <summary>
+    /// Gets or sets the project path being analyzed.
+    /// </summary>
     public required string ProjectPath { get; init; }
+
+    /// <summary>
+    /// Gets or sets the unique analysis identifier.
+    /// </summary>
     public required string AnalysisId { get; init; }
+
+    /// <summary>
+    /// Gets the dictionary for storing arbitrary context items.
+    /// </summary>
     public Dictionary<string, object> Items { get; } = [];
+
+    /// <summary>
+    /// Gets or sets the start time in milliseconds.
+    /// </summary>
     public long StartTimeMilliseconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets the end time in milliseconds.
+    /// </summary>
     public long EndTimeMilliseconds { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error message if analysis failed.
+    /// </summary>
     public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the analysis is cancelled.
+    /// </summary>
     public bool IsCancelled { get; set; }
 
     /// <summary>
