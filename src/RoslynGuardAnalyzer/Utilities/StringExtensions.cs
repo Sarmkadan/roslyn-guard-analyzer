@@ -525,4 +525,16 @@ public static class StringExtensions
         // Clamp to maxDistance + 1 if exceeded
         return distance > maxDistance ? maxDistance + 1 : distance;
     }
+
+    /// <summary>
+    /// Converts all backslashes in the string to forward slashes.
+    /// </summary>
+    /// <param name="text">The input string, potentially containing backslashes.</param>
+    /// <returns>A string with all backslashes replaced by forward slashes, or <see langword="null"/> if the input is <see langword="null"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="text"/> is <see langword="null"/></exception>
+    public static string ToForwardSlashes(this string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        return text.Replace('\\', '/');
+    }
 }

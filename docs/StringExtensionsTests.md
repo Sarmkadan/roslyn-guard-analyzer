@@ -28,6 +28,12 @@ This test class contains unit tests for the string extension methods defined in 
 - **Return Value**: `void`.
 - **Exceptions**: Throws an exception if the distance is not zero for identical inputs.
 
+### ToForwardSlashes_BackslashesConvertedToForwardSlashes_ReturnsCorrectPath
+- **Purpose**: Verifies that the `ToForwardSlashes` extension correctly converts backslashes to forward slashes in a path string.
+- **Parameters**: None.
+- **Return Value**: `void`.
+- **Exceptions**: Throws an exception if the conversion does not produce the expected forward-slash path.
+
 ### CountOccurrences_NonOverlappingSubstring_ReturnsCorrectCount
 - **Purpose**: Verifies that the `CountOccurrences` extension correctly counts non‑overlapping occurrences of a substring within a source string.
 - **Parameters**: None.
