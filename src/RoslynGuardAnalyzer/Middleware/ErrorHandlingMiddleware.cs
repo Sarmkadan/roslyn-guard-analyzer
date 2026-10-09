@@ -27,6 +27,9 @@ public sealed class ErrorHandlingMiddleware : IMiddleware
 
     public async Task InvokeAsync(PipelineContext context, MiddlewareDelegate next)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(next);
+
         try
         {
             await next(context);
