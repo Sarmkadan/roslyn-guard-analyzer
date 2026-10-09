@@ -320,4 +320,40 @@ public sealed class StringExtensionsEdgeCaseTests
     }
 
     #endregion
+
+    #region ToForwardSlashes Edge Cases
+
+    [Theory]
+    [InlineData("folder\\subfolder\\file.txt", "folder/subfolder/file.txt")]
+    [InlineData("folder/subfolder/file.txt", "folder/subfolder/file.txt")] // already forward slashes
+    [InlineData("\\\\server\\share\\file.txt", "//server/share/file.txt")] // UNC path
+    [InlineData("C:\\Users\\Name\\Docs\\file.txt", "C:/Users/Name/Docs/file.txt")] // Windows absolute path
+    [InlineData("/home/user/docs/file.txt", "/home/user/docs/file.txt")] // Unix absolute path
+    [InlineData("relative\\path\\to\\file", "relative/path/to/file")] // relative path
+    [InlineData("single\\file", "single/file")] // single backslash
+    [InlineData("no\\slashes", "no/slashes")] // no slashes
+    [InlineData("", "")] // empty string
+    [InlineData("   ", "   ")] // spaces only
+    [InlineData("\\\\\\\\", "////")] // only backslashes
+    [InlineData("////", "////")] // only forward slashes
+    public void ToForwardSlashes_HandlesEdgeCases_ReturnsExpected(string input, string expected)
+    {
+        // Act
+        var result = input.ToForwardSlashes();
+
+        // Assert
+        result.Should().Be(expected);
+    }
+
+    [Fact]
+    public void ToForwardSlashes_NullInput_ThrowsArgumentNullException()
+    {
+        // Arrange
+        string? nullInput = null;
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => nullInput.ToForwardSlashes());
+    }
+
+    #endregion
 }

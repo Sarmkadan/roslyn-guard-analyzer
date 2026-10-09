@@ -136,6 +136,14 @@ Computes the Levenshtein distance with an optional maximum distance threshold fo
 
 **Note**: The algorithm uses the two-row variant with O(min(m,n)) space complexity and includes early-exit optimization for performance when only checking if strings are "close enough".
 
+### `ToForwardSlashes`
+
+Converts all backslashes in the string to forward slashes.
+
+- **Parameters**: `this string text` – the input string, potentially containing backslashes.
+- **Returns**: `string` – a string with all backslashes replaced by forward slashes, or <see langword="null"/> if the input is <see langword="null"/>.
+- **Throws**: `ArgumentNullException` if <paramref name="text"/> is <see langword="null"/>.
+
 ## Usage
 
 ```csharp

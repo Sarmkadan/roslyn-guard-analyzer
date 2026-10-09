@@ -80,6 +80,22 @@ public sealed class StringExtensionsTests
     }
 
     /// <summary>
+    /// Tests the ToForwardSlashes method.
+    /// </summary>
+    [Fact]
+    public void ToForwardSlashes_BackslashesConvertedToForwardSlashes_ReturnsCorrectPath()
+    {
+        // Arrange
+        const string input = "folder\\subfolder\\file.txt";
+
+        // Act
+        var result = input.ToForwardSlashes();
+
+        // Assert
+        result.Should().Be("folder/subfolder/file.txt");
+    }
+
+    /// <summary>
     /// Tests the CountOccurrences method.
     /// </summary>
     /// <param name="text">The text to search in.</param>
