@@ -26,15 +26,18 @@ namespace RoslynGuardAnalyzer.Services;
 /// </summary>
 public static class ParallelAnalysisConfig
 {
+    private const int MaxFileParallelismCap = 8;
+    private const int MaxRuleParallelismCap = 4;
+
     /// <summary>
     /// Maximum degree of parallelism for file processing
     /// </summary>
-    public static int MaxDegreeOfParallelism { get; set; } = Math.Min(Environment.ProcessorCount, 8);
+    public static int MaxDegreeOfParallelism { get; set; } = Math.Min(Environment.ProcessorCount, MaxFileParallelismCap);
 
     /// <summary>
     /// Maximum degree of parallelism for rule execution
     /// </summary>
-    public static int MaxRuleParallelism { get; set; } = Math.Min(Environment.ProcessorCount, 4);
+    public static int MaxRuleParallelism { get; set; } = Math.Min(Environment.ProcessorCount, MaxRuleParallelismCap);
 }
 
 /// <summary>
@@ -42,6 +45,22 @@ public static class ParallelAnalysisConfig
 /// </summary>
 public sealed class AnalysisService : IAnalysisService
 {
+    private const string DefaultTargetFramework = "net10.0";
+    private const string CSharpFileExtension = ".cs";
+    private const string CSharpSearchPattern = "*" + CSharpFileExtension;
+
+    private const string ProjectPathRequiredMessage = "Project path cannot be null or empty.";
+    private const string FilePathRequiredMessage = "File path cannot be null or empty.";
+    private const string InvalidProjectPathMessage = "Invalid project path";
+    private const string FileNotFoundPrefix = "File not found: ";
+    private const string UnsupportedFileTypeMessage = "Only C# files (" + CSharpFileExtension + ") are supported";
+    private const string AnalysisFailedPrefix = "Analysis failed: ";
+    private const string FileAnalysisFailedPrefix = "File analysis failed: ";
+    private const string ProjectAnalysisErrorPrefix = "Failed to analyze project at ";
+    private const string FileAnalysisErrorPrefix = "Failed to analyze file ";
+    private const string ParseErrorPrefix = "Error parsing file: ";
+    private const string ParseWarningPrefix = "Warning: Could not parse ";
+
     private readonly IRuleEngine _ruleEngine;
     private readonly IValidationService _validationService;
 
@@ -57,11 +76,11 @@ public sealed class AnalysisService : IAnalysisService
     public async Task<AnalysisResult> AnalyzeProjectAsync(string projectPath)
     {
         if (string.IsNullOrWhiteSpace(projectPath))
-            throw new ArgumentException("Project path cannot be null or empty.", nameof(projectPath));
+            throw new ArgumentException(ProjectPathRequiredMessage, nameof(projectPath));
 
         var validation = _validationService.ValidateProjectPath(projectPath);
         if (!validation.IsValid)
-            throw new ConfigurationException(validation.Error ?? "Invalid project path");
+            throw new ConfigurationException(validation.Error ?? InvalidProjectPathMessage);
 
         var result = new AnalysisResult(
             Path.GetFileNameWithoutExtension(projectPath),
@@ -89,8 +108,8 @@ public sealed class AnalysisService : IAnalysisService
         }
         catch (Exception ex)
         {
-            result.MarkAsFailed($"Analysis failed: {ex.Message}");
-            throw new AnalysisException($"Failed to analyze project at {projectPath}", ex);
+            result.MarkAsFailed($"{AnalysisFailedPrefix}{ex.Message}");
+            throw new AnalysisException($"{ProjectAnalysisErrorPrefix}{projectPath}", ex);
         }
 
         return result;
@@ -102,13 +121,13 @@ public sealed class AnalysisService : IAnalysisService
     public async Task<AnalysisResult> AnalyzeFileAsync(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+            throw new ArgumentException(FilePathRequiredMessage, nameof(filePath));
 
         if (!File.Exists(filePath))
-            throw new FileAccessException(filePath, $"File not found: {filePath}");
+            throw new FileAccessException(filePath, $"{FileNotFoundPrefix}{filePath}");
 
-        if (!filePath.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
-            throw new FileAccessException(filePath, "Only C# files (.cs) are supported");
+        if (!filePath.EndsWith(CSharpFileExtension, StringComparison.OrdinalIgnoreCase))
+            throw new FileAccessException(filePath, UnsupportedFileTypeMessage);
 
         var result = new AnalysisResult(
             Path.GetFileNameWithoutExtension(filePath),
@@ -132,8 +151,8 @@ public sealed class AnalysisService : IAnalysisService
         }
         catch (Exception ex)
         {
-            result.MarkAsFailed($"File analysis failed: {ex.Message}");
-            throw new AnalysisException($"Failed to analyze file {filePath}", ex);
+            result.MarkAsFailed($"{FileAnalysisFailedPrefix}{ex.Message}");
+            throw new AnalysisException($"{FileAnalysisErrorPrefix}{filePath}", ex);
         }
 
         return result;
@@ -150,7 +169,7 @@ public sealed class AnalysisService : IAnalysisService
 
         var projectDir = Path.GetDirectoryName(projectPath) ?? Directory.GetCurrentDirectory();
 
-        var csFiles = Directory.GetFiles(projectDir, "*.cs", SearchOption.AllDirectories);
+        var csFiles = Directory.GetFiles(projectDir, CSharpSearchPattern, SearchOption.AllDirectories);
         foreach (var file in csFiles)
         {
             // Skip build output and VCS directories. Match whole path segments only,
@@ -162,8 +181,8 @@ public sealed class AnalysisService : IAnalysisService
         }
 
         // Set .NET 10 as default
-        project.TargetFramework = "net10.0";
-        project.SetProperty("TargetFramework", "net10.0");
+        project.TargetFramework = DefaultTargetFramework;
+        project.SetProperty("TargetFramework", DefaultTargetFramework);
 
         return project;
     }
@@ -219,14 +238,14 @@ public sealed class AnalysisService : IAnalysisService
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                parseExceptions.Add(new ParseException(file, $"Error parsing file: {ex.Message}", ex));
+                parseExceptions.Add(new ParseException(file, $"{ParseErrorPrefix}{ex.Message}", ex));
             }
         });
 
         // Log parse exceptions
         foreach (var ex in parseExceptions)
         {
-            Console.WriteLine($"Warning: Could not parse {ex.Message}");
+            Console.WriteLine($"{ParseWarningPrefix}{ex.Message}");
         }
 
         // Merge partial classes across multiple files
@@ -380,7 +399,7 @@ public sealed class AnalysisService : IAnalysisService
         }
         catch (Exception ex)
         {
-            throw new ParseException(filePath, $"Error parsing file: {ex.Message}", ex);
+            throw new ParseException(filePath, $"{ParseErrorPrefix}{ex.Message}", ex);
         }
 
         return elements;
