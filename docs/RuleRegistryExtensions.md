@@ -46,6 +46,20 @@ Returns the number of rules registered under a specific category.
   - `ArgumentNullException`: If `registry` or `category` is `null`.
 
 ---
+
+### `GetRulesBySeverity`
+
+Returns all rules whose `DefaultSeverity` matches the specified level.
+
+- **Parameters**
+  - `registry` (`RuleRegistry`): The rule registry to query.
+  - `severity` (`SeverityLevel`): The default severity level to filter rules by.
+- **Returns**
+  - `IReadOnlyList<AnalysisRule>`: The rules with the specified default severity; empty if none match.
+- **Throws**
+  - `ArgumentNullException`: If `registry` is `null`.
+
+---
 ### `GetAllRuleIds`
 
 Enumerates all rule identifiers registered in the registry.

@@ -72,6 +72,23 @@ public static class RuleRegistryExtensions
     }
 
     /// <summary>
+    /// Gets all rules whose default severity matches the specified level.
+    /// </summary>
+    /// <param name="registry">The rule registry instance.</param>
+    /// <param name="severity">The default severity level to filter rules by.</param>
+    /// <returns>A read-only list of the rules with the specified default severity.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="registry"/> is <see langword="null"/>.</exception>
+    public static IReadOnlyList<AnalysisRule> GetRulesBySeverity(this RuleRegistry registry, SeverityLevel severity)
+    {
+        ArgumentNullException.ThrowIfNull(registry);
+
+        return registry.GetAllRules()
+            .Where(r => r.DefaultSeverity == severity)
+            .ToList()
+            .AsReadOnly();
+    }
+
+    /// <summary>
     /// Gets all rule IDs currently registered in the registry.
     /// </summary>
     /// <param name="registry">The rule registry instance.</param>
