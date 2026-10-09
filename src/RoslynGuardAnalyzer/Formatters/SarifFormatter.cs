@@ -40,6 +40,9 @@ public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter
     /// </summary>
     public string FormatResult(AnalysisResult result)
     {
+        if (result == null)
+            throw new ArgumentNullException(nameof(result));
+
         var sarifReport = CreateSarifReport(result);
         return JsonSerializer.Serialize(sarifReport, new JsonSerializerOptions { WriteIndented = true });
     }
@@ -49,6 +52,9 @@ public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter
     /// </summary>
     public string FormatViolations(IEnumerable<RuleViolation> violations)
     {
+        if (violations == null)
+            throw new ArgumentNullException(nameof(violations));
+
         var analysisResult = new AnalysisResult
         {
             ProjectName = "Violations Report",
@@ -64,6 +70,9 @@ public sealed class SarifFormatter : IOutputFormatter, IEquatable<SarifFormatter
     /// </summary>
     public string FormatReport(ViolationReport report)
     {
+        if (report == null)
+            throw new ArgumentNullException(nameof(report));
+
         // Convert ViolationReport to AnalysisResult for SARIF formatting
         var analysisResult = new AnalysisResult
         {
