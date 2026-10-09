@@ -18,8 +18,9 @@ namespace RoslynGuardAnalyzer.Rules;
 public static class EmptyCatchRule
 {
     /// <summary>
-    /// Creates and returns the EmptyCatchRule instance.
+    /// Creates and returns the <see cref="CustomAnalysisRule"/> instance for the Empty Catch Rule.
     /// </summary>
+    /// <returns>A fully configured <see cref="CustomAnalysisRule"/>.</returns>
     public static CustomAnalysisRule Create()
     {
         return CustomRuleBuilder.Create("EC001", "Empty Catch Blocks Must Be Removed Or Handle Exception")
@@ -31,6 +32,11 @@ public static class EmptyCatchRule
             .Build();
     }
 
+    /// <summary>
+    /// Determines whether the specified <see cref="CodeElement"/> represents an empty catch block.
+    /// </summary>
+    /// <param name="element">The code element to evaluate.</param>
+    /// <returns><c>true</c> if the element is a catch block with no executable content or only comments; otherwise, <c>false</c>.</returns>
     private static bool IsEmptyCatchBlock(CodeElement element)
     {
         // Only check catch blocks
@@ -112,6 +118,11 @@ public static class EmptyCatchRule
         return false;
     }
 
+    /// <summary>
+    /// Creates a violation message for an empty catch block.
+    /// </summary>
+    /// <param name="element">The <see cref="CodeElement"/> representing the catch block.</param>
+    /// <returns>A formatted string describing the violation.</returns>
     private static string CreateViolationMessage(CodeElement element)
     {
         var blockName = element.Name;
