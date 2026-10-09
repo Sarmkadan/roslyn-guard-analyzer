@@ -27,6 +27,9 @@ public sealed class LoggingMiddleware : IMiddleware
 
     public async Task InvokeAsync(PipelineContext context, MiddlewareDelegate next)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(next);
+
         context.StartTimeMilliseconds = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         if (_logLevel >= 3)
