@@ -94,6 +94,34 @@ public sealed class CustomRuleEngineTests
     }
 
     [Fact]
+    public async Task EvaluateRuleAsync_WithNullRule_ThrowsArgumentNullException()
+    {
+        var registry = Substitute.For<ICustomRuleRegistry>();
+        var engine = new CustomRuleEngine(registry);
+
+        var act = async () => await engine.EvaluateRuleAsync(null!, Array.Empty<CodeElement>());
+
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task EvaluateRuleAsync_WithNullElements_ThrowsArgumentNullException()
+    {
+        var registry = Substitute.For<ICustomRuleRegistry>();
+        var engine = new CustomRuleEngine(registry);
+
+        var rule = CustomRuleBuilder
+            .Create("R103", "NullElementsRule")
+            .When(_ => true)
+            .WithMessage("unused")
+            .Build();
+
+        var act = async () => await engine.EvaluateRuleAsync(rule, null!);
+
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
     public async Task EvaluateAsync_WithNullElements_ThrowsArgumentNullException()
     {
         var registry = Substitute.For<ICustomRuleRegistry>();

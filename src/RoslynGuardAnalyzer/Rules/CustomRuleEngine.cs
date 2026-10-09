@@ -36,6 +36,12 @@ public sealed class CustomRuleEngine
         IEnumerable<CodeElement> elements,
         CancellationToken cancellationToken = default)
     {
+        if (rule is null)
+            throw new ArgumentNullException(nameof(rule));
+
+        if (elements is null)
+            throw new ArgumentNullException(nameof(elements));
+
         cancellationToken.ThrowIfCancellationRequested();
         return rule.EvaluateAsync(elements);
     }
