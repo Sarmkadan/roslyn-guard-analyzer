@@ -21,6 +21,15 @@ namespace RoslynGuardAnalyzer.Services;
 /// </summary>
 public sealed class ReportingService : IReportingService
 {
+    private const string SectionSeparator = "═══════════════════════════════════════════════════════════";
+    private const string SummaryTitle = "SUMMARY";
+    private const string DetailedViolationsTitle = "DETAILED VIOLATIONS";
+    private const string ViolationsBySeverityTitle = "Violations by Severity:";
+    private const string ViolationsByCategoryTitle = "Violations by Category:";
+    private const char FileGroupSeparatorChar = '─';
+    private const int FileGroupSeparatorWidth = 60;
+    private const string XmlDeclaration = "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+
     /// <summary>
     /// Generates a human-readable text report from analysis results.
     /// </summary>
@@ -43,9 +52,9 @@ public sealed class ReportingService : IReportingService
         sb.AppendLine($"Duration: {result.GetDuration().TotalSeconds:F2}s");
         sb.AppendLine();
 
-        sb.AppendLine("═══════════════════════════════════════════════════════════");
-        sb.AppendLine("SUMMARY");
-        sb.AppendLine("═══════════════════════════════════════════════════════════");
+        sb.AppendLine(SectionSeparator);
+        sb.AppendLine(SummaryTitle);
+        sb.AppendLine(SectionSeparator);
         sb.AppendLine($"Total Violations: {result.ViolationCount}");
         sb.AppendLine($"Files Analyzed: {result.TotalFilesAnalyzed}");
         sb.AppendLine($"Code Elements Analyzed: {result.TotalElementsAnalyzed}");
@@ -54,7 +63,7 @@ public sealed class ReportingService : IReportingService
 
         if (result.ViolationsBySeverity.Any())
         {
-            sb.AppendLine("Violations by Severity:");
+            sb.AppendLine(ViolationsBySeverityTitle);
             foreach (var kvp in result.ViolationsBySeverity.OrderByDescending(k => k.Key))
             {
                 sb.AppendLine($"  {kvp.Key}: {kvp.Value}");
@@ -64,7 +73,7 @@ public sealed class ReportingService : IReportingService
 
         if (result.ViolationsByCategory.Any())
         {
-            sb.AppendLine("Violations by Category:");
+            sb.AppendLine(ViolationsByCategoryTitle);
             foreach (var kvp in result.ViolationsByCategory.OrderByDescending(k => k.Value))
             {
                 sb.AppendLine($"  {kvp.Key}: {kvp.Value}");
@@ -72,9 +81,9 @@ public sealed class ReportingService : IReportingService
             sb.AppendLine();
         }
 
-        sb.AppendLine("═══════════════════════════════════════════════════════════");
-        sb.AppendLine("DETAILED VIOLATIONS");
-        sb.AppendLine("═══════════════════════════════════════════════════════════");
+        sb.AppendLine(SectionSeparator);
+        sb.AppendLine(DetailedViolationsTitle);
+        sb.AppendLine(SectionSeparator);
 
         if (result.ViolationCount == 0)
         {
@@ -88,7 +97,7 @@ public sealed class ReportingService : IReportingService
             {
                 sb.AppendLine();
                 sb.AppendLine($"📄 {Path.GetFileName(fileGroup.Key)}");
-                sb.AppendLine(new string('─', 60));
+                sb.AppendLine(new string(FileGroupSeparatorChar, FileGroupSeparatorWidth));
 
                 foreach (var violation in fileGroup.OrderBy(v => v.LineNumber))
                 {
@@ -111,9 +120,9 @@ public sealed class ReportingService : IReportingService
         }
 
         sb.AppendLine();
-        sb.AppendLine("═══════════════════════════════════════════════════════════");
+        sb.AppendLine(SectionSeparator);
         sb.AppendLine($"Report generated at {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-        sb.AppendLine("═══════════════════════════════════════════════════════════");
+        sb.AppendLine(SectionSeparator);
 
         return sb.ToString();
     }
@@ -220,7 +229,7 @@ public sealed class ReportingService : IReportingService
     private string GenerateXmlReport(AnalysisResult result)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+        sb.AppendLine(XmlDeclaration);
         sb.AppendLine("<AnalysisReport>");
         sb.AppendLine($"  <Project>{XmlEscape(result.ProjectName)}</Project>");
         sb.AppendLine($"  <Path>{XmlEscape(result.ProjectPath)}</Path>");
@@ -281,8 +290,8 @@ public sealed class ReportingService : IReportingService
     private string SerializeToXml(ViolationReport report)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-        sb.AppendLine($"<Report Title=\"{XmlEscape(report.Title)}\" Generated=\"{report.GeneratedAt:O}\">");
+        sb.AppendLine(XmlDeclaration);
+        sb.AppendLine($"<ReportTitle=\"{XmlEscape(report.Title)}\" Generated=\"{report.GeneratedAt:O}\">");
 
         foreach (var group in report.ViolationGroups)
         {
