@@ -56,16 +56,37 @@ public enum RuleCategory
 /// </summary>
 public enum CodeElementType
 {
+    /// <summary>A namespace declaration.</summary>
     Namespace = 0,
+
+    /// <summary>A class declaration.</summary>
     Class = 1,
+
+    /// <summary>An interface declaration.</summary>
     Interface = 2,
+
+    /// <summary>A struct declaration.</summary>
     Struct = 3,
+
+    /// <summary>An enum declaration.</summary>
     Enum = 4,
+
+    /// <summary>A method declaration.</summary>
     Method = 5,
+
+    /// <summary>A property declaration.</summary>
     Property = 6,
+
+    /// <summary>A field declaration.</summary>
     Field = 7,
+
+    /// <summary>A method or constructor parameter.</summary>
     Parameter = 8,
+
+    /// <summary>The return type of a method.</summary>
     ReturnType = 9,
+
+    /// <summary>A catch block in a try statement.</summary>
     CatchBlock = 10
 }
 
