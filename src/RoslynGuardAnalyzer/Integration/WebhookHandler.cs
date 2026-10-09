@@ -16,6 +16,10 @@ namespace RoslynGuardAnalyzer.Integration;
 /// </summary>
 public sealed class WebhookHandler
 {
+    private const string XEventTypeHeader = "X-Event-Type";
+    private const string XTimestampHeader = "X-Timestamp";
+    private const string JsonContentType = "application/json";
+
     public sealed class WebhookRegistration
     {
         public required string Id { get; init; }
@@ -146,11 +150,11 @@ public sealed class WebhookHandler
             }
 
             // Add X-Event-Type header
-            client.DefaultRequestHeaders.Add("X-Event-Type", webhook.EventType);
-            client.DefaultRequestHeaders.Add("X-Timestamp", DateTime.UtcNow.ToIso8601String());
+            client.DefaultRequestHeaders.Add(XEventTypeHeader, webhook.EventType);
+            client.DefaultRequestHeaders.Add(XTimestampHeader, DateTime.UtcNow.ToIso8601String());
 
             var response = await _httpClientFactory.ExecuteWithRetryAsync(client, async c =>
-                await c.PostAsync(webhook.Url, new StringContent(payload, System.Text.Encoding.UTF8, "application/json")));
+                await c.PostAsync(webhook.Url, new StringContent(payload, System.Text.Encoding.UTF8, JsonContentType)));
 
             if (!response.IsSuccessStatusCode)
             {
