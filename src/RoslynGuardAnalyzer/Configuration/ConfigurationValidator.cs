@@ -17,6 +17,28 @@ namespace RoslynGuardAnalyzer.Configuration;
 /// </summary>
 public sealed class ConfigurationValidator
 {
+    // Validation message constants
+    private const string ConfigNullError = "Configuration cannot be null";
+    private const string OptionsNullError = "Options cannot be null";
+    private const string RuleNamesNullError = "Rule names and supported rules cannot be null";
+    private const string InvalidMinSeverityFormat = "Invalid minimum severity: {0}";
+    private const string MaxViolationsMustBePositive = "Max violations must be greater than 0";
+    private const string MaxViolationsLowWarning = "Max violations is very low, may limit report completeness";
+    private const string InvalidOutputFormat = "Invalid output format: {0}";
+    private const string NoRulesEnabledWarning = "No rules are explicitly enabled";
+    private const string DuplicateRulesWarning = "Duplicate rules found: {0}";
+    private const string EmptyExcludePatternError = "Exclude patterns cannot contain empty values";
+    private const string ProjectPathNotFound = "Project path not found: {0}";
+    private const string FileNotFound = "File not found: {0}";
+    private const string ConfigFileNotFound = "Config file not found: {0}";
+    private const string AnalysisTimeoutMustBePositive = "Analysis timeout must be positive";
+    private const string MaxParallelThreadsMustBePositive = "Max parallel threads must be positive";
+    private const string MaxParallelThreadsExceedsReasonable = "Max parallel threads ({0}) exceeds reasonable count";
+    private const string UnknownRuleError = "Unknown rule: {0}";
+
+    // Validation value constants
+    private static readonly string[] ValidSeverities = { "Low", "Medium", "High", "Critical" };
+    private static readonly string[] ValidFormats = { "text", "json", "csv", "html", "xml" };
     /// <summary>
     /// Validation result containing success status and error messages.
     /// </summary>
@@ -64,7 +86,7 @@ public sealed class ConfigurationValidator
 
     /// <summary>
     /// Validates an analysis configuration.
-    /// </summary>
+    /// </>
     public static ValidationResult ValidateAnalysisConfig(AnalysisConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);
@@ -72,30 +94,28 @@ public sealed class ConfigurationValidator
 
         if (config is null)
         {
-            result.AddError("Configuration cannot be null");
+            result.AddError(ConfigNullError);
             return result;
         }
 
         // Validate severity
-        var validSeverities = new[] { "Low", "Medium", "High", "Critical" };
-        if (!validSeverities.Contains(config.MinimumSeverity, StringComparer.OrdinalIgnoreCase))
-            result.AddError($"Invalid minimum severity: {config.MinimumSeverity}");
+        if (!ValidSeverities.Contains(config.MinimumSeverity, StringComparer.OrdinalIgnoreCase))
+            result.AddError(string.Format(InvalidMinSeverityFormat, config.MinimumSeverity));
 
         // Validate max violations
         if (config.MaxViolationsToReport <= 0)
-            result.AddError("Max violations must be greater than 0");
+            result.AddError(MaxViolationsMustBePositive);
 
         if (config.MaxViolationsToReport < 10)
-            result.AddWarning("Max violations is very low, may limit report completeness");
+            result.AddWarning(MaxViolationsLowWarning);
 
         // Validate output format
-        var validFormats = new[] { "text", "json", "csv", "html", "xml" };
-        if (!validFormats.Contains(config.OutputFormat, StringComparer.OrdinalIgnoreCase))
-            result.AddError($"Invalid output format: {config.OutputFormat}");
+        if (!ValidFormats.Contains(config.OutputFormat, StringComparer.OrdinalIgnoreCase))
+            result.AddError(string.Format(InvalidOutputFormat, config.OutputFormat));
 
         // Validate rule names
         if (config.EnabledRules.Count == 0)
-            result.AddWarning("No rules are explicitly enabled");
+            result.AddWarning(NoRulesEnabledWarning);
 
         // Check for duplicate rules
         var duplicates = config.EnabledRules
@@ -105,7 +125,7 @@ public sealed class ConfigurationValidator
             .ToList();
 
         if (duplicates.Count > 0)
-            result.AddWarning($"Duplicate rules found: {string.Join(", ", duplicates)}");
+            result.AddWarning(string.Format(DuplicateRulesWarning, string.Join(", ", duplicates)));
 
         // Validate patterns
         if (config.ExcludePatterns.Count > 0)
@@ -113,7 +133,7 @@ public sealed class ConfigurationValidator
             foreach (var pattern in config.ExcludePatterns)
             {
                 if (string.IsNullOrWhiteSpace(pattern))
-                    result.AddError("Exclude patterns cannot contain empty values");
+                    result.AddError(EmptyExcludePatternError);
             }
         }
 
@@ -130,7 +150,7 @@ public sealed class ConfigurationValidator
 
         if (options is null)
         {
-            result.AddError("Options cannot be null");
+            result.AddError(OptionsNullError);
             return result;
         }
 
@@ -138,30 +158,30 @@ public sealed class ConfigurationValidator
         if (!string.IsNullOrEmpty(options.ProjectPath))
         {
             if (!File.Exists(options.ProjectPath) && !Directory.Exists(options.ProjectPath))
-                result.AddError($"Project path not found: {options.ProjectPath}");
+                result.AddError(string.Format(ProjectPathNotFound, options.ProjectPath));
         }
 
         if (!string.IsNullOrEmpty(options.FilePath))
         {
             if (!File.Exists(options.FilePath))
-                result.AddError($"File not found: {options.FilePath}");
+                result.AddError(string.Format(FileNotFound, options.FilePath));
         }
 
         if (!string.IsNullOrEmpty(options.ConfigFile))
         {
             if (!File.Exists(options.ConfigFile))
-                result.AddError($"Config file not found: {options.ConfigFile}");
+                result.AddError(string.Format(ConfigFileNotFound, options.ConfigFile));
         }
 
         // Validate numeric options
         if (options.AnalysisTimeoutSeconds <= 0)
-            result.AddError("Analysis timeout must be positive");
+            result.AddError(AnalysisTimeoutMustBePositive);
 
         if (options.MaxParallelThreads <= 0)
-            result.AddError("Max parallel threads must be positive");
+            result.AddError(MaxParallelThreadsMustBePositive);
 
         if (options.MaxParallelThreads > Environment.ProcessorCount * 2)
-            result.AddWarning($"Max parallel threads ({options.MaxParallelThreads}) exceeds reasonable count");
+            result.AddWarning(string.Format(MaxParallelThreadsExceedsReasonable, options.MaxParallelThreads));
 
         return result;
     }
@@ -179,7 +199,7 @@ public sealed class ConfigurationValidator
 
         if (ruleNames is null || supportedRules is null)
         {
-            result.AddError("Rule names and supported rules cannot be null");
+            result.AddError(RuleNamesNullError);
             return result;
         }
 
@@ -188,7 +208,7 @@ public sealed class ConfigurationValidator
         foreach (var rule in ruleNames)
         {
             if (!supported.Contains(rule))
-                result.AddError($"Unknown rule: {rule}");
+                result.AddError(string.Format(UnknownRuleError, rule));
         }
 
         return result;
