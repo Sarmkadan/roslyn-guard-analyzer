@@ -92,6 +92,11 @@ Calculates and returns statistical data regarding the project, such as line coun
 *   **Returns**: A `ProjectStatistics` object containing the computed metrics.
 *   **Remarks**: This method may perform I/O operations or traverse the syntax tree depending on the implementation of `ProjectStatistics`.
 
+#### `public override string ToString()`
+Returns the project name and path in the form `Name (Path)`, e.g. `MyApp (/src/MyApp/MyApp.csproj)`.
+*   **Returns**: A concise identifier for logging and diagnostics.
+*   **Remarks**: Properties and other fields (including any connection strings or secrets stored in `Properties`) are intentionally excluded.
+
 ## Usage
 
 ### Example 1: Initializing and Configuring a Project

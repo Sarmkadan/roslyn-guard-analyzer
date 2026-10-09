@@ -149,6 +149,11 @@ public sealed class AnalysisProject
         ArgumentException.ThrowIfNullOrEmpty(Path);
         return Directory.Exists(Path) ? Path : System.IO.Path.GetDirectoryName(Path) ?? string.Empty;
     }
+
+    /// <summary>
+    /// Returns the project name and path, e.g. "MyApp (/src/MyApp/MyApp.csproj)".
+    /// </summary>
+    public override string ToString() => $"{Name} ({Path})";
 }
 
 /// <summary>
