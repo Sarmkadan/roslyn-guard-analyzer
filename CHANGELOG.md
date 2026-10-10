@@ -5,6 +5,11 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- `EventBusExtensions.PublishIfSubscribedAsync` publishes an event only when a handler is registered for its type
+- `IEventBus.HasSubscribers(Type)` (implemented by `EventBus`) reports whether a handler would receive an event of a given type
+
 ## [2.0.2] - 2026-05-20
 ### Fixed
 - Fix false positive in analyzer when using conditional access with nullable

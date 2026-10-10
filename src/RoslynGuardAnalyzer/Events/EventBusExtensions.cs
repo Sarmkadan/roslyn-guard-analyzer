@@ -106,5 +106,30 @@ namespace RoslynGuardAnalyzer.Events
                 await bus.PublishAsync(ev).ConfigureAwait(false);
             }
         }
+
+        /// <summary>
+        /// Publishes an event only when at least one handler is registered for its runtime type.
+        /// When no handler matches, the event is dropped and the returned task completes immediately.
+        /// </summary>
+        /// <typeparam name="TEvent">The type of the event to publish.</typeparam>
+        /// <param name="bus">The event bus instance.</param>
+        /// <param name="event">The event instance to publish.</param>
+        /// <returns>A task that completes when the event has been published, or immediately if no handler is registered.</returns>
+        /// <remarks>
+        /// The subscriber check and the publish are not atomic. A handler subscribed or removed between the two
+        /// steps follows the normal publish semantics for that moment.
+        /// </remarks>
+        /// <exception cref="ArgumentNullException"><paramref name="bus"/> is <see langword="null"/></exception>
+        /// <exception cref="ArgumentNullException"><paramref name="event"/> is <see langword="null"/></exception>
+        /// <exception cref="AggregateException">Thrown if any subscribers throw exceptions.</exception>
+        public static Task PublishIfSubscribedAsync<TEvent>(this IEventBus bus, TEvent @event) where TEvent : IEvent
+        {
+            ArgumentNullException.ThrowIfNull(bus);
+            ArgumentNullException.ThrowIfNull(@event);
+
+            return bus.HasSubscribers(@event.GetType())
+                ? bus.PublishAsync(@event)
+                : Task.CompletedTask;
+        }
     }
 }

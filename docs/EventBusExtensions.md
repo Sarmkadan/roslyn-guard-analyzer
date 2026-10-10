@@ -61,6 +61,22 @@ Publishes a collection of events asynchronously. Each event is delivered to its 
   - `ArgumentException` if `events` contains a `null` element.  
   - `InvalidOperationException` if the bus is disposed.
 
+### PublishIfSubscribedAsync<TEvent>
+```csharp
+public static Task PublishIfSubscribedAsync<TEvent>(this IEventBus bus, TEvent @event)
+```
+Publishes `@event` only when at least one handler is registered for its runtime type (see `IEventBus.HasSubscribers`). Otherwise the event is dropped and the returned task completes immediately.  
+- **Parameters**  
+  - `bus`: The event bus instance on which to publish.  
+  - `@event`: The event instance to publish.  
+- **Return value**  
+  A `Task` that completes when the event has been delivered, or immediately if no handler matches.  
+- **Exceptions**  
+  - `ArgumentNullException` if `bus` or `@event` is `null`.  
+  - `AggregateException` if a subscriber throws.  
+- **Remarks**  
+  The subscriber check and the publish are not atomic; a handler added or removed between them follows normal publish semantics.
+
 ## Usage
 
 ```csharp
