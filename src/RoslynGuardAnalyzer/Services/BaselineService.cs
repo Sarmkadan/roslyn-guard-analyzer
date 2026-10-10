@@ -20,6 +20,31 @@ namespace RoslynGuardAnalyzer.Services;
 /// </summary>
 public sealed class BaselineService : IBaselineService
 {
+    private const string EmptyFilePathMessage = "File path cannot be null or empty";
+    private const string EmptyProjectNameMessage = "Project name cannot be null or empty";
+    private const string TraversalSegment = "..";
+    private const string TraversalMessageSuffix =
+        "' contains directory traversal sequence '..'. " +
+        "Paths must stay within the expected directory structure.";
+    private const string InvalidPathCharsMessageSuffix = "' contains invalid path characters.";
+
+    private const string BaselineNotFoundLog = "Baseline file not found: {FilePath}";
+    private const string BaselineParseFailedLog = "Failed to parse baseline file: {FilePath}";
+    private const string BaselineLoadedLog =
+        "Loaded baseline with {ViolationCount} violations from {FilePath}";
+    private const string BaselineLoadErrorLog = "Error loading baseline file: {FilePath}";
+    private const string BaselineSavedLog =
+        "Saved baseline with {ViolationCount} violations to {FilePath}";
+    private const string BaselineSaveErrorLog = "Error saving baseline file: {FilePath}";
+    private const string IgnoredViolationLog =
+        "Ignoring violation from baseline: {RuleId} at {FilePath}:{LineNumber}";
+    private const string FilteredViolationsLog =
+        "Filtered violations: {TotalViolations} total, {NewViolations} new, {IgnoredViolations} ignored from baseline";
+    private const string CreatedBaselineForProjectLog =
+        "Created baseline with {ViolationCount} violations for project {ProjectName}";
+    private const string CreatedBaselineForNameLog =
+        "Created baseline with {ViolationCount} violations for {ProjectName}";
+
     private readonly ILogger<BaselineService> _logger;
 
     public BaselineService(ILogger<BaselineService> logger)
@@ -35,20 +60,19 @@ public sealed class BaselineService : IBaselineService
     private void ValidateFilePath(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+            throw new ArgumentException(EmptyFilePathMessage, nameof(filePath));
 
-        if (filePath.Split('/', '\\').Any(segment => segment == ".."))
+        if (filePath.Split('/', '\\').Any(segment => segment == TraversalSegment))
         {
             throw new ArgumentException(
-                $"File path '{filePath}' contains directory traversal sequence '..'. " +
-                "Paths must stay within the expected directory structure.",
+                $"File path '{filePath}{TraversalMessageSuffix}",
                 nameof(filePath));
         }
 
         if (filePath.IndexOfAny(Path.GetInvalidPathChars()) >= 0)
         {
             throw new ArgumentException(
-                $"File path '{filePath}' contains invalid path characters.",
+                $"File path '{filePath}{InvalidPathCharsMessageSuffix}",
                 nameof(filePath));
         }
 
@@ -61,14 +85,14 @@ public sealed class BaselineService : IBaselineService
     public async Task<Baseline?> LoadBaselineAsync(string filePath)
     {
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+            throw new ArgumentException(EmptyFilePathMessage, nameof(filePath));
 
         // Validate the file path to prevent directory traversal
         ValidateFilePath(filePath);
 
         if (!File.Exists(filePath))
         {
-            _logger.LogWarning("Baseline file not found: {FilePath}", filePath);
+            _logger.LogWarning(BaselineNotFoundLog, filePath);
             return null;
         }
 
@@ -79,12 +103,12 @@ public sealed class BaselineService : IBaselineService
 
             if (baseline is null)
             {
-                _logger.LogError("Failed to parse baseline file: {FilePath}", filePath);
+                _logger.LogError(BaselineParseFailedLog, filePath);
                 return null;
             }
 
             _logger.LogInformation(
-                "Loaded baseline with {ViolationCount} violations from {FilePath}",
+                BaselineLoadedLog,
                 baseline.ViolationCount,
                 filePath
             );
@@ -93,7 +117,7 @@ public sealed class BaselineService : IBaselineService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading baseline file: {FilePath}", filePath);
+            _logger.LogError(ex, BaselineLoadErrorLog, filePath);
             return null;
         }
     }
@@ -107,7 +131,7 @@ public sealed class BaselineService : IBaselineService
             throw new ArgumentNullException(nameof(baseline));
 
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty", nameof(filePath));
+            throw new ArgumentException(EmptyFilePathMessage, nameof(filePath));
 
         // Validate the file path to prevent directory traversal
         ValidateFilePath(filePath);
@@ -124,14 +148,14 @@ public sealed class BaselineService : IBaselineService
             await File.WriteAllTextAsync(filePath, json);
 
             _logger.LogInformation(
-                "Saved baseline with {ViolationCount} violations to {FilePath}",
+                BaselineSavedLog,
                 baseline.ViolationCount,
                 filePath
             );
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving baseline file: {FilePath}", filePath);
+            _logger.LogError(ex, BaselineSaveErrorLog, filePath);
             throw;
         }
     }
@@ -167,7 +191,7 @@ public sealed class BaselineService : IBaselineService
             else
             {
                 _logger.LogDebug(
-                    "Ignoring violation from baseline: {RuleId} at {FilePath}:{LineNumber}",
+                    IgnoredViolationLog,
                     violation.RuleId,
                     Path.GetFileName(violation.FilePath),
                     violation.LineNumber
@@ -176,7 +200,7 @@ public sealed class BaselineService : IBaselineService
         }
 
         _logger.LogInformation(
-            "Filtered violations: {TotalViolations} total, {NewViolations} new, {IgnoredViolations} ignored from baseline",
+            FilteredViolationsLog,
             violations.Count,
             newViolations.Count,
             violations.Count - newViolations.Count
@@ -204,7 +228,7 @@ public sealed class BaselineService : IBaselineService
         }
 
         _logger.LogInformation(
-            "Created baseline with {ViolationCount} violations for project {ProjectName}",
+            CreatedBaselineForProjectLog,
             baseline.ViolationCount,
             result.ProjectName
         );
@@ -221,7 +245,7 @@ public sealed class BaselineService : IBaselineService
     public Baseline CreateBaseline(string projectName, List<RuleViolation> violations)
     {
         if (string.IsNullOrWhiteSpace(projectName))
-            throw new ArgumentException("Project name cannot be null or empty", nameof(projectName));
+            throw new ArgumentException(EmptyProjectNameMessage, nameof(projectName));
 
         if (violations is null)
             throw new ArgumentNullException(nameof(violations));
@@ -235,7 +259,7 @@ public sealed class BaselineService : IBaselineService
         }
 
         _logger.LogInformation(
-            "Created baseline with {ViolationCount} violations for {ProjectName}",
+            CreatedBaselineForNameLog,
             baseline.ViolationCount,
             projectName
         );
