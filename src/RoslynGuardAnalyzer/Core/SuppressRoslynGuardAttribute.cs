@@ -5,7 +5,10 @@ namespace RoslynGuardAnalyzer
     /// <summary>
     /// Indicates that RoslynGuard analysis is suppressed for a class, method, or property.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage(
+        AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Property,
+        AllowMultiple = true,
+        Inherited = false)]
     public sealed class SuppressRoslynGuardAttribute : Attribute
     {
         /// <summary>
