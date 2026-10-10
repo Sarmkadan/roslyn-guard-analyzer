@@ -59,7 +59,7 @@ public sealed class HelpGenerator
         sb.AppendLine($"  {AppName} ./src/MyProject.csproj");
         sb.AppendLine($"  {AppName} --project=./src/MyProject --format=json --output=report.json");
         sb.AppendLine($"  {AppName} --file=./src/MyClass.cs --verbose");
-        sb.AppendLine($"  {AppName} --project=. --rule-filter=LayerDependency,NamingConvention");
+        sb.AppendLine($"  {AppName} --project=. --rule-filter=LayerDependency, NamingConvention");
         sb.AppendLine();
 
         sb.AppendLine(SectionOptions);
@@ -103,7 +103,7 @@ public sealed class HelpGenerator
         sb.AppendLine(SectionSupportedRules);
         sb.AppendLine("  • LayerDependency       - Enforces layer dependency constraints");
         sb.AppendLine("  • NamingConvention      - Validates naming conventions");
-        sb.AppendLine("  • AsyncPatterns         - Checks async/await usage patterns");
+        sb.AppendLine("  • AsyncPatterns         - Checks async/await usage patterns.");
         sb.AppendLine("  • NullSafety            - Enforces null safety patterns");
         sb.AppendLine("  • CircularDependency    - Detects circular references");
         sb.AppendLine();
