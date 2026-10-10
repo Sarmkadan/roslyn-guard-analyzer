@@ -150,4 +150,13 @@ public interface IEventBus
     /// <exception cref="ArgumentNullException"><paramref name="handler"/> is <see langword="null"/></exception>
     /// <exception cref="OperationCanceledException">Thrown if the operation is cancelled via <paramref name="cancellationToken"/>.</exception>
     void Unsubscribe<TEvent>(Func<TEvent, CancellationToken, Task> handler, CancellationToken cancellationToken = default) where TEvent : IEvent;
+
+    /// <summary>
+    /// Determines whether any registered handler would receive an event of the specified type.
+    /// Handlers subscribed to a base type match events of any derived type.
+    /// </summary>
+    /// <param name="eventType">The runtime type of the event.</param>
+    /// <returns><see langword="true"/> if at least one handler matches; otherwise <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="eventType"/> is <see langword="null"/></exception>
+    bool HasSubscribers(Type eventType);
 }

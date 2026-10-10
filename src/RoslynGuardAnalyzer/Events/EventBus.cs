@@ -242,6 +242,22 @@ public sealed class EventBus : IEventBus
     }
 
     /// <summary>
+    /// Determines whether any registered handler would receive an event of the specified type.
+    /// </summary>
+    /// <param name="eventType">The runtime type of the event.</param>
+    /// <returns><see langword="true"/> if at least one handler matches; otherwise <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="eventType"/> is <see langword="null"/></exception>
+    public bool HasSubscribers(Type eventType)
+    {
+        ArgumentNullException.ThrowIfNull(eventType);
+
+        lock (_lockObject)
+        {
+            return _subscriptions.Any(s => s.EventType.IsAssignableFrom(eventType));
+        }
+    }
+
+    /// <summary>
     /// Gets the count of subscriptions (useful for testing).
     /// </summary>
     public int SubscriptionCount

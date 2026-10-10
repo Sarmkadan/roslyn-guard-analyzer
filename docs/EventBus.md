@@ -43,6 +43,15 @@ Removes a previously registered handler for a specific event type.
 *   **Return Value**: `void`.
 *   **Exceptions**: May throw if the handler was not found or if arguments are invalid.
 
+### `HasSubscribers`
+```csharp
+public bool HasSubscribers(Type eventType)
+```
+Returns `true` if at least one registered handler would receive an event of the given runtime type. Handlers subscribed to a base type match derived events.
+*   **Parameters**: `eventType` - the runtime type of the event.
+*   **Return Value**: `bool`.
+*   **Exceptions**: `ArgumentNullException` if `eventType` is `null`.
+
 ### `ClearSubscriptions`
 ```csharp
 public void ClearSubscriptions
