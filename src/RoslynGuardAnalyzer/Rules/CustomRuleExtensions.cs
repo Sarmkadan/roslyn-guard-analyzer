@@ -50,4 +50,17 @@ public static class CustomRuleExtensions
 
         return Task.FromResult(violations);
     }
+
+    /// <summary>
+    /// Filters a sequence of analysis rules down to those that are enabled.
+    /// </summary>
+    /// <param name="rules">The analysis rules to filter.</param>
+    /// <returns>A lazily evaluated sequence containing only the rules whose <see cref="AnalysisRule.IsEnabled"/> is <see langword="true"/>, in their original order.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="rules"/> is <see langword="null"/>.</exception>
+    public static IEnumerable<AnalysisRule> WhereEnabled(this IEnumerable<AnalysisRule> rules)
+    {
+        ArgumentNullException.ThrowIfNull(rules);
+
+        return rules.Where(rule => rule.IsEnabled);
+    }
 }
