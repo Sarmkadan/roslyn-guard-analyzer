@@ -49,4 +49,21 @@ public sealed class HttpClientFactoryOptions
     /// When true, DNS records are refreshed after <see cref="PooledConnectionLifetime"/>.
     /// </summary>
     public bool EnableDnsRefresh { get; init; } = true;
+
+    /// <summary>
+    /// Returns a summary of the option values for logging.
+    /// Contains no credentials; these options hold only timeouts, limits and flags.
+    /// </summary>
+    public override string ToString()
+    {
+        return $"HttpClientFactoryOptions {{" +
+               $" DefaultTimeout={DefaultTimeout}, " +
+               $" MaxRetries={MaxRetries}, " +
+               $" CircuitBreakerFailureThreshold={CircuitBreakerFailureThreshold}, " +
+               $" CircuitBreakerOpenDuration={CircuitBreakerOpenDuration}, " +
+               $" PooledConnectionLifetime={PooledConnectionLifetime}, " +
+               $" MaxConnectionsPerServer={MaxConnectionsPerServer}, " +
+               $" EnableDnsRefresh={EnableDnsRefresh}" +
+               $"}};";
+    }
 }
