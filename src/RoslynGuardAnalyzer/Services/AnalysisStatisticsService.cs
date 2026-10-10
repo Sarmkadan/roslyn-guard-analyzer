@@ -71,7 +71,8 @@ public sealed class AnalysisStatisticsService
     /// </summary>
     public static ViolationStatistics CalculateStatistics(AnalysisResult? result)
     {
-        return CalculateStatistics(result?.Violations);
+        ArgumentNullException.ThrowIfNull(result);
+        return CalculateStatistics(result.Violations);
     }
 
     /// <summary>
@@ -81,6 +82,7 @@ public sealed class AnalysisStatisticsService
         IEnumerable<RuleViolation> violations,
         int count = 10)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return violations
             .GroupBy(v => v.RuleName)
             .Select(g => (Rule: g.Key, Count: g.Count()))
@@ -96,6 +98,7 @@ public sealed class AnalysisStatisticsService
         IEnumerable<RuleViolation> violations,
         int count = 10)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         return violations
             .GroupBy(v => System.IO.Path.GetFileName(v.FilePath))
             .Select(g => (File: g.Key, Count: g.Count()))
@@ -109,6 +112,7 @@ public sealed class AnalysisStatisticsService
     /// </summary>
     public static Dictionary<string, double> GetSeverityDistribution(IEnumerable<RuleViolation> violations)
     {
+        ArgumentNullException.ThrowIfNull(violations);
         var stats = CalculateStatistics(violations);
 
         var result = new Dictionary<string, double>();
@@ -128,6 +132,7 @@ public sealed class AnalysisStatisticsService
     /// </summary>
     public static string GenerateSummaryReport(ViolationStatistics stats)
     {
+        ArgumentNullException.ThrowIfNull(stats);
         var sb = new System.Text.StringBuilder();
 
         sb.AppendLine("=== Violation Statistics ===");
@@ -162,6 +167,7 @@ public sealed class AnalysisStatisticsService
     /// </summary>
     public static int CalculateRiskScore(ViolationStatistics stats)
     {
+        ArgumentNullException.ThrowIfNull(stats);
         var score = (stats.CriticalCount * 10) + (stats.HighCount * 5) + (stats.MediumCount * 2) + stats.LowCount;
         return Math.Min(100, score / 10);
     }
@@ -171,6 +177,7 @@ public sealed class AnalysisStatisticsService
     /// </summary>
     public static string GetHealthAssessment(ViolationStatistics stats)
     {
+        ArgumentNullException.ThrowIfNull(stats);
         if (stats.TotalCount == 0)
             return "✓ Excellent - No violations found";
 
