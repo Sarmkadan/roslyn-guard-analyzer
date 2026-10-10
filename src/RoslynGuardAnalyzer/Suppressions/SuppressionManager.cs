@@ -21,6 +21,9 @@ namespace RoslynGuardAnalyzer.Suppressions;
 /// </summary>
 public sealed class SuppressionManager : ISuppressionManager
 {
+    private const string EmptyFilePathMessage = "File path cannot be null or empty.";
+    private const string DirectoryTraversalSequence = "..";
+
     private readonly ILogger<SuppressionManager> _logger;
     private readonly object _syncRoot = new();
     private readonly Dictionary<string, SuppressionRecord> _records = new(StringComparer.OrdinalIgnoreCase);
@@ -131,7 +134,7 @@ public sealed class SuppressionManager : ISuppressionManager
         if (filePath is null)
             throw new ArgumentNullException(nameof(filePath));
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+            throw new ArgumentException(EmptyFilePathMessage, nameof(filePath));
 
         try
         {
@@ -166,7 +169,7 @@ public sealed class SuppressionManager : ISuppressionManager
         if (filePath is null)
             throw new ArgumentNullException(nameof(filePath));
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+            throw new ArgumentException(EmptyFilePathMessage, nameof(filePath));
 
         try
         {
@@ -212,7 +215,7 @@ public sealed class SuppressionManager : ISuppressionManager
     private void ValidateFilePath(string filePath, string? expectedBaseDirectory = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
-            throw new ArgumentException("File path cannot be null or empty.", nameof(filePath));
+            throw new ArgumentException(EmptyFilePathMessage, nameof(filePath));
 
         var fullPath = Path.GetFullPath(filePath);
 
@@ -220,10 +223,10 @@ public sealed class SuppressionManager : ISuppressionManager
         fullPath = fullPath.Replace('\\', Path.DirectorySeparatorChar);
 
         // Check for directory traversal attempts
-        if (fullPath.Contains("..") && !fullPath.StartsWith(".."))
+        if (fullPath.Contains(DirectoryTraversalSequence) && !fullPath.StartsWith(DirectoryTraversalSequence))
         {
             throw new ArgumentException(
-                $"File path '{filePath}' contains directory traversal sequence '..'. " +
+                $"File path '{filePath}' contains directory traversal sequence '{DirectoryTraversalSequence}'. " +
                 "Paths must stay within the expected directory structure.",
                 nameof(filePath));
         }
