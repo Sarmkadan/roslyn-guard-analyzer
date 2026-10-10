@@ -22,5 +22,6 @@ public interface ICustomRuleRegistry
     /// <summary>
     /// Returns all registered custom rules.
     /// </summary>
+    /// <returns>A read-only list of all registered custom rules.</returns>
     IReadOnlyList<CustomAnalysisRule> GetCustomRules();
 }
