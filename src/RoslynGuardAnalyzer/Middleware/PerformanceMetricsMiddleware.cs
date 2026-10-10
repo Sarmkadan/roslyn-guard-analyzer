@@ -29,8 +29,20 @@ public sealed class PerformanceMetricsMiddleware : IMiddleware
         public TimeSpan GetElapsed() => EndTime - StartTime;
     }
 
+    private const string MiddlewareName = "PerformanceMetrics";
     private const string MetricsKey = "PerformanceMetrics";
-    public string Name => "PerformanceMetrics";
+    private const long BytesPerMegabyte = 1024 * 1024;
+    private const double PercentageScale = 100.0;
+    private const string PercentageFormat = "F1";
+    private const string DurationFormat = @"hh\:mm\:ss\.fff";
+    private const string ReportHeader = "=== Performance Report ===";
+    private const string TotalTimeLabel = "Total Time: ";
+    private const string DurationLabel = "Duration: ";
+    private const string MemoryDeltaLabel = "Memory Delta: ";
+    private const string ProcessorsLabel = "Processors: ";
+    private const string ComponentTimingsHeader = "Component Timings:";
+
+    public string Name => MiddlewareName;
 
     public async Task InvokeAsync(PipelineContext context, MiddlewareDelegate next)
     {
@@ -97,21 +109,21 @@ public sealed class PerformanceMetricsMiddleware : IMiddleware
     {
         var report = new System.Text.StringBuilder();
 
-        report.AppendLine("=== Performance Report ===");
-        report.AppendLine($"Total Time: {metrics.TotalMilliseconds}ms");
-        report.AppendLine($"Duration: {metrics.GetElapsed():hh\\:mm\\:ss\\.fff}");
-        report.AppendLine($"Memory Delta: {(metrics.PeakMemoryBytes / 1024 / 1024)}MB");
-        report.AppendLine($"Processors: {metrics.ProcessorCount}");
+        report.AppendLine(ReportHeader);
+        report.AppendLine($"{TotalTimeLabel}{metrics.TotalMilliseconds}ms");
+        report.AppendLine($"{DurationLabel}{metrics.GetElapsed().ToString(DurationFormat)}");
+        report.AppendLine($"{MemoryDeltaLabel}{metrics.PeakMemoryBytes / BytesPerMegabyte}MB");
+        report.AppendLine($"{ProcessorsLabel}{metrics.ProcessorCount}");
 
         if (metrics.ComponentTimingsMs.Count > 0)
         {
             report.AppendLine();
-            report.AppendLine("Component Timings:");
+            report.AppendLine(ComponentTimingsHeader);
 
             foreach (var (component, ms) in metrics.ComponentTimingsMs.OrderByDescending(x => x.Value))
             {
-                var percentage = (ms * 100.0) / metrics.TotalMilliseconds;
-                report.AppendLine($"  {component}: {ms}ms ({percentage:F1}%)");
+                var percentage = (ms * PercentageScale) / metrics.TotalMilliseconds;
+                report.AppendLine($"  {component}: {ms}ms ({percentage.ToString(PercentageFormat)}%)");
             }
         }
 
