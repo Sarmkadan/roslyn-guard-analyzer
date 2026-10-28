@@ -2,6 +2,7 @@
 
 using System.Collections.Immutable;
 using System.Globalization;
+using Microsoft.CodeAnalysis;
 
 namespace RoslynGuardAnalyzer.Rules;
 
@@ -30,6 +31,28 @@ public sealed class GuardOptions
     public const string IgnoredNamespacesKey = "guard.ignored_namespaces";
 
     /// <summary>
+    /// Key that lists the indexable types bounds-check analysis checks, separated by commas. Each entry is a
+    /// namespace-qualified type name without type arguments, such as <c>System.Collections.Generic.List</c>,
+    /// or <c>[]</c> for arrays. The list must not be empty.
+    /// </summary>
+    public const string BoundsCheckAllowedIndexerTypesKey = "guard.bounds_check.allowed_indexer_types";
+
+    /// <summary>
+    /// Key that controls whether <c>Span&lt;T&gt;</c> and <c>ReadOnlySpan&lt;T&gt;</c> are checked. Accepts <c>true</c> or <c>false</c>.
+    /// </summary>
+    public const string BoundsCheckCheckSpansKey = "guard.bounds_check.check_spans";
+
+    /// <summary>
+    /// Key that overrides the severity of <c>BND001</c>. Accepts <c>silent</c>, <c>suggestion</c>, <c>warning</c> or <c>error</c>.
+    /// </summary>
+    public const string BoundsCheckSeverityKey = "guard.bounds_check.severity";
+
+    /// <summary>
+    /// Entry in <see cref="BoundsCheckAllowedIndexerTypesKey"/> that stands for array types.
+    /// </summary>
+    public const string ArrayIndexerTypeEntry = "[]";
+
+    /// <summary>
     /// Smallest accepted value for <see cref="BoundsCheckMaxDepthKey"/>.
     /// </summary>
     public const int MinBoundsCheckMaxDepth = 1;
@@ -50,7 +73,22 @@ public sealed class GuardOptions
     public static ImmutableArray<string> KnownKeys { get; } = ImmutableArray.Create(
         NullCheckExcludePrivateKey,
         BoundsCheckMaxDepthKey,
-        IgnoredNamespacesKey);
+        IgnoredNamespacesKey,
+        BoundsCheckAllowedIndexerTypesKey,
+        BoundsCheckCheckSpansKey,
+        BoundsCheckSeverityKey);
+
+    /// <summary>
+    /// Gets the indexable types checked by default. This matches the built-in set before the options existed.
+    /// </summary>
+    public static ImmutableArray<string> DefaultAllowedIndexerTypes { get; } = ImmutableArray.Create(
+        ArrayIndexerTypeEntry,
+        "System.Collections.Generic.List",
+        "System.Collections.Generic.IList",
+        "System.Span",
+        "System.ReadOnlySpan",
+        "System.Memory",
+        "System.ReadOnlyMemory");
 
     /// <summary>
     /// Gets the options with every key at its default value.
@@ -58,16 +96,28 @@ public sealed class GuardOptions
     public static GuardOptions Default { get; } = new(
         nullCheckExcludePrivate: false,
         boundsCheckMaxDepth: DefaultBoundsCheckMaxDepth,
-        ignoredNamespaces: ImmutableArray<string>.Empty);
+        ignoredNamespaces: ImmutableArray<string>.Empty,
+        boundsCheckAllowedIndexerTypes: DefaultAllowedIndexerTypes,
+        boundsCheckCheckSpans: true,
+        boundsCheckSeverity: DiagnosticSeverity.Warning);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GuardOptions"/> class with validated values.
     /// </summary>
-    private GuardOptions(bool nullCheckExcludePrivate, int boundsCheckMaxDepth, ImmutableArray<string> ignoredNamespaces)
+    private GuardOptions(
+        bool nullCheckExcludePrivate,
+        int boundsCheckMaxDepth,
+        ImmutableArray<string> ignoredNamespaces,
+        ImmutableArray<string> boundsCheckAllowedIndexerTypes,
+        bool boundsCheckCheckSpans,
+        DiagnosticSeverity boundsCheckSeverity)
     {
         NullCheckExcludePrivate = nullCheckExcludePrivate;
         BoundsCheckMaxDepth = boundsCheckMaxDepth;
         IgnoredNamespaces = ignoredNamespaces;
+        BoundsCheckAllowedIndexerTypes = boundsCheckAllowedIndexerTypes;
+        BoundsCheckCheckSpans = boundsCheckCheckSpans;
+        BoundsCheckSeverity = boundsCheckSeverity;
     }
 
     /// <summary>
@@ -84,6 +134,23 @@ public sealed class GuardOptions
     /// Gets the namespaces excluded from guard analysis, without duplicates, in configuration order.
     /// </summary>
     public ImmutableArray<string> IgnoredNamespaces { get; }
+
+    /// <summary>
+    /// Gets the indexable types bounds-check analysis checks, in configuration order, without duplicates.
+    /// Each entry is a namespace-qualified type name without type arguments, or <see cref="ArrayIndexerTypeEntry"/>.
+    /// </summary>
+    public ImmutableArray<string> BoundsCheckAllowedIndexerTypes { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether <c>Span&lt;T&gt;</c> and <c>ReadOnlySpan&lt;T&gt;</c> are checked.
+    /// A span type is checked only when it is also in <see cref="BoundsCheckAllowedIndexerTypes"/>.
+    /// </summary>
+    public bool BoundsCheckCheckSpans { get; }
+
+    /// <summary>
+    /// Gets the severity that <c>BND001</c> is reported with. Compiler <c>dotnet_diagnostic</c> settings still take precedence.
+    /// </summary>
+    public DiagnosticSeverity BoundsCheckSeverity { get; }
 
     /// <summary>
     /// Validates raw configuration values and builds <see cref="GuardOptions"/>.
@@ -140,8 +207,108 @@ public sealed class GuardOptions
             }
         }
 
-        var options = new GuardOptions(nullCheckExcludePrivate, boundsCheckMaxDepth, ignoredNamespaces);
+        var allowedIndexerTypes = Default.BoundsCheckAllowedIndexerTypes;
+        if (values.TryGetValue(BoundsCheckAllowedIndexerTypesKey, out var indexerTypes))
+        {
+            if (TryParseIndexerTypes(indexerTypes, out var parsed, out var reason))
+            {
+                allowedIndexerTypes = parsed;
+            }
+            else
+            {
+                errors.Add(new GuardConfigurationError(BoundsCheckAllowedIndexerTypesKey, indexerTypes, reason));
+            }
+        }
+
+        var checkSpans = Default.BoundsCheckCheckSpans;
+        if (values.TryGetValue(BoundsCheckCheckSpansKey, out var spans))
+        {
+            if (bool.TryParse(spans.Trim(), out var parsed))
+            {
+                checkSpans = parsed;
+            }
+            else
+            {
+                errors.Add(new GuardConfigurationError(BoundsCheckCheckSpansKey, spans, "expected 'true' or 'false'"));
+            }
+        }
+
+        var severity = Default.BoundsCheckSeverity;
+        if (values.TryGetValue(BoundsCheckSeverityKey, out var severityValue))
+        {
+            if (TryParseSeverity(severityValue.Trim(), out var parsed))
+            {
+                severity = parsed;
+            }
+            else
+            {
+                errors.Add(new GuardConfigurationError(
+                    BoundsCheckSeverityKey,
+                    severityValue,
+                    "expected 'silent', 'suggestion', 'warning' or 'error'"));
+            }
+        }
+
+        var options = new GuardOptions(
+            nullCheckExcludePrivate,
+            boundsCheckMaxDepth,
+            ignoredNamespaces,
+            allowedIndexerTypes,
+            checkSpans,
+            severity);
         return new GuardOptionsParseResult(options, errors.ToImmutable());
+    }
+
+    private static bool TryParseIndexerTypes(string value, out ImmutableArray<string> types, out string reason)
+    {
+        types = ImmutableArray<string>.Empty;
+        reason = string.Empty;
+
+        if (value.Trim().Length == 0)
+        {
+            reason = "must list at least one type";
+            return false;
+        }
+
+        var builder = ImmutableArray.CreateBuilder<string>();
+        foreach (var entry in value.Split(','))
+        {
+            var name = entry.Trim();
+            if (name.Length == 0)
+            {
+                reason = "contains an empty type entry";
+                return false;
+            }
+
+            if (name != ArrayIndexerTypeEntry && !IsValidNamespaceName(name))
+            {
+                reason = $"'{name}' is not a valid type name (use a namespace-qualified name without type arguments, or '[]')";
+                return false;
+            }
+
+            if (!builder.Contains(name))
+            {
+                builder.Add(name);
+            }
+        }
+
+        types = builder.ToImmutable();
+        return true;
+    }
+
+    private static bool TryParseSeverity(string value, out DiagnosticSeverity severity)
+    {
+        var parsed = value.ToLowerInvariant() switch
+        {
+            "silent" => DiagnosticSeverity.Hidden,
+            "suggestion" => DiagnosticSeverity.Info,
+            "warning" => DiagnosticSeverity.Warning,
+            "error" => DiagnosticSeverity.Error,
+            _ => (DiagnosticSeverity?)null,
+        };
+
+        severity = parsed ?? DiagnosticSeverity.Warning;
+        return parsed.HasValue;
     }
 
     private static bool TryParseMaxDepth(string value, out int depth)
