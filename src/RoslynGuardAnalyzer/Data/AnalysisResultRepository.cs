@@ -18,7 +18,7 @@ namespace RoslynGuardAnalyzer.Data;
 /// <summary>
 /// Repository for managing persistence of analysis results.
 /// </summary>
-public sealed class AnalysisResultRepository : RepositoryBase<AnalysisResult>
+public sealed class AnalysisResultRepository : RepositoryBase<AnalysisResult>, IEquatable<AnalysisResultRepository>
 {
     private const string ResultsDirectory = "results";
     private readonly string _dataDirectory;
@@ -31,6 +31,66 @@ public sealed class AnalysisResultRepository : RepositoryBase<AnalysisResult>
             "Data");
 
         EnsureDirectoryExists();
+    }
+
+    /// <summary>
+    /// Determines whether this repository has the same analysis statistics as another repository.
+    /// </summary>
+    public bool Equals(AnalysisResultRepository? other)
+    {
+        if (other is null)
+            return false;
+
+        if (ReferenceEquals(this, other))
+            return true;
+
+        var left = GetStatistics();
+        var right = other.GetStatistics();
+
+        return left.TotalAnalyses == right.TotalAnalyses
+            && left.SuccessfulAnalyses == right.SuccessfulAnalyses
+            && left.FailedAnalyses == right.FailedAnalyses
+            && left.AverageViolationCount == right.AverageViolationCount
+            && left.TotalViolations == right.TotalViolations
+            && left.AverageAnalysisDurationSeconds == right.AverageAnalysisDurationSeconds
+            && left.ProjectsAnalyzed == right.ProjectsAnalyzed;
+    }
+
+    /// <inheritdoc />
+    public override bool Equals(object? obj)
+    {
+        return obj is AnalysisResultRepository other && Equals(other);
+    }
+
+    /// <inheritdoc />
+    public override int GetHashCode()
+    {
+        var statistics = GetStatistics();
+
+        return HashCode.Combine(
+            statistics.TotalAnalyses,
+            statistics.SuccessfulAnalyses,
+            statistics.FailedAnalyses,
+            statistics.AverageViolationCount,
+            statistics.TotalViolations,
+            statistics.AverageAnalysisDurationSeconds,
+            statistics.ProjectsAnalyzed);
+    }
+
+    /// <summary>
+    /// Compares two repositories by value.
+    /// </summary>
+    public static bool operator ==(AnalysisResultRepository? left, AnalysisResultRepository? right)
+    {
+        return left is null ? right is null : left.Equals(right);
+    }
+
+    /// <summary>
+    /// Compares two repositories by value.
+    /// </summary>
+    public static bool operator !=(AnalysisResultRepository? left, AnalysisResultRepository? right)
+    {
+        return !(left == right);
     }
 
     /// <summary>
