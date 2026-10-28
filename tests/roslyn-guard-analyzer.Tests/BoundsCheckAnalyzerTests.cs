@@ -414,7 +414,13 @@ public sealed class BoundsCheckAnalyzerTests
     public void Analyzer_SupportsBND001()
     {
         var analyzer = new BoundsCheckAnalyzer();
-        analyzer.SupportedDiagnostics.Should().ContainSingle()
-            .Which.Id.Should().Be("BND001");
+        analyzer.SupportedDiagnostics.Select(d => d.Id).Should().Contain("BND001");
+    }
+
+    [Fact]
+    public void Analyzer_SupportsGRD001ConfigurationError()
+    {
+        var analyzer = new BoundsCheckAnalyzer();
+        analyzer.SupportedDiagnostics.Select(d => d.Id).Should().Contain("GRD001");
     }
 }

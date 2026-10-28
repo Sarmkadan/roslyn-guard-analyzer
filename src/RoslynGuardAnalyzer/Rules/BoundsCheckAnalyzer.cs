@@ -1,5 +1,6 @@
 #nullable enable
 
+using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -43,19 +44,67 @@ public sealed class BoundsCheckAnalyzer : DiagnosticAnalyzer
 
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
-        ImmutableArray.Create(Rule);
+        ImmutableArray.Create(Rule, DiagnosticDescriptors.GuardConfigurationRule);
 
     /// <inheritdoc/>
     public override void Initialize(AnalysisContext context)
     {
         context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
         context.EnableConcurrentExecution();
-        context.RegisterSyntaxNodeAction(AnalyzeElementAccess, SyntaxKind.ElementAccessExpression);
+        context.RegisterCompilationStartAction(OnCompilationStart);
     }
 
-    private static void AnalyzeElementAccess(SyntaxNodeAnalysisContext context)
+    private static void OnCompilationStart(CompilationStartAnalysisContext context)
+    {
+        // Validate every distinct .editorconfig section once per compilation. Diagnostics can only be
+        // reported from the compilation-end context, so invalid values are collected here and reported there.
+        var provider = context.Options.AnalyzerConfigOptionsProvider;
+        var configs = new ConcurrentDictionary<AnalyzerConfigOptions, GuardOptions>(ReferenceEqualityComparer.Instance);
+        var errors = new List<GuardConfigurationError>();
+
+        foreach (var tree in context.Compilation.SyntaxTrees)
+        {
+            var config = provider.GetOptions(tree);
+            if (configs.ContainsKey(config))
+                continue;
+
+            var result = GuardOptions.Parse(ReadGuardValues(config));
+            configs[config] = result.Options;
+            errors.AddRange(result.Errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            context.RegisterCompilationEndAction(endContext =>
+            {
+                foreach (var error in errors)
+                {
+                    endContext.ReportDiagnostic(Diagnostic.Create(
+                        DiagnosticDescriptors.GuardConfigurationRule,
+                        Location.None,
+                        error.Key,
+                        error.Value,
+                        error.Reason));
+                }
+            });
+        }
+
+        context.RegisterSyntaxNodeAction(
+            nodeContext => AnalyzeElementAccess(nodeContext, configs),
+            SyntaxKind.ElementAccessExpression);
+    }
+
+    private static void AnalyzeElementAccess(
+        SyntaxNodeAnalysisContext context,
+        ConcurrentDictionary<AnalyzerConfigOptions, GuardOptions> configs)
     {
         var elementAccess = (ElementAccessExpressionSyntax)context.Node;
+
+        var config = context.Options.AnalyzerConfigOptionsProvider.GetOptions(elementAccess.SyntaxTree);
+        var guardOptions = configs.GetOrAdd(config, static c => GuardOptions.Parse(ReadGuardValues(c)).Options);
+
+        if (IsInIgnoredNamespace(context, guardOptions.IgnoredNamespaces))
+            return;
 
         // Determine the collection expression being indexed
         var expression = elementAccess.Expression;
@@ -74,7 +123,7 @@ public sealed class BoundsCheckAnalyzer : DiagnosticAnalyzer
             return;
 
         // Skip if preceded by an if-check on Length/Count in the same block or an enclosing if
-        if (IsGuardedByLengthCheck(elementAccess, context.SemanticModel))
+        if (IsGuardedByLengthCheck(elementAccess, context.SemanticModel, guardOptions.BoundsCheckMaxDepth))
             return;
 
         // Skip if the index is a hat expression (^1) - these are range/index expressions
@@ -138,13 +187,45 @@ public sealed class BoundsCheckAnalyzer : DiagnosticAnalyzer
         return true;
     }
 
-    private static bool IsGuardedByLengthCheck(ElementAccessExpressionSyntax elementAccess, SemanticModel model)
+    private static bool IsInIgnoredNamespace(SyntaxNodeAnalysisContext context, ImmutableArray<string> ignoredNamespaces)
+    {
+        if (ignoredNamespaces.IsDefaultOrEmpty)
+            return false;
+
+        var containingNamespace = context.ContainingSymbol?.ContainingNamespace;
+        if (containingNamespace is null || containingNamespace.IsGlobalNamespace)
+            return false;
+
+        var namespaceName = containingNamespace.ToDisplayString();
+        foreach (var ignored in ignoredNamespaces)
+        {
+            if (namespaceName == ignored || namespaceName.StartsWith(ignored + ".", StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static Dictionary<string, string> ReadGuardValues(AnalyzerConfigOptions config)
+    {
+        var values = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var key in GuardOptions.KnownKeys)
+        {
+            if (config.TryGetValue(key, out var value))
+                values[key] = value;
+        }
+
+        return values;
+    }
+
+    private static bool IsGuardedByLengthCheck(ElementAccessExpressionSyntax elementAccess, SemanticModel model, int maxDepth)
     {
         var expressionText = elementAccess.Expression.ToString();
 
-        // Walk up to find an enclosing if statement
+        // Walk up to find an enclosing if statement, examining at most maxDepth ancestor levels
         var current = elementAccess.Parent;
-        while (current is not null)
+        var depth = 0;
+        while (current is not null && depth++ < maxDepth)
         {
             if (current is IfStatementSyntax ifStatement)
             {
