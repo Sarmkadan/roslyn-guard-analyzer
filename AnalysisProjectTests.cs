@@ -40,6 +40,9 @@ public class AnalysisProjectTests
     [Fact]
     public void Ctor_WithNameAndPath_SetsValues(string name, string path)
     {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentException.ThrowIfNullOrEmpty(path);
+
         // Arrange
         // Act
         var project = new AnalysisProject(name, path);
@@ -113,6 +116,9 @@ public class AnalysisProjectTests
     [Fact]
     public void GetProperty_Existing_ReturnsValue(string key, string defaultValue)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
+        ArgumentException.ThrowIfNullOrEmpty(defaultValue);
+
         // Arrange
         var project = new AnalysisProject();
         project.SetProperty(key, "value");
@@ -133,6 +139,9 @@ public class AnalysisProjectTests
     [Fact]
     public void GetProperty_NonExisting_ReturnsDefault(string key, string defaultValue)
     {
+        ArgumentException.ThrowIfNullOrEmpty(key);
+        ArgumentException.ThrowIfNullOrEmpty(defaultValue);
+
         // Arrange
         var project = new AnalysisProject();
 
