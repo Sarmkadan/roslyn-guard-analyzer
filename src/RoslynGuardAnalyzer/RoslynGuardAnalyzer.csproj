@@ -11,18 +11,31 @@
     <Version>1.0.0</Version>
     <Authors>Vladyslav Zaiets</Authors>
     <Description>RoslynGuardAnalyzer is a powerful tool for enforcing architectural and coding standards through automated Roslyn-based analysis.</Description>
-    <PackageTags>roslyn analyzer code-analysis architecture rules csharp</PackageTags>
+    <PackageTags>analyzers roslyn guard code-analysis architecture rules csharp</PackageTags>
     <RepositoryUrl>https://github.com/sarmkadan/roslyn-guard-analyzer</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/sarmkadan/roslyn-guard-analyzer</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- Analyzer package: the DLL goes to analyzers/dotnet/cs (see ItemGroup below), not lib/. -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <!-- The CLI's runtime libraries (Serilog, Microsoft.Extensions.*) are not needed by the analyzer and must not flow into consumers; the host compiler supplies Microsoft.CodeAnalysis. -->
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <Deterministic>true</Deterministic>
-    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <!-- Embedded PDB: a .snupkg only pairs PDBs with lib/ assemblies, so the analyzers/ DLL carries its own symbols and SourceLink data. -->
+    <DebugType>embedded</DebugType>
+    <!-- Path remapping for CI only; local builds keep real source paths for debugging. -->
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="../../README.md" Pack="true" PackagePath="\" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="\" />
+    <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(TargetDir)$(TargetName).xml" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +62,7 @@
       <NoWarn>NU1510</NoWarn>
     </PackageReference>
     <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.402" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>
