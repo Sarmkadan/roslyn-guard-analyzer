@@ -1,71 +1,61 @@
 # Contributing to RoslynGuardAnalyzer
 
-Thank you for considering contributing to RoslynGuardAnalyzer!
+Thanks for contributing!
 
-## Requirements
+## Prerequisites
 
-- [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0) or later
-- Git
+- **.NET SDK 10.0.100** or later. `global.json` pins `10.0.100` with `rollForward: latestMinor`; the projects target `net10.0`.
+- Git.
 
-## Building Locally
+Check your SDK with `dotnet --version`.
 
-```bash
-# Clone your fork
-git clone https://github.com/your-username/roslyn-guard-analyzer.git
-cd roslyn-guard-analyzer
-
-# Restore dependencies
-dotnet restore
-
-# Build in Release configuration
-dotnet build -c Release
-
-# Or use the Makefile
-make build
-```
-
-## Running Tests
+## Building
 
 ```bash
-# Run all tests
-dotnet test --verbosity normal
-
-# Run tests with detailed output and generate a TRX report
-dotnet test --verbosity normal --logger "trx" --results-directory TestResults
-
-# Run a specific test project
-dotnet test tests/roslyn-guard-analyzer.Tests/
+dotnet restore RoslynGuardAnalyzer.sln
+dotnet build RoslynGuardAnalyzer.sln -c Debug   # or: make build
 ```
 
-## Code Style
+Release: `dotnet build RoslynGuardAnalyzer.sln -c Release` (or `make release`).
 
-This project follows standard .NET conventions enforced via `.editorconfig`:
+## Running tests
 
-- **Naming**: PascalCase for public types and members, camelCase for parameters and locals, `_camelCase` for private fields, `I` prefix for interfaces, `Async` suffix for async methods.
-- **Braces**: Always use braces for control flow blocks.
-- **Nullability**: Enable nullable reference types (`<Nullable>enable</Nullable>`); avoid `null` suppression operators unless unavoidable.
-- **XML docs**: Add or update `<summary>` documentation for all public APIs.
+Tests live in `tests/roslyn-guard-analyzer.Tests/` (xUnit, FluentAssertions, NSubstitute).
 
-Run `dotnet format --verify-no-changes` to confirm your changes comply before opening a PR.
+```bash
+dotnet test RoslynGuardAnalyzer.sln -c Debug   # or: make test
+dotnet test tests/roslyn-guard-analyzer.Tests/roslyn-guard-analyzer.Tests.csproj \
+  --filter "FullyQualifiedName~RuleViolationTests"   # single test class
+```
 
-## Branching & Pull Requests
+Do not add tests under `src/RoslynGuardAnalyzer.Tests/` or `src/tests/`; those are stray copies outside the solution.
 
-1. **Fork** the repository and create a branch from `main`:
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-2. Make focused, well-scoped changes. One feature or fix per PR.
-3. Ensure all tests pass and no new build warnings are introduced.
-4. Write a clear PR description explaining _what_ changed and _why_.
-5. Reference any related issues with `Fixes #<issue>` in the PR body.
+## Coding conventions
 
-## Reporting Issues
+- **Formatting:** follow `.editorconfig` (4 spaces; 2 for csproj/props/json/yml; LF; UTF-8; final newline). Verify with `make format-check`.
+- **Nullable:** `Nullable` is enabled. Avoid `!` suppression unless unavoidable.
+- **Warnings:** do not add new build warnings. The current baseline is 0 errors and 76 warnings; keep it from growing.
+- **Structure:** namespaces mirror folders (`RoslynGuardAnalyzer.<Folder>`), file-scoped namespaces, one type per file, `sealed` by default, interfaces prefixed `I`, private fields `_camelCase`.
+- **Analyzer diagnostic IDs:** built-in rules are `LYR001` (layer dependencies), `NAM001` (naming), `ASY001` (async patterns), `NUL001` (null safety), defined in `src/RoslynGuardAnalyzer/Rules/DiagnosticDescriptors.cs`. Error codes `ERR001`–`ERR006` are in `Core/Constants.cs`. Pick a new unique ID for a new rule and never renumber existing ones.
+- **Tests:** file `<Type>Tests.cs`, `public sealed class`, method names `Method_Scenario_Expected`, Arrange/Act/Assert comments, FluentAssertions `.Should()`.
+- **Docs:** public APIs get XML `<summary>` comments, and each public type has a `docs/<Type>.md` to update when its API changes.
 
-Use [GitHub Issues](https://github.com/sarmkadan/roslyn-guard-analyzer/issues). When reporting a bug, include:
+## Pull request process
+
+1. Fork the repository and branch from `main` (e.g. `feature/my-change`).
+2. Keep each PR to one change.
+3. Add or update tests for every behavior change.
+4. Update `docs/` and `CHANGELOG.md` for user-facing changes.
+5. Make sure CI passes. `ci.yml` runs restore, Release build, and `dotnet test --no-build -c Release`. `build.yml` runs self-analysis and fails on error-severity violations, so run `make analyze` locally.
+6. In the PR description, explain what changed and why, and reference issues with `Fixes #<issue>`.
+
+## Reporting issues
+
+Use [GitHub Issues](https://github.com/sarmkadan/roslyn-guard-analyzer/issues). Include:
 
 - A clear description of the problem.
 - Minimal reproduction steps or a failing test case.
-- Expected vs. actual behaviour.
+- Expected vs. actual behavior.
 - SDK version (`dotnet --version`) and OS.
 
 ## License
