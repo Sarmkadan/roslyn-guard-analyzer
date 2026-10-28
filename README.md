@@ -1,3 +1,87 @@
+## Getting started
+
+Roslyn Guard Analyzer is a command-line tool that scans C# sources and reports architecture and style violations. It is not a Roslyn analyzer package: referencing it with `PackageReference` does not make the compiler report its diagnostics, so run it as a CLI against your sources.
+
+### Build the CLI
+
+```bash
+git clone https://github.com/sarmkadan/roslyn-guard-analyzer.git
+cd roslyn-guard-analyzer
+dotnet publish src/RoslynGuardAnalyzer -c Release -o ./publish
+```
+
+### Run it on your code
+
+```bash
+./publish/RoslynGuardAnalyzer ./path/to/your/src
+./publish/RoslynGuardAnalyzer ./path/to/your/src -r LYR001,NAM001 --strict
+```
+
+`-r` limits the run to the listed rule IDs, and `--strict` fails the run when any violation is found. Run `./publish/RoslynGuardAnalyzer --help` for all options, including `--format` (text, json, csv, html, xml) and `--output`.
+
+### Before and after: ASY001
+
+`ASY001` reports a method that returns `Task` or `Task<T>` without being marked `async`. The CLI does not apply fixes, so the change is manual.
+
+Before:
+
+```csharp
+public class OrderService
+{
+    public Task Load()
+    {
+        return Task.CompletedTask;
+    }
+}
+```
+
+```text
+⚠️ [ASY001] Line 3: Method 'Load' returns Task but is not marked as async
+```
+
+After:
+
+```csharp
+public class OrderService
+{
+    public async Task LoadAsync()
+    {
+        await Task.CompletedTask;
+    }
+}
+```
+
+The run reports no violations for the updated file.
+
+### Diagnostic IDs
+
+Values come from `DiagnosticDescriptors` in `src/RoslynGuardAnalyzer/Rules/DiagnosticDescriptors.cs`.
+
+| ID | Title | Default severity |
+|----|-------|------------------|
+| `LYR001` | Layer Dependency Violation | Error |
+| `NAM001` | Naming Convention Violation | Warning |
+| `ASY001` | Async Pattern Violation | Warning |
+| `NUL001` | Null Safety Violation | Warning |
+
+`NUL001` is defined here, but the CLI's current source scanner does not emit property or field elements, so it reports nothing on current builds.
+
+### Change severity with .editorconfig
+
+Put `dotnet_diagnostic.<ID>.severity` lines in an `.editorconfig` in the directory of your sources or in any parent directory. Accepted values are `error`, `warning`, `suggestion`, `info`, and `none` (`none` turns the rule off).
+
+```ini
+root = true
+
+[*.cs]
+dotnet_diagnostic.LYR001.severity = error
+dotnet_diagnostic.NAM001.severity = none
+dotnet_diagnostic.ASY001.severity = error
+dotnet_diagnostic.NUL001.severity = suggestion
+```
+
+This file affects only this CLI; `dotnet build` does not read it. The CLI looks up each file's `.editorconfig` by walking up from the file's directory, and the first matching line it finds wins. It ignores section headers such as `[*.cs]`, so every `dotnet_diagnostic` line applies to all files under that `.editorconfig`.
+
 ## FileSystemHelper
 
 The `FileSystemHelper` static class (in `RoslynGuardAnalyzer.Utilities`) provides common file-system operations with consistent argument validation and error handling. It discovers C# and project files recursively, filters generated or tooling directories, safely reads and writes text files, and queries file or directory metadata.
