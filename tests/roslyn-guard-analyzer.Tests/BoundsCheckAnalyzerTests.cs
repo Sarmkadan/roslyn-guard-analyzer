@@ -15,6 +15,16 @@ namespace RoslynGuardAnalyzer.Tests;
 /// </summary>
 public sealed class BoundsCheckAnalyzerTests
 {
+    static BoundsCheckAnalyzerTests()
+    {
+        // ReferenceAssemblies.Net.Net80 restores reference packages through NuGet, which throws
+        // when HOME is unset (e.g. minimal CI or service environments). Fall back to the user profile.
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("HOME")))
+        {
+            Environment.SetEnvironmentVariable("HOME", Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
+        }
+    }
+
     private static CSharpAnalyzerTest<BoundsCheckAnalyzer, DefaultVerifier> CreateTest(string source)
     {
         var test = new CSharpAnalyzerTest<BoundsCheckAnalyzer, DefaultVerifier>
