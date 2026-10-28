@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `EventBusExtensions.PublishIfSubscribedAsync` publishes an event only when a handler is registered for its type
 - `IEventBus.HasSubscribers(Type)` (implemented by `EventBus`) reports whether a handler would receive an event of a given type
 
+### Changed
+- NuGet package is now analyzer-only: the DLL ships under `analyzers/dotnet/cs`, the package is marked as a development dependency and has no dependencies, so consumers do not receive the CLI's runtime libraries
+- Packages embed the PDB with SourceLink data (`DebugType=embedded`); CI builds use path mapping via `GITHUB_ACTIONS`
+- Package tags now include `analyzers`, `guard`, and `roslyn`; the MIT `LICENSE` is packed alongside the README
+
 ## [2.0.2] - 2026-05-20
 ### Fixed
 - Fix false positive in analyzer when using conditional access with nullable
