@@ -58,5 +58,19 @@ namespace RoslynGuardAnalyzer.Rules
             isEnabledByDefault: true,
             description: "Ensures that types are null-safe by using nullable reference types.",
             helpLinkUri: "https://github.com/roslyn-guard-analyzer/roslyn-guard-analyzer/blob/main/docs/rules.md#NUL001");
+
+        /// <summary>
+        /// Gets the diagnostic descriptor reported when a guard.* value in .editorconfig is invalid.
+        /// </summary>
+        public static readonly DiagnosticDescriptor GuardConfigurationRule = new DiagnosticDescriptor(
+            id: "GRD001",
+            title: "Invalid guard analyzer configuration",
+            messageFormat: "Invalid value '{1}' for '{0}': {2}; the default is used instead",
+            category: "RoslynGuardAnalyzer.Configuration",
+            defaultSeverity: DiagnosticSeverity.Warning,
+            isEnabledByDefault: true,
+            description: "A guard.* option in .editorconfig has a value that is out of range, not a known value, or not valid syntax.",
+            helpLinkUri: "https://github.com/roslyn-guard-analyzer/roslyn-guard-analyzer/blob/main/docs/GuardOptions.md",
+            customTags: new[] { WellKnownDiagnosticTags.CompilationEnd });
     }
 }
