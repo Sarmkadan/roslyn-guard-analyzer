@@ -4,10 +4,8 @@ using System.Threading.Tasks;
 using System.Net;
 using System;
 
-namespace RoslynGuardAnalyzer.Integration.Tests
+namespace RoslynGuardAnalyzer.Integration.Tests;
+public class HttpClientFactoryTests
 {
-    public class HttpClientFactoryTests
-    {
-        // ... rest of the file remains the same ...
-    }
+    // ... rest of the file remains the same ...
 }

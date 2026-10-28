@@ -86,7 +86,7 @@ public sealed class ConfigurationValidator
 
     /// <summary>
     /// Validates an analysis configuration.
-    /// </>
+    /// </summary>
     public static ValidationResult ValidateAnalysisConfig(AnalysisConfig config)
     {
         ArgumentNullException.ThrowIfNull(config);

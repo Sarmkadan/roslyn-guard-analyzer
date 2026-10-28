@@ -39,7 +39,6 @@ public sealed class RuleRepository : RepositoryBase<AnalysisRule>
     /// </summary>
     public IReadOnlyList<AnalysisRule> GetByCategory(RuleCategory category)
     {
-        ArgumentNullException.ThrowIfNull(category);
         return Find(r => r.Category == category);
     }
 

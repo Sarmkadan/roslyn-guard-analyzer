@@ -3,13 +3,10 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <PackageId>RoslynGuardAnalyzer</PackageId>
     <Version>1.0.0</Version>
-    <Authors>Vladyslav Zaiets</Authors>
     <Description>RoslynGuardAnalyzer is a powerful tool for enforcing architectural and coding standards through automated Roslyn-based analysis.</Description>
     <PackageTags>analyzers roslyn guard code-analysis architecture rules csharp</PackageTags>
     <RepositoryUrl>https://github.com/sarmkadan/roslyn-guard-analyzer</RepositoryUrl>
@@ -23,6 +20,8 @@
     <!-- The CLI's runtime libraries (Serilog, Microsoft.Extensions.*) are not needed by the analyzer and must not flow into consumers; the host compiler supplies Microsoft.CodeAnalysis. -->
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <Deterministic>true</Deterministic>
+    <!-- RS1036 asks for EnforceExtendedAnalyzerRules, which also bans File/Environment/CurrentCulture across the CLI code (RS1035, ~150 sites); out of scope here. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);RS1036</WarningsNotAsErrors>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <!-- Embedded PDB: a .snupkg only pairs PDBs with lib/ assemblies, so the analyzers/ DLL carries its own symbols and SourceLink data. -->
@@ -36,6 +35,11 @@
     <None Include="../../LICENSE" Pack="true" PackagePath="\" />
     <None Include="$(TargetPath)" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
     <None Include="$(TargetDir)$(TargetName).xml" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
   </ItemGroup>
 
   <ItemGroup>
