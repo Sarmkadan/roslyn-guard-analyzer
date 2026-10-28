@@ -20,7 +20,7 @@ public sealed class RuleConfigurationBuilder
     private readonly string _ruleName;
     private bool _enabled = true;
     private string _severity = "Medium";
-    private readonly Dictionary<string, object> _parameters = [];
+    private readonly Dictionary<string, object?> _parameters = [];
     private string _description = string.Empty;
 
     public RuleConfigurationBuilder(string? ruleName)

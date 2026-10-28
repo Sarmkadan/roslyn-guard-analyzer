@@ -3,8 +3,8 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <!-- Scratch edge-case driver: passes null on purpose (CS8600 stays a warning here). -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS8600</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
