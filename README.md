@@ -82,6 +82,111 @@ dotnet_diagnostic.NUL001.severity = suggestion
 
 This file affects only this CLI; `dotnet build` does not read it. The CLI looks up each file's `.editorconfig` by walking up from the file's directory, and the first matching line it finds wins. It ignores section headers such as `[*.cs]`, so every `dotnet_diagnostic` line applies to all files under that `.editorconfig`.
 
+## BoundsCheckAnalyzer
+
+`BoundsCheckAnalyzer` (in `RoslynGuardAnalyzer.Rules`) is a Roslyn `DiagnosticAnalyzer` that reports `BND001` on element access (`[]`) to an array, `List<T>`, `IList<T>`, `Span<T>`, or `ReadOnlySpan<T>` when no length or bounds check is visible before the access. The default severity is Warning.
+
+It runs inside the compiler, not in the CLI, and it is not in the `Diagnostic IDs` table above. Build the analyzer DLL and add it to the project you compile, as shown in [Enforce BND001 in CI](#enforce-bnd001-in-ci).
+
+### Example: array access in a loop
+
+`Totals.cs`:
+
+```csharp
+using System;
+
+public static class Totals
+{
+    public static int SumFirst(int[] values, int count)
+    {
+        var total = 0;
+        for (var i = 0; i < count; i++)
+        {
+            total += values[i];
+        }
+
+        return total;
+    }
+
+    public static void Main()
+    {
+        Console.WriteLine(SumFirst(new[] { 1, 2, 3 }, 3));
+    }
+}
+```
+
+`dotnet build` reports:
+
+```text
+Totals.cs(10,22): warning BND001: Element access on 'values' may be out of bounds without a preceding length/bounds check
+```
+
+The loop is bounded by `count`, not by `values.Length`, so the analyzer cannot tie the index to the array.
+
+### Fixed version
+
+There is no code fix provider for `BND001` in this repository, so this change is manual. Add `values.Length` to the loop condition:
+
+```csharp
+using System;
+
+public static class Totals
+{
+    public static int SumFirst(int[] values, int count)
+    {
+        var total = 0;
+        for (var i = 0; i < count && i < values.Length; i++)
+        {
+            total += values[i];
+        }
+
+        return total;
+    }
+
+    public static void Main()
+    {
+        Console.WriteLine(SumFirst(new[] { 1, 2, 3 }, 3));
+    }
+}
+```
+
+The build succeeds with no `BND001` warning, and the program prints `6`.
+
+### Patterns the analyzer accepts as guards
+
+The analyzer matches on the collection expression's text, not on the index. These patterns suppress `BND001`:
+
+- **Constant index**, such as `values[0]`.
+- **`for` loop** whose condition contains `values.Length` or `values.Count`, such as `i < values.Length` or `i < count && i < values.Length`.
+- **Inside any `foreach`**. The analyzer does not check that the loop iterates the same collection.
+- **`if` true branch** whose condition contains `values.Length` or `values.Count`, such as `if (i < values.Length) { ... values[i] ... }`. The `else` branch is not treated as guarded.
+- **Early exit**: an earlier `if` in the same block, or in an enclosing block, whose condition contains `values.Length` or `values.Count` and whose body contains a `return` or `throw`, such as `if (values.Length == 0) return 0;`.
+- **Index from the end** (`values[^1]`) and **range** (`values[1..3]`) expressions.
+
+Things the analyzer does not recognize: `while` loops, a length copied to another variable first (`var n = values.Length; if (i < n) ...`), and any other kind of check. `Dictionary<TKey, TValue>` indexing is not checked at all.
+
+### Enforce BND001 in CI
+
+Add the analyzer DLL to the project as an `Analyzer` item. Replace the path with the location where you built `RoslynGuardAnalyzer.dll`:
+
+```xml
+<ItemGroup>
+  <Analyzer Include="../roslyn-guard-analyzer/src/RoslynGuardAnalyzer/bin/Release/net10.0/RoslynGuardAnalyzer.dll" />
+</ItemGroup>
+```
+
+Build the analyzer first with `dotnet build src/RoslynGuardAnalyzer -c Release` in the analyzer repository. Then, in your CI job:
+
+```bash
+dotnet build -c Release -warnaserror:BND001
+```
+
+`-warnaserror:BND001` turns only `BND001` into an error, so other warnings do not fail the build. The build exits with code 1 on any `BND001` report:
+
+```text
+Totals.cs(10,22): error BND001: Element access on 'values' may be out of bounds without a preceding length/bounds check
+```
+
 ## FileSystemHelper
 
 The `FileSystemHelper` static class (in `RoslynGuardAnalyzer.Utilities`) provides common file-system operations with consistent argument validation and error handling. It discovers C# and project files recursively, filters generated or tooling directories, safely reads and writes text files, and queries file or directory metadata.
