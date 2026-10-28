@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `IEventBus.HasSubscribers(Type)` (implemented by `EventBus`) reports whether a handler would receive an event of a given type
 - `GuardOptions` reads and validates `guard.*` settings from `.editorconfig`: `guard.bounds_check.max_depth` (1 to 1000), `guard.ignored_namespaces` (namespace list), and `guard.null_check.exclude_private` (boolean, reserved for a null-check analyzer)
 - Diagnostic `GRD001` reports an invalid `guard.*` value instead of silently using the default
+- `BoundsCheckAnalyzer` reads `guard.bounds_check.allowed_indexer_types` (which types are checked; `[]` for arrays), `guard.bounds_check.check_spans` (whether `Span<T>` and `ReadOnlySpan<T>` are checked), and `guard.bounds_check.severity` (`silent`, `suggestion`, `warning`, or `error`)
 
 ### Changed
 - NuGet package is now analyzer-only: the DLL ships under `analyzers/dotnet/cs`, the package is marked as a development dependency and has no dependencies, so consumers do not receive the CLI's runtime libraries

@@ -42,6 +42,25 @@ public sealed class BoundsCheckAnalyzer : DiagnosticAnalyzer
         isEnabledByDefault: true,
         description: Description);
 
+    /// <summary>
+    /// Copies of <see cref="Rule"/> with each severity that <c>guard.bounds_check.severity</c> can select.
+    /// They share the ID, so the analyzer still advertises only <see cref="Rule"/>.
+    /// </summary>
+    private static readonly ImmutableDictionary<DiagnosticSeverity, DiagnosticDescriptor> SeverityRules =
+        new[] { DiagnosticSeverity.Hidden, DiagnosticSeverity.Info, DiagnosticSeverity.Warning, DiagnosticSeverity.Error }
+            .ToImmutableDictionary(
+                severity => severity,
+                severity => new DiagnosticDescriptor(
+                    Rule.Id,
+                    Rule.Title,
+                    Rule.MessageFormat,
+                    Rule.Category,
+                    severity,
+                    Rule.IsEnabledByDefault,
+                    Rule.Description,
+                    Rule.HelpLinkUri,
+                    Rule.CustomTags.ToArray()));
+
     /// <inheritdoc/>
     public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics =>
         ImmutableArray.Create(Rule, DiagnosticDescriptors.GuardConfigurationRule);
@@ -75,9 +94,10 @@ public sealed class BoundsCheckAnalyzer : DiagnosticAnalyzer
 
         if (errors.Count > 0)
         {
+            // Sections with identical text can yield identical errors, so report each distinct error once.
             context.RegisterCompilationEndAction(endContext =>
             {
-                foreach (var error in errors)
+                foreach (var error in errors.Distinct())
                 {
                     endContext.ReportDiagnostic(Diagnostic.Create(
                         DiagnosticDescriptors.GuardConfigurationRule,
@@ -135,12 +155,12 @@ public sealed class BoundsCheckAnalyzer : DiagnosticAnalyzer
         if (IsRangeExpression(elementAccess))
             return;
 
-        // Check if the target is an indexable type (array, List, Span, etc.)
+        // Check if the target is one of the configured indexable types (array, List, Span, etc.)
         var typeInfo = context.SemanticModel.GetTypeInfo(expression);
-        if (!IsIndexableType(typeInfo.Type))
+        if (!IsCheckedType(typeInfo.Type, guardOptions))
             return;
 
-        var diagnostic = Diagnostic.Create(Rule, elementAccess.GetLocation(), expressionText);
+        var diagnostic = Diagnostic.Create(GetRule(guardOptions.BoundsCheckSeverity), elementAccess.GetLocation(), expressionText);
         context.ReportDiagnostic(diagnostic);
     }
 
@@ -292,27 +312,27 @@ public sealed class BoundsCheckAnalyzer : DiagnosticAnalyzer
         return argument is RangeExpressionSyntax;
     }
 
-    private static bool IsIndexableType(ITypeSymbol? type)
+    private static DiagnosticDescriptor GetRule(DiagnosticSeverity severity) =>
+        severity == Rule.DefaultSeverity ? Rule : SeverityRules[severity];
+
+    private static bool IsCheckedType(ITypeSymbol? type, GuardOptions options)
     {
         if (type is null)
             return false;
 
-        // Arrays
         if (type is IArrayTypeSymbol)
-            return true;
+            return options.BoundsCheckAllowedIndexerTypes.Contains(GuardOptions.ArrayIndexerTypeEntry);
 
-        // Check for well-known indexable types
-        var fullName = type.ToDisplayString();
-        if (fullName.StartsWith("System.Collections.Generic.List<", StringComparison.Ordinal) ||
-            fullName.StartsWith("System.Collections.Generic.IList<", StringComparison.Ordinal) ||
-            fullName.StartsWith("System.Span<", StringComparison.Ordinal) ||
-            fullName.StartsWith("System.ReadOnlySpan<", StringComparison.Ordinal) ||
-            fullName.StartsWith("System.Memory<", StringComparison.Ordinal) ||
-            fullName.StartsWith("System.ReadOnlyMemory<", StringComparison.Ordinal))
-        {
-            return true;
-        }
+        // Compare by namespace-qualified name without type arguments, e.g. System.Collections.Generic.List
+        var definition = type.OriginalDefinition;
+        var name = definition.ContainingNamespace is { IsGlobalNamespace: false } ns
+            ? $"{ns.ToDisplayString()}.{definition.Name}"
+            : definition.Name;
 
-        return false;
+        if (!options.BoundsCheckAllowedIndexerTypes.Contains(name))
+            return false;
+
+        var isSpan = name is "System.Span" or "System.ReadOnlySpan";
+        return options.BoundsCheckCheckSpans || !isSpan;
     }
 }
