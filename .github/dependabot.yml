@@ -4,9 +4,18 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+      day: "monday"
+    open-pull-requests-limit: 5
+    # Major bumps of Microsoft.CodeAnalysis.* change the minimum supported
+    # Visual Studio / .NET SDK version. Review those PRs manually; do not ignore them.
+    groups:
+      nuget-minor-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 5
