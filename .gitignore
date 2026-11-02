@@ -66,3 +66,10 @@ Thumbs.db
 # aider internal state - never commit
 .aider*
 BenchmarkDotNet.Artifacts/
+build/
+aider_buildcmd.py
+buildcmd.py
+build_output.txt
+clean_build.txt
+files_to_process.txt
+verbose.proj
